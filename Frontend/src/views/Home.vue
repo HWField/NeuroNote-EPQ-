@@ -85,26 +85,16 @@ import { ref } from 'vue'
 // This is sample data.
 const data = {
   user: {
-    name: 'shadcn',
-    email: 'm@example.com',
+    name: 'Henry',
+    email: 'Henry@henryfield.net',
     avatar: '/avatars/shadcn.jpg',
   },
   teams: [
     {
-      name: 'Acme Inc',
+      name: 'School',
       logo: GalleryVerticalEnd,
-      plan: 'Enterprise',
-    },
-    {
-      name: 'Acme Corp.',
-      logo: AudioWaveform,
-      plan: 'Startup',
-    },
-    {
-      name: 'Evil Corp.',
-      logo: Command,
-      plan: 'Free',
-    },
+      plan: 'Personal',
+    }
   ],
   navMain: [
     {
@@ -248,7 +238,7 @@ function setActiveTeam(team: typeof data.teams[number]) {
                 :side-offset="4"
               >
                 <DropdownMenuLabel class="text-xs text-muted-foreground">
-                  Teams
+                  Views
                 </DropdownMenuLabel>
                 <DropdownMenuItem
                   v-for="(team, index) in data.teams"
@@ -268,7 +258,7 @@ function setActiveTeam(team: typeof data.teams[number]) {
                     <Plus class="size-4" />
                   </div>
                   <div class="font-medium text-muted-foreground">
-                    Add team
+                    Add View
                   </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -278,7 +268,7 @@ function setActiveTeam(team: typeof data.teams[number]) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Platform</SidebarGroupLabel>
+          <SidebarGroupLabel>File Tree:</SidebarGroupLabel>
           <SidebarMenu>
             <Collapsible
               v-for="item in data.navMain"
@@ -313,51 +303,45 @@ function setActiveTeam(team: typeof data.teams[number]) {
             </Collapsible>
           </SidebarMenu>
         </SidebarGroup>
-        <SidebarGroup class="group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel>Projects</SidebarGroupLabel>
+
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Recently acessed:</SidebarGroupLabel>
           <SidebarMenu>
-            <SidebarMenuItem
-              v-for="item in data.projects"
-              :key="item.name"
+            <Collapsible
+              v-for="item in data.navMain"
+              :key="item.title"
+              as-child
+              :default-open="item.isActive"
+              class="group/collapsible"
             >
-              <SidebarMenuButton as-child>
-                <a :href="item.url">
-                  <component :is="item.icon" />
-                  <span>{{ item.name }}</span>
-                </a>
-              </SidebarMenuButton>
-              <DropdownMenu>
-                <DropdownMenuTrigger as-child>
-                  <SidebarMenuAction show-on-hover>
-                    <MoreHorizontal />
-                    <span class="sr-only">More</span>
-                  </SidebarMenuAction>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent class="w-48 rounded-lg" side="bottom" align="end">
-                  <DropdownMenuItem>
-                    <Folder class="text-muted-foreground" />
-                    <span>View Project</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Forward class="text-muted-foreground" />
-                    <span>Share Project</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Trash2 class="text-muted-foreground" />
-                    <span>Delete Project</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton class="text-sidebar-foreground/70">
-                <MoreHorizontal class="text-sidebar-foreground/70" />
-                <span>More</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+              <SidebarMenuItem>
+                <CollapsibleTrigger as-child>
+                  <SidebarMenuButton :tooltip="item.title">
+                    <component :is="item.icon" />
+                    <span>{{ item.title }}</span>
+                    <ChevronRight class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                  </SidebarMenuButton>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    <SidebarMenuSubItem
+                      v-for="subItem in item.items"
+                      :key="subItem.title"
+                    >
+                      <SidebarMenuSubButton as-child>
+                        <a :href="subItem.url">
+                          <span>{{ subItem.title }}</span>
+                        </a>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </SidebarMenuItem>
+            </Collapsible>
           </SidebarMenu>
         </SidebarGroup>
+       
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
@@ -371,7 +355,7 @@ function setActiveTeam(team: typeof data.teams[number]) {
                   <Avatar class="h-8 w-8 rounded-lg">
                     <AvatarImage :src="data.user.avatar" :alt="data.user.name" />
                     <AvatarFallback class="rounded-lg">
-                      CN
+                      {{ data.user.name[0] }}
                     </AvatarFallback>
                   </Avatar>
                   <div class="grid flex-1 text-left text-sm leading-tight">
