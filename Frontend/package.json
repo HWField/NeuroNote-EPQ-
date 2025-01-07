@@ -11,7 +11,7 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
-    "@vueuse/core": "^12.2.0",
+    "@vueuse/core": "^12.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-vue-next": "^0.469.0",
@@ -20,7 +20,9 @@
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "vue": "^3.5.13",
-    "vue-router": "^4.5.0"
+    "vue-cytoscape": "^1.0.8",
+    "vue-router": "^4.5.0",
+    "vue3-swatches": "^1.2.4"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.0",

@@ -1,64 +1,111 @@
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted } from "vue";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/components/ui/resizable'
 
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 </script>
 
 <template>
-  <div id="toolbar" class="">
-          <!-- Mode Toggle -->
-          <label for="nameInput">Name:</label>
-          <input type="text" id="nameInput" placeholder="note name" />
+  <ResizablePanelGroup direction="vertical">
+    
+    <ResizablePanel :default-size="80">
+      <div id="canvas-container">
+        <!-- Bottom grid canvas -->
+        <canvas id="grid-canvas"></canvas>
+        <!-- Top Fabric.js canvas for drawing -->
+        <canvas id="fabricCanvas"></canvas>
+      </div>
+    </ResizablePanel>
 
-          <label for="modeToggle">Mode:</label>
-          <select id="modeToggle">
-            <option value="draw">Draw</option>
-            <option value="text" selected>Text</option>
-          </select>
+    <ResizableHandle with-handle="" />
 
-          <!-- Add Shape -->
+    <ResizablePanel :default-size="20">
+      <div id="toolbar" style="display: flex; flex-direction: row; flex-wrap: wrap;">
+        <!-- Mode Toggle -->
+        <label for="nameInput">Name:</label>
+        <Input type="text" id="nameInput" placeholder="note name" />
 
-          <label for="addShape">Add Shape:</label>
-          <select id="addShape">
-            <option value="none">Select Shape</option>
-            <option value="rectangle">Rectangle</option>
-            <option value="circle">Circle</option>
-            <option value="triangle">Triangle</option>
-          </select>
-          <button id="addShapeButton">Add</button>
+        <label for="modeToggle">Mode:</label>
 
-          <button id="addTextButton">Add Text</button>
+        <Select id="modeToggle">
+          <SelectTrigger>
+        <SelectValue placeholder="Mode:" />
+          </SelectTrigger>
+          <SelectContent>
+        <SelectGroup>
+          <SelectLabel>Mode</SelectLabel>
+          <SelectItem value="draw"> Draw </SelectItem>
+          <SelectItem value="text"> Text </SelectItem>
+        </SelectGroup>
+          </SelectContent>
+        </Select>
 
-          <!-- Pen Settings -->
-          <label for="penColor">Pen Color:</label>
-          <input type="color" id="penColor" value="#000000" />
-          <label for="penWidth">Pen Width:</label>
+        <!-- Add Shape -->
 
-          <input type="number" id="penWidth" min="1" max="50" value="5" />
+        <label for="addShape">Add Shape:</label>
 
-          <select id="Background">
-            <option value="blank" selected>Blank</option>
-            <option value="s__grid">Small Grid</option>
-            <option value="m_grid">Medium Grid</option>
-            <option value="l_grid">Large Grid</option>
-            <option value="line">Lines</option>
-          </select>
+        <Select id="addShape">
+          <SelectTrigger>
+        <SelectValue placeholder="Add Shape:" />
+          </SelectTrigger>
+          <SelectContent>
+        <SelectGroup>
+          <SelectLabel>Shape</SelectLabel>
+          <SelectItem value="none"> None </SelectItem>
+          <SelectItem value="rectangle"> Rectangle </SelectItem>
+          <SelectItem value="circle"> Circle </SelectItem>
+          <SelectItem value="triangle"> Triangle </SelectItem>
+        </SelectGroup>
+          </SelectContent>
+        </Select>
 
-          <!-- Eraser -->
-          <button id="deleteButton">Delete</button>
+        <Button id="addShapeButton">Add</Button>
 
-          <button id="deleteNoteButton">Delete Note</button>
+        <Button id="addTextButton">Add Text</Button>
 
-          <!-- Close Button -->
-          <button id="closeModal" class="close-button">Close</button>
-        </div>
+        <!-- Pen Settings -->
+        <label for="penColor">Pen Color:</label>
+        <Input type="color" id="penColor" value="#000000" />
+        <label for="penWidth">Pen Width:</label>
 
-        <!-- Canvas -->
-        <div id="canvas-container">
-          <!-- Bottom grid canvas -->
-          <canvas id="grid-canvas"></canvas>
-          <!-- Top Fabric.js canvas for drawing -->
-          <canvas id="fabricCanvas"></canvas>
-        </div>
-     
+        <Input type="number" id="penWidth" min="1" max="50" />
+
+        <Select id="Background">
+          <SelectTrigger>
+        <SelectValue placeholder="Background:" />
+          </SelectTrigger>
+          <SelectContent>
+        <SelectGroup>
+          <SelectLabel>Shape</SelectLabel>
+          <SelectItem value="s__grid"> Small Grid </SelectItem>
+          <SelectItem value="m_grid"> Medium Grid </SelectItem>
+          <SelectItem value="l_grid"> Large Grid </SelectItem>
+          <SelectItem value="line"> Lines </SelectItem>
+        </SelectGroup>
+          </SelectContent>
+        </Select>
+
+        <!-- Eraser -->
+        <Button id="deleteButton">Delete</Button>
+
+        <Button id="deleteNoteButton">Delete Note</Button>
+      </div>
+    </ResizablePanel>
+  </ResizablePanelGroup>
+
 </template>

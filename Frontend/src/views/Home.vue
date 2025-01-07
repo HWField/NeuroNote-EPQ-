@@ -80,6 +80,7 @@ import {
   SquareTerminal,
   Trash2,
 } from "lucide-vue-next";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { Button } from "@/components/ui/button";
 import { ref } from "vue";
@@ -214,7 +215,6 @@ function removeTab(tab: string) {
   }
 }
 
-
 const activeTeam = ref(data.teams[0]);
 
 function setActiveTeam(team: (typeof data.teams)[number]) {
@@ -224,7 +224,7 @@ function setActiveTeam(team: (typeof data.teams)[number]) {
 
 <template>
   <SidebarProvider>
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" variant="sidebar" side="left">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -285,85 +285,87 @@ function setActiveTeam(team: (typeof data.teams)[number]) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>File Tree:</SidebarGroupLabel>
-          <SidebarMenu>
-            <Collapsible
-              v-for="item in data.navMain"
-              :key="item.title"
-              as-child
-              :default-open="item.isActive"
-              class="group/collapsible"
-            >
-              <SidebarMenuItem>
-                <CollapsibleTrigger as-child>
-                  <SidebarMenuButton :tooltip="item.title">
-                    <component :is="item.icon" />
-                    <span>{{ item.title }}</span>
-                    <ChevronRight
-                      class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
-                    />
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    <SidebarMenuSubItem
-                      v-for="subItem in item.items"
-                      :key="subItem.title"
-                    >
-                      <SidebarMenuSubButton as-child>
-                        <a :href="subItem.url">
-                          <span>{{ subItem.title }}</span>
-                        </a>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuItem>
-            </Collapsible>
-          </SidebarMenu>
-        </SidebarGroup>
+      <ScrollArea className=" flex min-h-0 flex-1 flex-col rounded-md ">
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>File Tree:</SidebarGroupLabel>
+            <SidebarMenu>
+              <Collapsible
+                v-for="item in data.navMain"
+                :key="item.title"
+                as-child
+                :default-open="item.isActive"
+                class="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger as-child>
+                    <SidebarMenuButton :tooltip="item.title">
+                      <component :is="item.icon" />
+                      <span>{{ item.title }}</span>
+                      <ChevronRight
+                        class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                      />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem
+                        v-for="subItem in item.items"
+                        :key="subItem.title"
+                      >
+                        <SidebarMenuSubButton as-child>
+                          <a :href="subItem.url">
+                            <span>{{ subItem.title }}</span>
+                          </a>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            </SidebarMenu>
+          </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Recently acessed:</SidebarGroupLabel>
-          <SidebarMenu>
-            <Collapsible
-              v-for="item in data.navMain"
-              :key="item.title"
-              as-child
-              :default-open="item.isActive"
-              class="group/collapsible"
-            >
-              <SidebarMenuItem>
-                <CollapsibleTrigger as-child>
-                  <SidebarMenuButton :tooltip="item.title">
-                    <component :is="item.icon" />
-                    <span>{{ item.title }}</span>
-                    <ChevronRight
-                      class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
-                    />
-                  </SidebarMenuButton>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    <SidebarMenuSubItem
-                      v-for="subItem in item.items"
-                      :key="subItem.title"
-                    >
-                      <SidebarMenuSubButton as-child>
-                        <a :href="subItem.url">
-                          <span>{{ subItem.title }}</span>
-                        </a>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuItem>
-            </Collapsible>
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Recently acessed:</SidebarGroupLabel>
+            <SidebarMenu>
+              <Collapsible
+                v-for="item in data.navMain"
+                :key="item.title"
+                as-child
+                :default-open="item.isActive"
+                class="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger as-child>
+                    <SidebarMenuButton :tooltip="item.title">
+                      <component :is="item.icon" />
+                      <span>{{ item.title }}</span>
+                      <ChevronRight
+                        class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                      />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem
+                        v-for="subItem in item.items"
+                        :key="subItem.title"
+                      >
+                        <SidebarMenuSubButton as-child>
+                          <a :href="subItem.url">
+                            <span>{{ subItem.title }}</span>
+                          </a>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+      </ScrollArea>
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -453,14 +455,15 @@ function setActiveTeam(team: (typeof data.teams)[number]) {
       <SidebarRail />
     </Sidebar>
     <SidebarInset>
-      <Tabs default-value="cytoscape" class="w-[400px]">
+      <Tabs default-value="cytoscape" class="flex flex-col h-screen">
+        <!-- Header -->
         <header
-          class="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12"
+          class="flex h-16 shrink-0 items-center gap-2 border-b bg-gray-100"
         >
           <div class="flex items-center gap-2 px-4">
-            <SidebarTrigger class="-  ml-1" />
-            <Separator orientation="vertical" class="mr-2 h-4 bg-black" />
-            <TabsList class = "ml-10">
+            <SidebarTrigger class="ml-1" />
+            <Separator orientation="vertical" class="mr-0 h-4 bg-black" />
+            <TabsList class="ml-2">
               <TabsTrigger value="cytoscape">Cytoscape</TabsTrigger>
               <Separator orientation="vertical" class="mr-2 h-4" />
               <TabsTrigger
@@ -476,17 +479,24 @@ function setActiveTeam(team: (typeof data.teams)[number]) {
           </div>
         </header>
 
-        <div class="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <TabsContent value="cytoscape">
-            <Cytoscape />
+        <!-- Main Content -->
+        <div class="flex-grow flex overflow-hidden p-0 m-0">
+          <TabsContent value="cytoscape" class="flex-grow">
+            <div class="h-full w-full m-0 p-0">
+              <Cytoscape />
+            </div>
           </TabsContent>
-     
 
-        <TabsContent v-for="tab in tabs" :key="tab" :value="tab.toLowerCase()">
-          <div>
-            <Note />
-          </div>
-        </TabsContent>
+          <TabsContent
+            v-for="tab in tabs"
+            :key="tab"
+            :value="tab.toLowerCase()"
+            class="flex-grow"
+          >
+            <div class="h-full w-full m-0 p-0">
+              <Note />
+            </div>
+          </TabsContent>
         </div>
       </Tabs>
     </SidebarInset>
