@@ -6,12 +6,16 @@ from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Table
 from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker, relationship, backref, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required, get_jwt_identity
+)
+
 
 
 
 
 from flask import Flask, render_template, request, jsonify, flash, redirect, url_for, session
-# from flask_cors import CORS
+from flask_cors import CORS
 from flask_socketio import SocketIO
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_sqlalchemy import SQLAlchemy
@@ -19,20 +23,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'  # Change this to a secret key of your choice
+CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+app.config['SECRET_KEY'] = 'Sjd($&^(£^$(*Whfoshfjnk)))'  # Change this to a secret key of your choice
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# Initialize Flask-Login
-login_manager = LoginManager()
-login_manager.init_app(app)
+# Configure a secret key for JWT
+app.config['JWT_SECRET_KEY'] = 'testing'
+jwt = JWTManager(app)
 
-# Redirect users to the login page if they're not logged in
-login_manager.login_view = 'login'
-login_manager.login_message = "Please log in to access this page."
-
-@login_manager.user_loader
-def load_user(user_id):
-    return dbsession.query(User).get(int(user_id))
 
 # Create an SQLite database inside the Backend folder
 engine = create_engine('sqlite:///Backend/Database.db')
@@ -92,7 +90,6 @@ class Tag(Base):
         max_id = session.query(func.max(Tag.user_specific_id)).filter(Tag.user_id == self.user_id).scalar()
         self.user_specific_id = (max_id or 0) + 1
         
-
 
 
 class Note(Base):
@@ -227,93 +224,90 @@ if dbsession.query(Tag).count() == 0:
     populate_sample_data()
 
 
-@app.route('/')
-def home():
-    return redirect('/app')
+# @app.route('/')
+# def home():
+#     return redirect('/app')
 
-@app.route('/login', methods=['GET', 'POST'])
+
+@app.route('/login', methods=['POST'])
 def login():
-    if current_user.is_authenticated:  # Check if already logged in
-        return redirect('/app')
+    # Expecting JSON data, not form data
+    data = request.get_json()  # Use .get_json() to parse JSON
+    print(data)
+    email = data.get('email')
+    password = data.get('password')
     
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
+    # Query the user from the database
+    user = dbsession.query(User).filter_by(email=email).first()
+    
+    # Check if user exists and passwords match
+    if user is None:
+        return jsonify({"message": "Invalid email"}), 400
+    
+    if check_password_hash(user.password, password):
+    # if user.password == password:
+        # Create JWT token on successful login
+        access_token = create_access_token(identity=str(user.id))
+        print("logged in") 
+        return jsonify(access_token=access_token), 200
         
-        # Query the user from the database
-        user = dbsession.query(User).filter_by(email=email).first()
-        
-        # Check if user exists and passwords match
-        # if user and user.password == password:  # Use a secure hash comparison for production
-        if user is None:
-            flash('Invalid email', 'danger')
-            return redirect('/login')
-        if check_password_hash(user.password, password):
-            login_user(user, remember=True)  # Log the user in
-            flash('Logged in successfully!', 'success')
-            return redirect('/app')  # Redirect to a protected page
-        else:
-            flash('Invalid  password', 'danger')
+    else:
+        return jsonify({"message": "Invalid password"}), 400
 
-    return render_template('Login.html')
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route('/test', methods=['GET'])
+@jwt_required()  # Protect this route with JWT authentication
+def test():
+    # try:
+        current_user = get_jwt_identity()  # Retrieve the identity from the JWT token
+    #     print("Decoded user identity:", current_user)  # Debugging line
+    #     return jsonify(current_user), 200
+    # except Exception as e:
+        return jsonify("message", current_user), 200
+
+
+@app.route('/register', methods=['POST'])
 def register():
     print("recieved request for registration")
-    if current_user.is_authenticated:
-        return redirect('/app')
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        password2 = request.form.get('password2')
-        username = request.form.get('username')
-
-        if password != password2:
-            flash('Passwords do not match', 'danger')
-            return redirect('/register')
-        
-        existing_user = dbsession.query(User).filter_by(email=email).first()
-        if existing_user:
-            flash('Email already exists', 'danger')
-            return redirect('/register')
-        
-        existing_user = dbsession.query(User).filter_by(username=username).first()
-        if existing_user:
-            flash('Username already exists', 'danger')
-            return redirect('/register')
-        
-    
-
+    data = request.get_json()  # Use .get_json() to parse JSON
+    print(data)
+    email = data.get('email')
+    password = data.get('password')
+    username = data.get('username')
+  
+    existing_user = dbsession.query(User).filter_by(email=email).first()
+    if existing_user:
+        return jsonify({"message": "User Already Exists"}), 400
+    else:
         user = User(email=email, password=generate_password_hash(password, method='pbkdf2:sha256'), username=username)
-        
         dbsession.add(user)
-       
         dbsession.commit()
+        
+        user = dbsession.query(User).filter_by(email=email).first()
+        access_token = create_access_token(identity=str(user.id))
+        print("logged in")
+        return jsonify(access_token=access_token), 200
        
         
-        flash('Account created successfully!', 'success')
-        login_user(user, remember=True)
-        return redirect('/app')
-    return render_template('Register.html')
     
-@app.route('/logout', methods=['GET'])
-@login_required  # Ensure the user is logged in to log out
-def logout():
-    logout_user()  # Log out the user
-    flash('You have been logged out.', 'success')
-    return redirect('/login')
+# @app.route('/logout', methods=['GET'])
+# @login_required  # Ensure the user is logged in to log out
+# def logout():
+#     logout_user()  # Log out the user
+#     flash('You have been logged out.', 'success')
+#     return redirect('/login')
 
 
-@app.route('/app')
-@login_required
-def index():
-    return render_template('V19.html')
+# @app.route('/app')
+# @login_required
+# def index():
+#     return render_template('V19.html')
 
     
 
     
 @app.route('/create', methods=['POST'])
-@login_required
+# @login_required
 def create():
     data = request.json
     type = data.get('type')
@@ -333,8 +327,8 @@ def create():
             target_tag_id = int(target_id.split('_')[1])
 
             # Query the tags
-            source_tag = dbsession.query(Tag).filter_by(user_id=current_user.id, user_specific_id=source_tag_id).first()
-            target_tag = dbsession.query(Tag).filter_by(user_id = current_user.id, user_specific_id=target_tag_id).first()
+            source_tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=source_tag_id).first()
+            target_tag = dbsession.query(Tag).filter_by(user_id = 1, user_specific_id=target_tag_id).first()
 
             if source_tag and target_tag:
                 # Add the parent-child relationship
@@ -352,8 +346,8 @@ def create():
             target_note_id = int(target_id.split('_')[1])
 
             # Query the tag and note
-            source_tag = dbsession.query(Tag).filter_by(user_id=current_user.id, user_specific_id=source_tag_id).first()
-            target_note = dbsession.query(Note).filter_by(user_id=current_user.id, user_specific_id=target_note_id).first()
+            source_tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=source_tag_id).first()
+            target_note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=target_note_id).first()
 
             if source_tag and target_note:
                 # Add the tag-note relationship
@@ -371,7 +365,7 @@ def create():
         
     elif type == 'tag':
         name = data.get('name')
-        tag = Tag(name=name, user_id = current_user.id)
+        tag = Tag(name=name, user_id = 1)
         tag.set_user_specific_id(dbsession)
         dbsession.add(tag)
         try:
@@ -401,7 +395,7 @@ def create():
         
     elif type == 'note':
         name = data.get('name')
-        note = Note(name=name,  user_id = current_user.id)
+        note = Note(name=name,  user_id = 1)
         note.set_user_specific_id(dbsession)
         dbsession.add(note)
         try:
@@ -431,7 +425,7 @@ def create():
     
 
 @app.route('/delete', methods=['POST'])
-@login_required
+# @login_required
 def  delete():
     data = request.json
     type = data.get('type')
@@ -451,8 +445,8 @@ def  delete():
                 target_tag_id = int(target_id.split('_')[1])
 
                 # Query the tags
-                source_tag = dbsession.query(Tag).filter_by(user_id=current_user.id, user_specific_id=source_tag_id).first()
-                target_tag = dbsession.query(Tag).filter_by(user_id = current_user.id, user_specific_id=target_tag_id).first()
+                source_tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=source_tag_id).first()
+                target_tag = dbsession.query(Tag).filter_by(user_id = 1, user_specific_id=target_tag_id).first()
 
                 if source_tag and target_tag:
                     # Remove the parent-child relationship
@@ -471,8 +465,8 @@ def  delete():
 
                 # Query the tag and note
             
-                source_tag = dbsession.query(Tag).filter_by(user_id=current_user.id, user_specific_id=source_tag_id).first()
-                target_note = dbsession.query(Note).filter_by(user_id = current_user.id, user_specific_id=target_note_id).first()
+                source_tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=source_tag_id).first()
+                target_note = dbsession.query(Note).filter_by(user_id = 1, user_specific_id=target_note_id).first()
 
                 if source_tag and target_note:
                     # Remove the tag-note relationship
@@ -499,7 +493,7 @@ def  delete():
         if id.startswith('tag_'):
             id = int(id.split('_')[1])
           
-            tag = dbsession.query(Tag).filter_by(user_id=current_user.id, user_specific_id=id).first()
+            tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=id).first()
 
             if tag is None:
                 return jsonify({'status': 'error', 'message': 'Tag not found'}), 404
@@ -513,7 +507,7 @@ def  delete():
                 return jsonify({'status': 'error', 'message': 'Failed to delete tag'}), 500
         elif id.startswith('note_'):
             id = int(id.split('_')[1])
-            note = dbsession.query(Note).filter_by(user_id=current_user.id, user_specific_id=id).first()
+            note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=id).first()
             if note is None:
                 return jsonify({'status': 'error', 'message': 'Note not found'}), 404
             try:
@@ -528,7 +522,7 @@ def  delete():
     
     
 @app.route('/update', methods=['POST'])
-@login_required
+# @login_required
 def update():   
     data = request.json
     operation = data.get('operation')
@@ -546,12 +540,12 @@ def update():
         # Determine if the node is a Tag or Note
         if node_id.startswith('tag_'):
             node_id = int(node_id.split('_')[1])
-            node = dbsession.query(Tag).filter_by(user_id=current_user.id, user_specific_id=node_id).first()
+            node = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=node_id).first()
     
             
         elif node_id.startswith('note_'):
             node_id = int(node_id.split('_')[1])
-            node = dbsession.query(Note).filter_by(user_id=current_user.id, user_specific_id=node_id).first()
+            node = dbsession.query(Note).filter_by(user_id=1, user_specific_id=node_id).first()
             
         else:
             return jsonify({'status': 'error', 'message': 'Invalid node ID format'}), 400
@@ -573,10 +567,10 @@ def update():
         id = data.get('id')
         if id == "all":
             try:
-                for tag in dbsession.query(Tag).filter_by(user_id=current_user.id).all():
+                for tag in dbsession.query(Tag).filter_by(user_id=1).all():
                     tag.x = None
                     tag.y = None
-                for note in dbsession.query(Note).filter_by(user_id=current_user.id).all():
+                for note in dbsession.query(Note).filter_by(user_id=1).all():
                     note.x = None
                     note.y = None
                 dbsession.commit()
@@ -587,10 +581,10 @@ def update():
         else:
             if id.startswith('tag_'):
                 id = int(id.split('_')[1])
-                node = dbsession.query(Tag).filter_by(user_id=current_user.id, user_specific_id=id).first()
+                node = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=id).first()
             elif id.startswith('note_'):
                 id = int(id.split('_')[1])
-                node = dbsession.query(Note).filter_by(user_id=current_user.id, user_specific_id=id).first()
+                node = dbsession.query(Note).filter_by(user_id=1, user_specific_id=id).first()
             node.x = None
             node.y = None
             dbsession.commit()
@@ -612,7 +606,7 @@ def update():
             return jsonify({'status': 'error', 'message': 'Invalid input data'}), 400
 
         # Query the note
-        note = dbsession.query(Note).filter_by(user_id=current_user.id, user_specific_id=note_id).first()
+        note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=note_id).first()
         if note is None:
             print("------- note", note_id, "has not been found")
             return jsonify({'status': 'error', 'message': 'Note not found'}), 404
@@ -645,10 +639,10 @@ def update():
         type = data.get('type')
         name = data.get('name')
         if type == "tag":
-            tag = dbsession.query(Tag).filter_by(user_id=current_user.id, user_specific_id=id).first()
+            tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=id).first()
             tag.name = name
         elif type == "note":
-            note = dbsession.query(Note).filter_by(user_id=current_user.id, user_specific_id=id).first()
+            note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=id).first()
             note.name = name
         dbsession.commit()
         return jsonify({'status': 'success', 'message': '{type}: {id} name updated successfully.'})
@@ -656,14 +650,17 @@ def update():
   
       
 @app.route('/load', methods=['POST'])
-@login_required
+# @login_required
+@jwt_required()
 def load():
+    
     data = request.json
     operation = data.get('operation')
+    current_user = get_jwt_identity()
     
     if operation == "all":
         elements = []
-        for tag in dbsession.query(Tag).filter_by(user_id=current_user.id).all():
+        for tag in dbsession.query(Tag).filter_by(user_id=current_user).all():
             
             element = {
                 'id': tag.user_specific_id,
@@ -680,7 +677,7 @@ def load():
             }
             elements.append(element)
             
-        for note in dbsession.query(Note).filter_by(user_id=current_user.id).all():
+        for note in dbsession.query(Note).filter_by(user_id=current_user).all():
             element = {
                 'id': note.user_specific_id,
                 'name': note.name,
@@ -714,7 +711,7 @@ def load():
 
         # Find tags matching the query
         matched_tags = dbsession.query(Tag).filter(and_(
-        Tag.user_id == current_user.id,  # Match the current user's tags
+        Tag.user_id == current_user,  # Match the current user's tags
         Tag.name.ilike(f"%{query}%"))).all()
 
         # Process each matched tag and its descendants
@@ -753,7 +750,7 @@ def load():
             }
                         })
                         processed_notes.add(note.id)
-        matched_notes = dbsession.query(Note).filter(and_(Note.user_id == current_user.id, Note.name.ilike(f"%{query}%"))).all()
+        matched_notes = dbsession.query(Note).filter(and_(Note.user_id == current_user, Note.name.ilike(f"%{query}%"))).all()
         
         for note in matched_notes:
             if note.id not in processed_notes:
@@ -782,7 +779,7 @@ def load():
             return jsonify({'status': 'error', 'message': 'Invalid input data'}), 400
 
         # Query the note
-        note = dbsession.query(Note).filter_by(user_id=current_user.id, user_specific_id=note_id).first()
+        note = dbsession.query(Note).filter_by(user_id=current_user, user_specific_id=note_id).first()
         if note is None:
             return jsonify({'status': 'error', 'message': 'Note not found'}), 404
         
