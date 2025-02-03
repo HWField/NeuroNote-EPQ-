@@ -38,7 +38,6 @@ api.interceptors.request.use(
 
 
 
-
 api.interceptors.response.use(
   response => response, // Pass the successful response through
   async (error) => {
@@ -51,6 +50,18 @@ api.interceptors.response.use(
       // Save the original route in the query parameters
       const currentRoute = window.location.pathname;
       window.location.href = `/login?redirect=${encodeURIComponent(currentRoute)}`;
+    }
+    else if (!error.response) {
+      console.error('Cannot connect to the server');
+
+    
+      
+
+      // Redirect to login page
+      const errorMessage = encodeURIComponent('Cannot connect to the server');
+      // window.location.href = `/error?message=${errorMessage}`;
+      //this method stops user retunring to the page which caused error message
+      window.location.replace(`/error?message=${errorMessage}`);
     }
     return Promise.reject(error);
   }

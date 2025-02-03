@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import { Theme } from "@/components/Theme";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ref } from "vue";
 import axios from "../axios"; // Import the Axios instance
 import { useRouter, useRoute } from "vue-router"; // Vue Router for navigation
@@ -75,7 +77,10 @@ const register = async () => {
     }
 
     // Handle successful login
-    console.log(response.data.access_token, "success registering and logging in");
+    console.log(
+      response.data.access_token,
+      "success registering and logging in"
+    );
 
     // Redirect to login view after successful registration
     isRegisterView.value = false;
@@ -125,10 +130,133 @@ const accessProtectedRoute = async () => {
 </script>
 
 <template>
-  <div class="flex items-center justify-center min-h-screen">
+  <!-- Large login form -->
+   <!-- <Theme></Theme> -->
+  <div
+    class="container hidden h-screen flex-col lg:grid lg:max-w-none lg:grid-cols-2 lg:px-0 bg-slate-1000"
+  >
+    <!-- compensate for the height of the inset -->
+    <div
+      class="relative hidden inset-5 flex-col h-[calc(100vh-2.5rem)] bg-muted p-10 text-white dark:border-r lg:flex"
+    >
+      <img
+        class="h-full object-cover absolute rounded-lg inset-0"
+        src="/Images/login.jpg"
+        alt="Logo"
+      />
+      <div class="relative z-20 flex items-center text-lg font-medium">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          class="mr-2 h-6 w-6"
+        >
+          <path
+            d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"
+          />
+        </svg>
+        Second Brain
+      </div>
+      <div class="relative z-20 mt-auto">
+        <blockquote class="space-y-2">
+          <p class="text-lg">
+            &ldquo;The Best software project management tool I have ever
+            used.&rdquo;
+          </p>
+          <footer class="text-sm">- Anynomous user</footer>
+        </blockquote>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-center">
+      <div class="w-2/3 ">
+
+        <form @submit.prevent="isRegisterView ? register() : login()">
+          <CardHeader>
+            <CardTitle class="text-2xl">
+              {{ isRegisterView ? "Register" : "Login" }}
+            </CardTitle>
+
+            <CardDescription>
+              {{
+                isRegisterView
+                  ? "Create a new account by filling in the details below."
+                  : "Enter your email below to login to your account."
+              }}
+            </CardDescription>
+          </CardHeader>
+          <CardContent class="grid gap-4">
+            <div v-if="isRegisterView" class="grid gap-2">
+              <Label for="username">Username</Label>
+              <Input v-model:="username" placeholder="Username" required />
+            </div>
+
+            <div class="grid gap-2">
+              <Label for="email">Email</Label>
+              <Input v-model="email" placeholder="Email" required />
+            </div>
+
+            <div class="grid gap-2">
+              <Label for="password">Password</Label>
+              <Input
+                type="password"
+                v-model="password"
+                placeholder="Password"
+                required
+              />
+            </div>
+
+            <div v-if="isRegisterView" class="grid gap-2">
+              <Label for="confirmPassword">Confirm Password</Label>
+              <Input
+                type="password"
+                v-model="confirmPassword"
+                placeholder="Confirm Password"
+                required
+              />
+            </div>
+          </CardContent>
+          <CardFooter class="flex flex-col gap-4">
+            <Button class="w-full" type="submit">
+              {{ isRegisterView ? "Sign up" : "Sign in" }}
+            </Button>
+
+            <label class="text-center text-sm text-gray-500">
+              {{
+                isRegisterView
+                  ? "Already have an account?"
+                  : "Don't have an account?"
+              }}
+              <a
+                href="#"
+                class="text-blue-500"
+                @click.prevent="isRegisterView = !isRegisterView"
+              >
+                {{ isRegisterView ? "Login" : "Register" }}
+              </a>
+            </label>
+          </CardFooter>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- small / mobile login form -->
+  <!-- <img
+      class=" inset-0 h-full w-full object-cover"
+      src="/Images/login.jpg"
+      alt="Background Image"
+    /> -->
+  <div class="flex items-center justify-center h-screen lg:hidden bg-[url(/Images/login.jpg)]">
+    
+    
+
     <Card class="w-full max-w-sm">
       <form @submit.prevent="isRegisterView ? register() : login()">
-        <!-- Toggle forms based on view -->
         <CardHeader>
           <CardTitle class="text-2xl">
             {{ isRegisterView ? "Register" : "Login" }}
@@ -177,6 +305,7 @@ const accessProtectedRoute = async () => {
           <Button class="w-full" type="submit">
             {{ isRegisterView ? "Sign up" : "Sign in" }}
           </Button>
+
           <label class="text-center text-sm text-gray-500">
             {{
               isRegisterView
@@ -194,5 +323,7 @@ const accessProtectedRoute = async () => {
         </CardFooter>
       </form>
     </Card>
+
+    
   </div>
 </template>

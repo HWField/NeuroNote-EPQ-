@@ -241,7 +241,7 @@ def login():
     user = dbsession.query(User).filter_by(email=email).first()
     
     # Check if user exists and passwords match
-    if user is None:
+    if user is None:    
         return jsonify({"message": "Invalid email"}), 400
     
     if check_password_hash(user.password, password):
