@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Theme } from "@/components/Theme";
+import LightDark from "@/components/LightDark.vue";
+import { Checkbox } from "@/components/ui/checkbox";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ref } from "vue";
@@ -130,17 +131,20 @@ const accessProtectedRoute = async () => {
 </script>
 
 <template>
+   <div class="absolute top-4 right-4">
+    <LightDark class="bg-white p-4 rounded-lg shadow-lg"></LightDark>
+  </div>
   <!-- Large login form -->
-   <!-- <Theme></Theme> -->
+ 
   <div
-    class="container hidden h-screen flex-col lg:grid lg:max-w-none lg:grid-cols-2 lg:px-0 bg-slate-1000"
+    class="container hidden h-screen flex-col lg:grid lg:max-w-none lg:grid-cols-2 lg:px-0 "
   >
     <!-- compensate for the height of the inset -->
     <div
-      class="relative hidden inset-5 flex-col h-[calc(100vh-2.5rem)] bg-muted p-10 text-white dark:border-r lg:flex"
+      class="relative hidden inset-5 flex-col h-[calc(100vh-2.5rem)] bg-none p-10 text-white dark:border-r lg:flex"
     >
       <img
-        class="h-full object-cover absolute rounded-lg inset-0"
+        class="h-full object-cover absolute rounded-2xl border-none inset-0 bg-none"
         src="/Images/login.jpg"
         alt="Logo"
       />
@@ -173,11 +177,10 @@ const accessProtectedRoute = async () => {
     </div>
 
     <div class="flex items-center justify-center">
-      <div class="w-2/3 ">
-
+      <div class="w-2/3 h-fill">
         <form @submit.prevent="isRegisterView ? register() : login()">
           <CardHeader>
-            <CardTitle class="text-2xl">
+            <CardTitle class="text-4xl pb-6">
               {{ isRegisterView ? "Register" : "Login" }}
             </CardTitle>
 
@@ -189,20 +192,31 @@ const accessProtectedRoute = async () => {
               }}
             </CardDescription>
           </CardHeader>
-          <CardContent class="grid gap-4">
+          <CardContent class="grid gap-8">
             <div v-if="isRegisterView" class="grid gap-2">
               <Label for="username">Username</Label>
-              <Input v-model:="username" placeholder="Username" required />
+              <Input
+                class="h-14"
+                v-model:="username"
+                placeholder="Username"
+                required
+              />
             </div>
 
             <div class="grid gap-2">
               <Label for="email">Email</Label>
-              <Input v-model="email" placeholder="Email" required />
+              <Input
+                class="h-14"
+                v-model="email"
+                placeholder="Email"
+                required
+              />
             </div>
 
             <div class="grid gap-2">
               <Label for="password">Password</Label>
               <Input
+                class="h-14"
                 type="password"
                 v-model="password"
                 placeholder="Password"
@@ -210,18 +224,28 @@ const accessProtectedRoute = async () => {
               />
             </div>
 
-            <div v-if="isRegisterView" class="grid gap-2">
+            <!-- <div v-if="isRegisterView" class="grid gap-2">
               <Label for="confirmPassword">Confirm Password</Label>
               <Input
+                class="h-14"
                 type="password"
                 v-model="confirmPassword"
                 placeholder="Confirm Password"
                 required
               />
+            </div> -->
+            <div class="items-center flex space-x-2">
+              <Checkbox class="h-6 w-6" id="terms1" />
+              <label
+                for="terms1"
+                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Accept terms and conditions
+              </label>
             </div>
           </CardContent>
           <CardFooter class="flex flex-col gap-4">
-            <Button class="w-full" type="submit">
+            <Button class="w-full h-12" type="submit">
               {{ isRegisterView ? "Sign up" : "Sign in" }}
             </Button>
 
@@ -251,10 +275,9 @@ const accessProtectedRoute = async () => {
       src="/Images/login.jpg"
       alt="Background Image"
     /> -->
-  <div class="flex items-center justify-center h-screen lg:hidden bg-[url(/Images/login.jpg)]">
-    
-    
-
+  <div
+    class="flex items-center justify-center h-screen lg:hidden bg-[url(/Images/login.jpg)]"
+  >
     <Card class="w-full max-w-sm">
       <form @submit.prevent="isRegisterView ? register() : login()">
         <CardHeader>
@@ -291,7 +314,7 @@ const accessProtectedRoute = async () => {
             />
           </div>
 
-          <div v-if="isRegisterView" class="grid gap-2">
+          <!-- <div v-if="isRegisterView" class="grid gap-2">
             <Label for="confirmPassword">Confirm Password</Label>
             <Input
               type="password"
@@ -299,6 +322,15 @@ const accessProtectedRoute = async () => {
               placeholder="Confirm Password"
               required
             />
+          </div> -->
+          <div class="items-center flex space-x-2">
+            <Checkbox class="h-4 w-4" id="terms1" />
+            <label
+              for="terms1"
+              class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+            >
+              Accept terms and conditions
+            </label>
           </div>
         </CardContent>
         <CardFooter class="flex flex-col gap-4">
@@ -323,7 +355,5 @@ const accessProtectedRoute = async () => {
         </CardFooter>
       </form>
     </Card>
-
-    
   </div>
 </template>

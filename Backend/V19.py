@@ -23,7 +23,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "http://localhost:5173"}})
+CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['SECRET_KEY'] = 'Sjd($&^(£^$(*Whfoshfjnk)))'  # Change this to a secret key of your choice
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -234,7 +234,7 @@ def login():
     # Expecting JSON data, not form data
     data = request.get_json()  # Use .get_json() to parse JSON
     print(data)
-    email = data.get('email')
+    email = data.get('email').lower()
     password = data.get('password')
     
     # Query the user from the database
