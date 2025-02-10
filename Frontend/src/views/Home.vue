@@ -55,35 +55,46 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
+  SidebarSeparator,
+  SidebarGroupAction,
+  SidebarGroupContent,
+  SidebarMenuBadge,
 } from "@/components/ui/sidebar";
 import {
-  AudioWaveform,
-  BadgeCheck,
+  Settings,
   Bell,
-  BookOpen,
-  Bot,
-  ChevronRight,
   ChevronsUpDown,
-  Command,
-  CreditCard,
-  Folder,
-  Forward,
-  Frame,
   GalleryVerticalEnd,
   LogOut,
-  Map,
   MoreHorizontal,
-  PieChart,
   Plus,
-  Settings2,
   Sparkles,
-  SquareTerminal,
-  Trash2,
+  Search,
+  Home,
+  MessagesSquare,
 } from "lucide-vue-next";
+
+import { useMagicKeys } from "@vueuse/core";
+import { watch } from "vue";
+
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "@/components/ui/command";
+
+import * as icons from "lucide-vue-next";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { Button } from "@/components/ui/button";
 import { ref } from "vue";
+import LightDark from "@/components/LightDark.vue";
 
 // This is sample data.
 const data = {
@@ -101,106 +112,53 @@ const data = {
   ],
   navMain: [
     {
-      title: "Playground",
+      title: "Getting Started",
       url: "#",
-      icon: SquareTerminal,
-      isActive: true,
       items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
+        { title: "Installation", url: "#" },
+        { title: "Project Structure", url: "#" },
       ],
     },
     {
-      title: "Models",
+      title: "Building Your Application",
       url: "#",
-      icon: Bot,
       items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
+        { title: "Routing", url: "#" },
+        { title: "Data Fetching", url: "#", isActive: true },
+        { title: "Rendering", url: "#" },
+        { title: "Caching", url: "#" },
+        { title: "Styling", url: "#" },
+        { title: "Optimizing", url: "#" },
+        { title: "Configuring", url: "#" },
+        { title: "Testing", url: "#" },
+        { title: "Authentication", url: "#" },
+        { title: "Deploying", url: "#" },
+        { title: "Upgrading", url: "#" },
+        { title: "Examples", url: "#" },
       ],
     },
     {
-      title: "Documentation",
+      title: "API Reference",
       url: "#",
-      icon: BookOpen,
       items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
+        { title: "Components", url: "#" },
+        { title: "File Conventions", url: "#" },
+        { title: "Functions", url: "#" },
+        { title: "next.config.js Options", url: "#" },
+        { title: "CLI", url: "#" },
+        { title: "Edge Runtime", url: "#" },
       ],
     },
     {
-      title: "Settings",
+      title: "Architecture",
       url: "#",
-      icon: Settings2,
       items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
+        { title: "Accessibility", url: "#" },
+        { title: "Fast Refresh", url: "#" },
+        { title: "Next.js Compiler", url: "#" },
+        { title: "Supported Browsers", url: "#" },
+        { title: "Turbopack", url: "#" },
       ],
-    },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
     },
   ],
 };
@@ -220,11 +178,46 @@ const activeTeam = ref(data.teams[0]);
 function setActiveTeam(team: (typeof data.teams)[number]) {
   activeTeam.value = team;
 }
+
+const open = ref(false);
+
+const { Meta_J, Ctrl_J } = useMagicKeys({
+  passive: false,
+  onEventFired(e) {
+    if (e.key === "j" && (e.metaKey || e.ctrlKey)) e.preventDefault();
+  },
+});
+
+watch([Meta_J, Ctrl_J], (v) => {
+  if (v[0] || v[1]) handleOpenChange();
+});
+
+function handleOpenChange() {
+  open.value = !open.value;
+}
 </script>
 
 <template>
+  <CommandDialog v-model:open="open">
+    <CommandInput placeholder="Type a command or search..." />
+    <CommandList>
+      <CommandEmpty>No results found.</CommandEmpty>
+      <CommandGroup heading="Suggestions">
+        <CommandItem value="calendar"> Calendar </CommandItem>
+        <CommandItem value="search-emoji"> Search Emoji </CommandItem>
+        <CommandItem value="calculator"> Calculator </CommandItem>
+      </CommandGroup>
+      <CommandSeparator />
+      <CommandGroup heading="Settings">
+        <CommandItem value="profile"> Profile </CommandItem>
+        <CommandItem value="billing"> Billing </CommandItem>
+        <CommandItem value="settings"> Settings </CommandItem>
+      </CommandGroup>
+    </CommandList>
+  </CommandDialog>
+
   <SidebarProvider>
-    <Sidebar collapsible="icon" variant="sidebar" side="left">
+    <Sidebar collapsible="icon" variant="floating" side="left">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -285,87 +278,70 @@ function setActiveTeam(team: (typeof data.teams)[number]) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <ScrollArea className=" flex min-h-0 flex-1 flex-col rounded-md ">
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>File Tree:</SidebarGroupLabel>
-            <SidebarMenu>
-              <Collapsible
-                v-for="item in data.navMain"
-                :key="item.title"
-                as-child
-                :default-open="item.isActive"
-                class="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger as-child>
-                    <SidebarMenuButton :tooltip="item.title">
-                      <component :is="item.icon" />
-                      <span>{{ item.title }}</span>
-                      <ChevronRight
-                        class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
-                      />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem
-                        v-for="subItem in item.items"
-                        :key="subItem.title"
-                      >
-                        <SidebarMenuSubButton as-child>
-                          <a :href="subItem.url">
-                            <span>{{ subItem.title }}</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-            </SidebarMenu>
-          </SidebarGroup>
+      <SidebarSeparator />
 
-          <SidebarGroup>
-            <SidebarGroupLabel>Recently acessed:</SidebarGroupLabel>
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
             <SidebarMenu>
-              <Collapsible
-                v-for="item in data.navMain"
-                :key="item.title"
-                as-child
-                :default-open="item.isActive"
-                class="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger as-child>
-                    <SidebarMenuButton :tooltip="item.title">
-                      <component :is="item.icon" />
-                      <span>{{ item.title }}</span>
-                      <ChevronRight
-                        class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
-                      />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem
-                        v-for="subItem in item.items"
-                        :key="subItem.title"
-                      >
-                        <SidebarMenuSubButton as-child>
-                          <a :href="subItem.url">
-                            <span>{{ subItem.title }}</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <Search />
+                  <a href="#"> Search </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <Home />
+                  <a href="#"> Home </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <MessagesSquare />
+                  <a href="#"> Chat </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
-          </SidebarGroup>
-        </SidebarContent>
-      </ScrollArea>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Tabs:</SidebarGroupLabel>
+          <SidebarGroupAction title="Add Project">
+            <Plus /> <span className="sr-only">Add Project</span>
+          </SidebarGroupAction>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="#">
+                    <span>Home</span>
+                  </a>
+                </SidebarMenuButton>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuAction>
+                      <MoreHorizontal />
+                    </SidebarMenuAction>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem>
+                      <span>Edit Project</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <span>Delete Project</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -423,20 +399,10 @@ function setActiveTeam(team: (typeof data.teams)[number]) {
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem>
-                    <Sparkles />
-                    Upgrade to Pro
+                    <Settings />
+                    Settings
                   </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <BadgeCheck />
-                    Account
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <CreditCard />
-                    Billing
-                  </DropdownMenuItem>
+
                   <DropdownMenuItem>
                     <Bell />
                     Notifications
@@ -452,53 +418,28 @@ function setActiveTeam(team: (typeof data.teams)[number]) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
-      <SidebarRail />
+      <!-- <SidebarRail /> -->
     </Sidebar>
+
     <SidebarInset>
-      <Tabs default-value="cytoscape" class="flex flex-col h-screen">
-        <!-- Header -->
-        <header
-          class="flex h-16 shrink-0 items-center gap-2 border-b bg-gray-100"
-        >
-          <div class="flex items-center gap-2 px-4">
-            <SidebarTrigger class="ml-1" />
-            <Separator orientation="vertical" class="mr-0 h-4 bg-black" />
-            <TabsList class="ml-2">
-              <TabsTrigger value="cytoscape">Cytoscape</TabsTrigger>
-              <Separator orientation="vertical" class="mr-2 h-4" />
-              <TabsTrigger
-                v-for="tab in tabs"
-                :key="tab"
-                :value="tab.toLowerCase()"
-                class="flex items-center"
-              >
-                {{ tab }}
-                <button class="ml-2" @click="removeTab(tab)">x</button>
-              </TabsTrigger>
-            </TabsList>
+      <!-- Header -->
+      <header class="flex h-16 shrink-0 items-center gap-2 border-b">
+        <div class="flex items-center">
+          <SidebarTrigger class="ml-1" />
+          <Separator orientation="vertical" class="mx-2" />
+          <span class="text-lg font-semibold">This is the Home Tab</span>
+
+          <div class="absolute top-4 right-4">
+            <LightDark class="bg-white p-4 rounded-lg shadow-lg"></LightDark>
           </div>
-        </header>
-
-        <!-- Main Content -->
-        <div class="flex-grow flex overflow-hidden p-0 m-0">
-          <TabsContent value="cytoscape" class="flex-grow">
-            <div class="h-full w-full m-0 p-0">
-              <Cytoscape />
-            </div>
-          </TabsContent>
-
-          <TabsContent
-            v-for="tab in tabs"
-            :key="tab"
-            :value="tab.toLowerCase()"
-            class="flex-grow"
-          >
-            <div class="h-full w-full m-0 p-0">
-              <Note />
-            </div>
-          </TabsContent>
         </div>
-      </Tabs>
+      </header>
+
+      <!-- Main Content -->
+
+      <div class="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <Cytoscape class="grid auto-rows-min gap-4 md:grid-cols-3" />
+      </div>
     </SidebarInset>
   </SidebarProvider>
 </template>

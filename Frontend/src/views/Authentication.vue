@@ -15,15 +15,20 @@ import { Label } from "@/components/ui/label";
 import LightDark from "@/components/LightDark.vue";
 import { Checkbox } from "@/components/ui/checkbox";
 import { buttonVariants } from "@/components/ui/button";
+import Toaster from '@/components/ui/toast/Toaster.vue'
+import { useToast } from '@/components/ui/toast/use-toast'
+
 import { cn } from "@/lib/utils";
 import { ref } from "vue";
 import axios from "../axios"; // Import the Axios instance
 import { useRouter, useRoute } from "vue-router"; // Vue Router for navigation
 
+const { toast } = useToast();
 const isRegisterView = ref(false);
 const email = ref("");
 const username = ref("");
 const password = ref("");
+const terms = ref(false);
 const confirmPassword = ref("");
 const router = useRouter(); // Router instance for programmatic navigation
 const route = useRoute(); // Current route to access query parameters
@@ -34,47 +39,61 @@ const login = async () => {
     const response = await axios.post("/login", {
       email: email.value,
       password: password.value,
+      terms: terms.value,
     });
 
     // Store the token in localStorage
     localStorage.setItem("token", response.data.access_token);
-
+    toast({
+        title: 'Success',
+        description: 'Sucesfully Logged in',
+         variant: 'success'
+      });
+      await new Promise(resolve => setTimeout(resolve, 500)); // Waitm for 500ms to show message before going to dashboard
     const redirect = route.query.redirect as string;
     if (redirect) {
-      router.push(decodeURIComponent(redirect)); // Navigate to the intended route
+      router.replace(decodeURIComponent(redirect)); // Navigate to the intended route
     } else {
-      router.push("/dashboard"); // Default route after login
+      router.replace("/dashboard"); // Default route after login
+      
     }
 
     // Handle successful login
     console.log(response.data.access_token, "success logging in");
   } catch (error) {
     console.error("Login failed", error.response ? error.response.data : error);
+    toast({
+        title: 'Login failed',
+        description: error.response.data.message,
+         variant: 'destructive'
+      });
   }
 };
 
 // Register function
 const register = async () => {
-  if (password.value !== confirmPassword.value) {
-    console.error("Passwords do not match");
-    return;
-  }
-
   try {
     const response = await axios.post("/register", {
       email: email.value,
       password: password.value,
       username: username.value,
+      terms: terms.value,
     });
 
     // Store the token in localStorage
     localStorage.setItem("token", response.data.access_token);
-
+    toast({
+        title: 'Success',
+        description: 'Sucesfully Registered and Logged in',
+         variant: 'success'
+      });
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Waitm for 500ms to show message before going to dashboard
     const redirect = route.query.redirect as string;
     if (redirect) {
-      router.push(decodeURIComponent(redirect)); // Navigate to the intended route
+      router.replace(decodeURIComponent(redirect)); // Navigate to the intended route
     } else {
-      router.push("/dashboard"); // Default route after login
+      router.replace("/dashboard"); // Default route after login
+      
     }
 
     // Handle successful login
@@ -90,6 +109,12 @@ const register = async () => {
       "Registration failed:",
       error.response ? error.response.data : error
     );
+    console.error("Registration failed", error.response ? error.response.data : error);
+    toast({
+        title: 'Registration failed',
+        description: error.response.data.message,
+         variant: 'destructive'
+      });
   }
 };
 
@@ -131,6 +156,15 @@ const accessProtectedRoute = async () => {
 </script>
 
 <template>
+  <Toaster /> <!-- Toast component to show messages -->
+    <!-- <Button
+    variant="outline" @click="() => {
+      toast({
+        description: 'Your message has been sent.',
+         variant: 'success'
+      });
+    }"
+  >Show Toast</Button> -->
    <div class="absolute top-4 right-4">
     <LightDark class="bg-white p-4 rounded-lg shadow-lg"></LightDark>
   </div>
@@ -141,10 +175,10 @@ const accessProtectedRoute = async () => {
   >
     <!-- compensate for the height of the inset -->
     <div
-      class="relative hidden inset-5 flex-col h-[calc(100vh-2.5rem)] bg-none p-10 text-white dark:border-r lg:flex"
+      class="relative hidden inset-5 flex-col h-[calc(100vh-2.5rem)] bg-none p-10  text-white lg:flex"
     >
       <img
-        class="h-full object-cover absolute rounded-2xl border-none inset-0 bg-none"
+        class="h-full object-cover absolute rounded-2xl border-2 inset-0 drop-shadow-lg  border-input bg-none"
         src="/Images/login.jpg"
         alt="Logo"
       />
@@ -206,7 +240,7 @@ const accessProtectedRoute = async () => {
             <div class="grid gap-2">
               <Label for="email">Email</Label>
               <Input
-                class="h-14"
+                class="h-14 text-sm"
                 v-model="email"
                 placeholder="Email"
                 required
@@ -216,7 +250,7 @@ const accessProtectedRoute = async () => {
             <div class="grid gap-2">
               <Label for="password">Password</Label>
               <Input
-                class="h-14"
+                class="h-14 text-sm"
                 type="password"
                 v-model="password"
                 placeholder="Password"
@@ -235,17 +269,17 @@ const accessProtectedRoute = async () => {
               />
             </div> -->
             <div class="items-center flex space-x-2">
-              <Checkbox class="h-6 w-6" id="terms1" />
+              <Checkbox class="h-6 w-6" id="terms" v-model:checked="terms"/>
               <label
-                for="terms1"
-                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                for="terms"
+                class="text-sm  leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Accept terms and conditions
               </label>
             </div>
           </CardContent>
           <CardFooter class="flex flex-col gap-4">
-            <Button class="w-full h-12" type="submit">
+            <Button class="w-full h-12 text-sm" type="submit">
               {{ isRegisterView ? "Sign up" : "Sign in" }}
             </Button>
 
@@ -275,10 +309,15 @@ const accessProtectedRoute = async () => {
       src="/Images/login.jpg"
       alt="Background Image"
     /> -->
+
+    
   <div
-    class="flex items-center justify-center h-screen lg:hidden bg-[url(/Images/login.jpg)]"
+    class="flex items-center justify-center h-screen lg:hidden bg-cover bg-center bg-[url(/Images/login.jpg)]"
   >
-    <Card class="w-full max-w-sm">
+  
+  
+    <Card class="w-full max-w-sm rounded-2xl shadow-xl">
+      
       <form @submit.prevent="isRegisterView ? register() : login()">
         <CardHeader>
           <CardTitle class="text-2xl">
@@ -324,9 +363,9 @@ const accessProtectedRoute = async () => {
             />
           </div> -->
           <div class="items-center flex space-x-2">
-            <Checkbox class="h-4 w-4" id="terms1" />
+            <Checkbox class="h-4 w-4" id="terms"  v-model:checked="terms" />
             <label
-              for="terms1"
+              for="terms"
               class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               Accept terms and conditions

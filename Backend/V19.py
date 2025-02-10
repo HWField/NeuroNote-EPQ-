@@ -236,10 +236,14 @@ def login():
     print(data)
     email = data.get('email').lower()
     password = data.get('password')
+    terms = data.get('terms')
     
     # Query the user from the database
     user = dbsession.query(User).filter_by(email=email).first()
     
+    if terms == False:
+        print("didnt accept terms")
+        return jsonify({"message": "Please accept the terms and conditions"}), 400
     # Check if user exists and passwords match
     if user is None:    
         return jsonify({"message": "Invalid email"}), 400
@@ -274,10 +278,14 @@ def register():
     email = data.get('email')
     password = data.get('password')
     username = data.get('username')
-  
+    terms = data.get('terms')
+    
+    if terms == False:
+        print("didnt accept terms")
+        return jsonify({"message": "Please accept the terms and conditions"}), 400
     existing_user = dbsession.query(User).filter_by(email=email).first()
     if existing_user:
-        return jsonify({"message": "User Already Exists"}), 400
+        return jsonify({"message": "Account already Exists, please Login"}), 400
     else:
         user = User(email=email, password=generate_password_hash(password, method='pbkdf2:sha256'), username=username)
         dbsession.add(user)

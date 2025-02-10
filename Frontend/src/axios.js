@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+import router from "@/router"; // Adjust the path based on your project structure
 // Create an Axios instance
 const api = axios.create({
   baseURL: 'http://192.168.1.232:8000',  // Replace with your Flask API base URL
@@ -49,7 +49,12 @@ api.interceptors.response.use(
 
       // Save the original route in the query parameters
       const currentRoute = window.location.pathname;
-      window.location.href = `/login?redirect=${encodeURIComponent(currentRoute)}`;
+      // window.location.replace(`login?redirect=${encodeURIComponent(currentRoute)}`);
+      router.push({ 
+        path: '/login', 
+        query: { redirect: currentRoute }
+      });
+      
     }
     else if (!error.response) {
       console.error('Cannot connect to the server');
@@ -61,7 +66,11 @@ api.interceptors.response.use(
       const errorMessage = encodeURIComponent('Cannot connect to the server');
       // window.location.href = `/error?message=${errorMessage}`;
       //this method stops user retunring to the page which caused error message
-      window.location.replace(`/error?message=${errorMessage}`);
+      // window.location.replace(`/error?message=${errorMessage}`);
+      router.push({ 
+        path: '/error', 
+        query: { message: errorMessage }
+      });
     }
     return Promise.reject(error);
   }
