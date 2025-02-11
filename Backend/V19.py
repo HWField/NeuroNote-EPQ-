@@ -21,6 +21,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from datetime import timedelta
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -96,6 +97,7 @@ class Note(Base):
     __tablename__ = 'notes'
 
     id = Column(Integer, primary_key=True)
+    type = Column(String, default="")
     name = Column(String, nullable=False)
     colour = Column(String, default="")
     x = Column(Integer, nullable=True)
@@ -143,7 +145,7 @@ def populate_sample_data():
     current_max_tag_id = 0
     current_max_note_id = 0
 
-    user = User(email="admin@admin", password="admin", username="adminuser", user_status="admin")
+    user = User(email="admin@admin", password=generate_password_hash("admin", method='pbkdf2:sha256'), username="adminuser", user_status="admin")
     dbsession.add(user)
     dbsession.commit()  # Save the user to generate an ID
 
@@ -251,7 +253,7 @@ def login():
     if check_password_hash(user.password, password):
     # if user.password == password:
         # Create JWT token on successful login
-        access_token = create_access_token(identity=str(user.id))
+        access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
         print("logged in") 
         return jsonify(access_token=access_token), 200
         
@@ -292,7 +294,7 @@ def register():
         dbsession.commit()
         
         user = dbsession.query(User).filter_by(email=email).first()
-        access_token = create_access_token(identity=str(user.id))
+        access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
         print("logged in")
         return jsonify(access_token=access_token), 200
        
@@ -661,7 +663,6 @@ def update():
 # @login_required
 @jwt_required()
 def load():
-    
     data = request.json
     operation = data.get('operation')
     current_user = get_jwt_identity()

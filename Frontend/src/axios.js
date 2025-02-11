@@ -2,7 +2,7 @@ import axios from 'axios';
 import router from "@/router"; // Adjust the path based on your project structure
 // Create an Axios instance
 const api = axios.create({
-  baseURL: 'http://192.168.1.232:8000',  // Replace with your Flask API base URL
+  baseURL: 'http://192.168.1.127:8000',  // Replace with your Flask API base URL
   headers: {
     'Content-Type': 'application/json',
   },

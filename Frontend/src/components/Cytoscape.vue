@@ -4,7 +4,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { Separator } from '@/components/ui/separator'
+import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -719,6 +719,37 @@ function HandlecyClick(event) {
   }
 }
 
+function centerGraph() {
+  cy.animate({ fit: { eles: cy.elements(), padding: 50 }, duration: 600 });
+}
+
+function ShuffleGraph() {
+  {
+    const selectedNodes = cy.$("node:selected").map((node) => node.id());
+    if (selectedNodes.length > 0) {
+      RunLayout(selectedNodes);
+    } else {
+      RunLayout("none");
+    }
+  }
+}
+
+function drillDown(ele) {
+  axios.post("/load", {
+    operation: "search",
+    query: ele.data("label"),
+  })
+    .then((response) => {
+      cy.elements().remove(); // Remove existing nodes
+      AddNodes(response.data); // Update graph with new data
+      UpdateNodes();
+      RunLayout("all");
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+    });
+}
+
 onMounted(() => {
   initializeCytoscape();
   document.addEventListener("keydown", HandlecyClick);
@@ -753,93 +784,95 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-<!-- mobile toolbar -->
-  <div class=" md:hidden absolute bottom-20 left-1/2 transform w-full -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2">
+  <!-- mobile toolbar -->
+  <div
+    class="md:hidden absolute bottom-20 left-1/2 transform w-full -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2"
+  >
     <div class="flex justify-around">
       <DropdownMenu>
-      <DropdownMenuTrigger as-child>
-        <Button class="">
-          <Eye></Eye>
-          <span>View</span>
-        </Button>
-      </DropdownMenuTrigger>
+        <DropdownMenuTrigger as-child>
+          <Button class="">
+            <Eye></Eye>
+            <span>View</span>
+          </Button>
+        </DropdownMenuTrigger>
 
-      <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-        <DropdownMenuItem
-          class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        >
-          <Shuffle class="w-5 h-5 text-gray-600" />
-          <span>Shuffle</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        >
-          <ChevronsDown class="w-5 h-5 text-gray-600" />
-          <span>Drill</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        >
-          <Home class="w-5 h-5 text-gray-600" />
-          <span>Centre</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+          >
+            <Shuffle class="w-5 h-5 text-gray-600" />
+            <span>Shuffle</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+          >
+            <ChevronsDown class="w-5 h-5 text-gray-600" />
+            <span>Drill</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+          >
+            <Home class="w-5 h-5 text-gray-600" />
+            <span>Centre</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <DropdownMenu>
-      <DropdownMenuTrigger as-child>
-        <Button class="">
-          <Plus></Plus>
-          <span>New</span>
-        </Button>
-      </DropdownMenuTrigger>
+        <DropdownMenuTrigger as-child>
+          <Button class="">
+            <Plus></Plus>
+            <span>New</span>
+          </Button>
+        </DropdownMenuTrigger>
 
-      <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-        <DropdownMenuItem
-          class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        >
-          <Tag class="w-5 h-5 text-gray-600" />
-          <span>Tag</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        >
-          <FileText class="w-5 h-5 text-gray-600" />
-          <span>Page</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        >
-          <LayoutGrid class="w-5 h-5 text-gray-600" />
-          <span>Whiteboard</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+          >
+            <Tag class="w-5 h-5 text-gray-600" />
+            <span>Tag</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+          >
+            <FileText class="w-5 h-5 text-gray-600" />
+            <span>Page</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+          >
+            <LayoutGrid class="w-5 h-5 text-gray-600" />
+            <span>Whiteboard</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-    <DropdownMenu>
-      <DropdownMenuTrigger as-child>
-        <Button class="">
-          <Ellipsis></Ellipsis>
-          <span>Options</span>
-        </Button>
-      </DropdownMenuTrigger>
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
+          <Button class="">
+            <Ellipsis></Ellipsis>
+            <span>Options</span>
+          </Button>
+        </DropdownMenuTrigger>
 
-      <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-        <DropdownMenuItem
-          class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        >
-          <Lock class="w-5 h-5 text-gray-600" />
-          <span>Lock</span>
-        </DropdownMenuItem>
-      
-        <DropdownMenuItem
-          class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        >
-          <Search class="w-5 h-5 text-gray-600" />
-          <span>Search</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+          >
+            <Lock class="w-5 h-5 text-gray-600" />
+            <span>Lock</span>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+          >
+            <Search class="w-5 h-5 text-gray-600" />
+            <span>Search</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   </div>
   <!-- desktop toolbar -->
@@ -855,7 +888,7 @@ onBeforeUnmount(() => {
       <Lock class="" />
       <span>Lock</span>
     </Button>
-    <Separator orientation="vertical" ></Separator>
+    <Separator orientation="vertical"></Separator>
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
         <Button class="">
@@ -886,20 +919,18 @@ onBeforeUnmount(() => {
       </DropdownMenuContent>
     </DropdownMenu>
 
-    <Separator orientation="vertical" ></Separator>
+    <Separator orientation="vertical"></Separator>
 
-    <Button @click="cy.animate({ fit: { eles: cy.elements(), padding: 50 }, duration: 600 })">
-      <House></House> Center
+    <Button @click="centerGraph()"> <House></House> Center </Button>
+
+    <Button @click="drillDown(cy.$('node:selected')[0])">
+      <ChevronsDown></ChevronsDown> Drill
     </Button>
-    <Button> <ChevronsDown></ChevronsDown> Drill</Button>
-    <Button variant="destructive" @click="() => {
-      const selectedNodes = cy.$('node:selected').map((node) => node.id());
-      if (selectedNodes.length > 0) {
-        RunLayout(selectedNodes);
-      } else {
-        RunLayout('none');
-      }
-    }">
+
+    <Button
+      variant="destructive"
+      @click="ShuffleGraph()"
+    >
       <Shuffle></Shuffle> Shuffle
     </Button>
   </div>
