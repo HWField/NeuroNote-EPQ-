@@ -41,9 +41,9 @@ import {
   Eye,
   Ellipsis,
 } from "lucide-vue-next";
-
+import { useTabStore } from "@/stores/useTabStore";
 import axios from "../axios";
-
+const tabStore = useTabStore();
 const cyRef = ref(null); // Reference for Cytoscape instance
 let cy = null;
 
@@ -97,8 +97,19 @@ function initializeCytoscape() {
           "font-size": "8px",
           width: "data(width)",
           height: "data(height)",
-          shape: "round-rectangle",
         },
+      },
+      {
+        selector: 'node[format="whiteboard"]',
+        style: {
+          shape: "triangle",
+        }
+      },
+        {
+        selector: 'node[format="document"]',
+        style: {
+          shape: "round-rectangle",
+        }
       },
       {
         selector: "edge",
@@ -213,6 +224,15 @@ function initializeCytoscape() {
       },
     ],
   });
+  cy.on("tap", "node", (event) => {
+    const node = event.target.data();
+    if (node.type === "note") {
+      console.log("Note node selected:", node.id);
+      tabStore.openTab(node.id);
+      // additional note-specific logic here, e.g., open a modal or display details
+    }
+   
+  });
 }
 
 function AddNodes(data) {
@@ -255,6 +275,7 @@ function AddNodes(data) {
             id: nodeId,
             label: item.name,
             type: item.type,
+            format: item.format,
             colour: "#1aed2c",
             width: 20, // Adjust size based on depth
             height: 20,
@@ -734,6 +755,88 @@ function ShuffleGraph() {
   }
 }
 
+function CreateNote(format) {
+      // if (type == "child") {
+      //   const selectedTag = cy.$('node[type="tag"]:selected');
+      //   let newNoteId = "";
+      //   if (selectedTag.length > 0) {
+      //     const noteName = prompt("Enter the name for the new Note:");
+      //     if (noteName) {
+      //       fetch("/create", {
+      //         method: "POST",
+      //         headers: {
+      //           "Content-Type": "application/json",
+      //         },
+      //         body: JSON.stringify({ type: "note", name: noteName }),
+      //       })
+      //         .then((response) => response.json())
+      //         .then((data) => {
+      //           newNoteId = data.elements[0].id;
+
+      //           console.log("new note id:", newNoteId);
+      //           AddNodes(data); // Call the updateGraph function with the new data
+      //           // UpdateNodes();
+      //           // Get the id from the single element in the array
+      //           // RunLayout("note_" + newNoteId); // Pass the id property of the single node
+      //           const tagId = selectedTag.id(); // Get the id of the selected tag
+
+      //           // Create an edge between the selected tag and the new note
+      //           fetch("/create", {
+      //             method: "POST",
+      //             headers: {
+      //               "Content-Type": "application/json",
+      //             },
+      //             body: JSON.stringify({
+      //               type: "edge",
+      //               source: tagId,
+      //               target: "note_" + newNoteId,
+      //             }),
+      //           })
+      //             .then((response) => response.json())
+      //             .then((data) => {
+      //               if (data.status === "success") {
+      //                 cy.add({
+      //                   group: "edges",
+      //                   data: {
+      //                     source: tagId,
+      //                     target: "note_" + newNoteId,
+      //                   },
+      //                 });
+      //                 UpdateNodes();
+      //                 RunLayout("note_" + newNoteId); // Run layout for the new note
+      //               } else {
+      //                 console.error("Failed to create edge:", data.message);
+      //               }
+      //             })
+      //             .catch((error) => {
+      //               console.error("Error creating edge:", error);
+      //             });
+      //         })
+      //         .catch((error) => {
+      //           console.error("Error fetching data:", error);
+      //         });
+      //     }
+      //   }
+      // } else {
+        // const noteName = prompt("Enter the name for the new note:");
+      
+          axios.post("/create", {
+            type: "note",
+            name: "Untitled Note",
+            format: format,
+          })
+            .then((response) => {
+              AddNodes(response.data); // Call the updateGraph function with the new data
+              UpdateNodes();
+              RunLayout("note_" + response.data.elements[0].id); // Pass the id property of the single node
+            })
+            .catch((error) => {
+              console.error("Error fetching data:", error);
+            });
+        
+      // }
+}
+
 function drillDown(ele) {
   axios.post("/load", {
     operation: "search",
@@ -781,6 +884,8 @@ onBeforeUnmount(() => {
     cyRef.value = null;
   }
 });
+
+
 </script>
 
 <template>
@@ -888,7 +993,7 @@ onBeforeUnmount(() => {
       <Lock class="" />
       <span>Lock</span>
     </Button>
-    <Separator orientation="vertical"></Separator>
+    <!-- <Separator orientation="vertical"></Separator> -->
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
         <Button class="">
@@ -906,12 +1011,14 @@ onBeforeUnmount(() => {
         </DropdownMenuItem>
         <DropdownMenuItem
           class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+          @click="CreateNote('document')"
         >
           <FileText class="w-5 h-5 text-gray-600" />
           <span>Page</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+          @click="CreateNote('whiteboard')"
         >
           <LayoutGrid class="w-5 h-5 text-gray-600" />
           <span>Whiteboard</span>
@@ -919,7 +1026,7 @@ onBeforeUnmount(() => {
       </DropdownMenuContent>
     </DropdownMenu>
 
-    <Separator orientation="vertical"></Separator>
+    <!-- <Separator orientation="vertical"></Separator> -->
 
     <Button @click="centerGraph()"> <House></House> Center </Button>
 

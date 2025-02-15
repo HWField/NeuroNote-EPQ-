@@ -97,7 +97,7 @@ class Note(Base):
     __tablename__ = 'notes'
 
     id = Column(Integer, primary_key=True)
-    type = Column(String, default="")
+    format = Column(String, default="document")
     name = Column(String, nullable=False)
     colour = Column(String, default="")
     x = Column(Integer, nullable=True)
@@ -318,6 +318,7 @@ def register():
     
 @app.route('/create', methods=['POST'])
 # @login_required
+@jwt_required()
 def create():
     data = request.json
     type = data.get('type')
@@ -405,7 +406,9 @@ def create():
         
     elif type == 'note':
         name = data.get('name')
-        note = Note(name=name,  user_id = 1)
+        format = data.get('format')
+     
+        note = Note(name=name, format=format, user_id=int(get_jwt_identity()))
         note.set_user_specific_id(dbsession)
         dbsession.add(note)
         try:
@@ -416,6 +419,7 @@ def create():
                 'id': note.user_specific_id,
                 'name': note.name,
                 'tags': [tag.user_specific_id for tag in note.tags],
+                'format': note.format,  # Add format property
                 'type': "note",  # Add type property
                 'data': 
             {
@@ -425,10 +429,10 @@ def create():
             }
             }
             elements.append(element)
-            return  jsonify(elements = elements)
+            return jsonify(elements = elements)
         except Exception as e:
             dbsession.rollback()
-            print(f"Error creating tag: {e}")
+            print(f"Error creating note: {e}")
             return jsonify({'status': 'error', 'message': 'Failed to create note}'}), 500
         
  
@@ -692,6 +696,7 @@ def load():
                 'name': note.name,
                 'tags': [tag.user_specific_id for tag in note.tags],
                 'type': "note",  # Add type property
+                'format': note.format,
                 'data': 
                 {
                     'x': note.x,
@@ -768,6 +773,7 @@ def load():
                     'name': note.name,
                     'tags': [tag.id for tag in note.tags],
                     'type': "note",
+                    'format': note.format,
                     'data': {
                 'x': note.x,
                 'y': note.y,

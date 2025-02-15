@@ -6,12 +6,12 @@ export const containerClass = "w-full h-full";
 
 <script setup lang="ts">
 import Cytoscape from "@/components/Cytoscape.vue";
+import tabview from "@/components/tabview.vue";
 import Note from "@/components/Note.vue";
+import LightDark from "@/components/LightDark.vue";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,7 +20,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-
 import {
   Collapsible,
   CollapsibleContent,
@@ -61,6 +60,20 @@ import {
   SidebarMenuBadge,
 } from "@/components/ui/sidebar";
 import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "@/components/ui/command";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+
+import {
   Settings,
   Bell,
   ChevronsUpDown,
@@ -72,30 +85,46 @@ import {
   Search,
   Home,
   MessagesSquare,
+  X,
+  GripVertical,
 } from "lucide-vue-next";
+import * as icons from "lucide-vue-next";
 
 import { useMagicKeys } from "@vueuse/core";
 import { watch } from "vue";
-
-import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-  CommandSeparator,
-  CommandShortcut,
-} from "@/components/ui/command";
-
-import * as icons from "lucide-vue-next";
-import { ScrollArea } from "@/components/ui/scroll-area";
-
-import { Button } from "@/components/ui/button";
+import { computed } from "vue";
 import { ref } from "vue";
-import LightDark from "@/components/LightDark.vue";
+import draggable from "vuedraggable";
 
+import { useTabStore } from '@/stores/useTabStore';
+
+
+const tabStore = useTabStore();
+const tabs = computed(() => tabStore.tabs);
+const activeTab = computed(() => tabStore.activeTab);
+
+// ✅ Ensures a fresh component instance when switching between tabs
+const activeTabKey = computed(() => {
+  return `${activeTab.value}-${tabs.value.find(tab => tab.id === activeTab.value)?.title}`;
+});
+
+// ✅ Ensures we get a valid component
+const getActiveComponent = computed(() => {
+  return tabs.value.find(tab => tab.id === activeTab.value)?.component || null;
+});
+
+function closeTab(id) {
+  tabStore.removeTab(id);
+}
+
+function switchTab(id) {
+  tabStore.setActiveTab(id);
+}
+
+function openNewTab() {
+  // Example: Adding a new tab dynamically
+  tabStore.addTab('New Tab', Note);
+}
 // This is sample data.
 const data = {
   user: {
@@ -163,15 +192,6 @@ const data = {
   ],
 };
 
-const tabs = ref(["Note 1", "Note 2", "Note 3"]);
-
-function removeTab(tab: string) {
-  const index = tabs.value.indexOf(tab);
-  if (index > -1) {
-    tabs.value.splice(index, 1);
-    console.log("removed");
-  }
-}
 
 const activeTeam = ref(data.teams[0]);
 
@@ -293,13 +313,13 @@ function handleOpenChange() {
               <SidebarMenuItem>
                 <SidebarMenuButton>
                   <Home />
-                  <a href="#"> Home </a>
+                  <a @click="tabStore.activeTabId = 'home'"> Home </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton>
                   <MessagesSquare />
-                  <a href="#"> Chat </a>
+                  <a @click="tabStore.activeTabId = 'chat'"> Chat </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -307,49 +327,39 @@ function handleOpenChange() {
         </SidebarGroup>
 
         <SidebarSeparator />
-
         <SidebarGroup>
-          <SidebarGroupLabel>Tabs:</SidebarGroupLabel>
-          <SidebarGroupAction title="Add Project">
-            <Plus /> <span className="sr-only">Add Project</span>
-          </SidebarGroupAction>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <a href="#">
-                    <span>Home</span>
-                  </a>
-                </SidebarMenuButton>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <SidebarMenuAction>
-                      <MoreHorizontal />
-                    </SidebarMenuAction>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem>
-                      <span>Edit Project</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <span>Delete Project</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+  <SidebarGroupLabel>Tabs:</SidebarGroupLabel>
+
+  <!-- Add new tab button -->
+  <SidebarGroupAction title="Add Tab" @click="openNewTab">
+    <Plus /> <span class="sr-only">Add Tab</span>
+  </SidebarGroupAction>
+
+  <!-- Tab List -->
+  <SidebarGroupContent>
+    <div v-for="tab in tabs" :key="tab.id" class="flex items-center justify-between p-2 cursor-pointer rounded-md" 
+         :class="{ 'bg-gray-200': tab.id === activeTab }" @click="switchTab(tab.id)">
+      
+      <span class="truncate">{{ tab.title }}</span>
+
+      <!-- Close button (except for the first tab) -->
+      <button v-if="tab.id !== 1" @click.stop="closeTab(tab.id)" class="text-red-500 hover:text-red-700">
+        ✖
+      </button>
+    </div>
+  </SidebarGroupContent>
+</SidebarGroup>
       </SidebarContent>
 
-       <SidebarFooter class="pb-[40px] md:pb-0"><!-- lift up footer on mobile -->
+      <SidebarFooter class="pb-[40px] md:pb-0"
+        ><!-- lift up footer on mobile -->
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
                 <SidebarMenuButton
                   size="lg"
-                  class="  data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <Avatar class="h-8 w-8 rounded-lg">
                     <AvatarImage
@@ -421,7 +431,7 @@ function handleOpenChange() {
       <!-- <SidebarRail /> -->
     </Sidebar>
 
-    <SidebarInset>
+    <SidebarInset class="overflow-hidden">
       <!-- Header -->
       <header class="flex h-16 shrink-0 items-center gap-2 border-b">
         <div class="flex items-center">
@@ -437,9 +447,25 @@ function handleOpenChange() {
 
       <!-- Main Content -->
 
-      <div class="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <Cytoscape class="grid auto-rows-min gap-4 md:grid-cols-3" />
-      </div>
+      <!-- <div class="flex flex-1 flex-col gap-4 p-4 pt-0 w-full">
+        <KeepAlive>
+          <Cytoscape class="grid auto-rows-min gap-4 w-full" />
+        </KeepAlive> -->
+        <!-- md:grid-cols-3 -->
+      <!-- </div> -->
+      
+
+     
+ 
+
+    <!-- Tab Content -->
+    <div class="flex flex-1 flex-col gap-4 p-4 pt-0 w-full" >
+    <KeepAlive>
+      <component :is="getActiveComponent" v-if="getActiveComponent" :key="activeTabKey"/>
+   
+    </KeepAlive>
+    </div>
+ 
     </SidebarInset>
   </SidebarProvider>
 </template>
