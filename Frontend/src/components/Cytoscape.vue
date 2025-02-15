@@ -44,16 +44,40 @@ import {
 import { useTabStore } from "@/stores/useTabStore";
 import axios from "../axios";
 const tabStore = useTabStore();
-const cyRef = ref(null); // Reference for Cytoscape instance
-let cy = null;
+let cy = null; // Reference for Cytoscape instance
+
+const props = defineProps({
+  tabId: Number,
+  tabType: String, // New property to identify the component type (e.g., 'cytoscape')
+});
+
+const loadState = () => {
+  const tab = tabStore.getTab(props.tabId, props.tabType);
+  return tab?.state || { elements: [], zoom: 1, pan: { x: 0, y: 0 } };
+};
+
+const saveState = () => {
+  if (cy) {
+    console.log("Saving state for tab:", cy.json().elements);
+    tabStore.updateTabState(props.tabId, props.tabType, {
+      elements: cy.json().elements,
+      zoom: cy.zoom(),
+      pan: cy.pan(),
+    });
+    console.log("recorded values weere:", loadState().elements);
+  }
+};
 
 function initializeCytoscape() {
   // Initialize Cytoscape
-  const cyElements = [];
+  const state = loadState();
+  console.log("Loaded elements with positions:", state.elements);
   cy = cytoscape({
     boxSelectionEnabled: true,
     container: document.getElementById("cy"),
-    elements: cyElements,
+    elements: state.elements,
+    zoom: state.zoom,
+    pan: state.pan,
     style: [
       {
         selector: "node",
@@ -103,13 +127,13 @@ function initializeCytoscape() {
         selector: 'node[format="whiteboard"]',
         style: {
           shape: "triangle",
-        }
+        },
       },
-        {
+      {
         selector: 'node[format="document"]',
         style: {
           shape: "round-rectangle",
-        }
+        },
       },
       {
         selector: "edge",
@@ -223,16 +247,35 @@ function initializeCytoscape() {
         },
       },
     ],
+    layout: {
+      name: "preset",
+    },
   });
+
   cy.on("tap", "node", (event) => {
     const node = event.target.data();
     if (node.type === "note") {
       console.log("Note node selected:", node.id);
-      tabStore.openTab(node.id);
+      // tabStore.openTab(node.id);
       // additional note-specific logic here, e.g., open a modal or display details
     }
-   
   });
+
+  cy.layout({
+    name: "cola",
+    infinite: true, // Infinite animation
+    animate: true,
+    randomize: false, // Preserve fcose positions
+    fit: false, // Do not fit the graph after layout
+    refresh: 0, // number of ticks per frame; higher is faster but more jerky
+    centerGraph: false,
+    eles: null,
+  }).run();
+
+  cy.zoom(state.zoom);
+  cy.pan(state.pan);
+
+  // Step 2: Start cola layout with infinite animation after fcose completes
 }
 
 function AddNodes(data) {
@@ -756,92 +799,94 @@ function ShuffleGraph() {
 }
 
 function CreateNote(format) {
-      // if (type == "child") {
-      //   const selectedTag = cy.$('node[type="tag"]:selected');
-      //   let newNoteId = "";
-      //   if (selectedTag.length > 0) {
-      //     const noteName = prompt("Enter the name for the new Note:");
-      //     if (noteName) {
-      //       fetch("/create", {
-      //         method: "POST",
-      //         headers: {
-      //           "Content-Type": "application/json",
-      //         },
-      //         body: JSON.stringify({ type: "note", name: noteName }),
-      //       })
-      //         .then((response) => response.json())
-      //         .then((data) => {
-      //           newNoteId = data.elements[0].id;
+  // if (type == "child") {
+  //   const selectedTag = cy.$('node[type="tag"]:selected');
+  //   let newNoteId = "";
+  //   if (selectedTag.length > 0) {
+  //     const noteName = prompt("Enter the name for the new Note:");
+  //     if (noteName) {
+  //       fetch("/create", {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify({ type: "note", name: noteName }),
+  //       })
+  //         .then((response) => response.json())
+  //         .then((data) => {
+  //           newNoteId = data.elements[0].id;
 
-      //           console.log("new note id:", newNoteId);
-      //           AddNodes(data); // Call the updateGraph function with the new data
-      //           // UpdateNodes();
-      //           // Get the id from the single element in the array
-      //           // RunLayout("note_" + newNoteId); // Pass the id property of the single node
-      //           const tagId = selectedTag.id(); // Get the id of the selected tag
+  //           console.log("new note id:", newNoteId);
+  //           AddNodes(data); // Call the updateGraph function with the new data
+  //           // UpdateNodes();
+  //           // Get the id from the single element in the array
+  //           // RunLayout("note_" + newNoteId); // Pass the id property of the single node
+  //           const tagId = selectedTag.id(); // Get the id of the selected tag
 
-      //           // Create an edge between the selected tag and the new note
-      //           fetch("/create", {
-      //             method: "POST",
-      //             headers: {
-      //               "Content-Type": "application/json",
-      //             },
-      //             body: JSON.stringify({
-      //               type: "edge",
-      //               source: tagId,
-      //               target: "note_" + newNoteId,
-      //             }),
-      //           })
-      //             .then((response) => response.json())
-      //             .then((data) => {
-      //               if (data.status === "success") {
-      //                 cy.add({
-      //                   group: "edges",
-      //                   data: {
-      //                     source: tagId,
-      //                     target: "note_" + newNoteId,
-      //                   },
-      //                 });
-      //                 UpdateNodes();
-      //                 RunLayout("note_" + newNoteId); // Run layout for the new note
-      //               } else {
-      //                 console.error("Failed to create edge:", data.message);
-      //               }
-      //             })
-      //             .catch((error) => {
-      //               console.error("Error creating edge:", error);
-      //             });
-      //         })
-      //         .catch((error) => {
-      //           console.error("Error fetching data:", error);
-      //         });
-      //     }
-      //   }
-      // } else {
-        // const noteName = prompt("Enter the name for the new note:");
-      
-          axios.post("/create", {
-            type: "note",
-            name: "Untitled Note",
-            format: format,
-          })
-            .then((response) => {
-              AddNodes(response.data); // Call the updateGraph function with the new data
-              UpdateNodes();
-              RunLayout("note_" + response.data.elements[0].id); // Pass the id property of the single node
-            })
-            .catch((error) => {
-              console.error("Error fetching data:", error);
-            });
-        
-      // }
+  //           // Create an edge between the selected tag and the new note
+  //           fetch("/create", {
+  //             method: "POST",
+  //             headers: {
+  //               "Content-Type": "application/json",
+  //             },
+  //             body: JSON.stringify({
+  //               type: "edge",
+  //               source: tagId,
+  //               target: "note_" + newNoteId,
+  //             }),
+  //           })
+  //             .then((response) => response.json())
+  //             .then((data) => {
+  //               if (data.status === "success") {
+  //                 cy.add({
+  //                   group: "edges",
+  //                   data: {
+  //                     source: tagId,
+  //                     target: "note_" + newNoteId,
+  //                   },
+  //                 });
+  //                 UpdateNodes();
+  //                 RunLayout("note_" + newNoteId); // Run layout for the new note
+  //               } else {
+  //                 console.error("Failed to create edge:", data.message);
+  //               }
+  //             })
+  //             .catch((error) => {
+  //               console.error("Error creating edge:", error);
+  //             });
+  //         })
+  //         .catch((error) => {
+  //           console.error("Error fetching data:", error);
+  //         });
+  //     }
+  //   }
+  // } else {
+  // const noteName = prompt("Enter the name for the new note:");
+
+  axios
+    .post("/create", {
+      type: "note",
+      name: "Untitled Note",
+      format: format,
+    })
+    .then((response) => {
+      AddNodes(response.data); // Call the updateGraph function with the new data
+      UpdateNodes();
+      RunLayout("note_" + response.data.elements[0].id); // Pass the id property of the single node
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+    });
+
+  // }
 }
 
 function drillDown(ele) {
-  axios.post("/load", {
-    operation: "search",
-    query: ele.data("label"),
-  })
+  axios
+    .post("/load", {
+      operation: "search",
+      query: ele.data("label"),
+    })
     .then((response) => {
       cy.elements().remove(); // Remove existing nodes
       AddNodes(response.data); // Update graph with new data
@@ -853,39 +898,48 @@ function drillDown(ele) {
     });
 }
 
+const loadData = async () => {
+  try {
+    const response = await axios.post("/load", {
+      operation: "all",
+    });
+    AddNodes(response.data); // Call the updateGraph function with the new data
+    UpdateNodes();
+    RunLayout("all");
+  } catch (error) {
+    console.error(
+      "Error fetching data:",
+      error.response ? error.response.data : error
+    );
+  }
+};
+
 onMounted(() => {
   initializeCytoscape();
   document.addEventListener("keydown", HandlecyClick);
   console.log("cytoscape click event listener addded");
-  const loadData = async () => {
-    try {
-      const response = await axios.post("/load", {
-        operation: "all",
-      });
-      AddNodes(response.data); // Call the updateGraph function with the new data
-      UpdateNodes();
-      RunLayout("all");
-    } catch (error) {
-      console.error(
-        "Error fetching data:",
-        error.response ? error.response.data : error
-      );
-    }
-  };
-
-  loadData();
-});
-
-onBeforeUnmount(() => {
-  destroyCytoscape();
-
-  if (cyRef.value) {
-    cyRef.value.disconnect();
-    cyRef.value = null;
+  console.log(
+    "cytoscape mounted, length of elements:",
+    loadState().elements.length
+  );
+  if (loadState().elements.length === 0) {
+    loadData();
   }
 });
 
+onBeforeUnmount(() => {
+  saveState();
 
+  cy.stop();
+
+  destroyCytoscape();
+  cy = null;
+  document.removeEventListener("keydown", HandlecyClick);
+  if (cy) {
+    cy.destroy();
+  }
+  console.log("cytoscape unmounted");
+});
 </script>
 
 <template>
@@ -1034,10 +1088,7 @@ onBeforeUnmount(() => {
       <ChevronsDown></ChevronsDown> Drill
     </Button>
 
-    <Button
-      variant="destructive"
-      @click="ShuffleGraph()"
-    >
+    <Button variant="destructive" @click="ShuffleGraph()">
       <Shuffle></Shuffle> Shuffle
     </Button>
   </div>

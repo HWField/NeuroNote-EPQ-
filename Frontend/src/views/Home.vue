@@ -93,7 +93,7 @@ import * as icons from "lucide-vue-next";
 import { useMagicKeys } from "@vueuse/core";
 import { watch } from "vue";
 import { computed } from "vue";
-import { ref } from "vue";
+import { ref, markRaw } from "vue";
 import draggable from "vuedraggable";
 
 import { useTabStore } from '@/stores/useTabStore';
@@ -123,8 +123,10 @@ function switchTab(id) {
 
 function openNewTab() {
   // Example: Adding a new tab dynamically
-  tabStore.addTab('New Tab', Note);
+  tabStore.addTab('New Tab','cytoscape');
 }
+
+
 // This is sample data.
 const data = {
   user: {
@@ -317,9 +319,9 @@ function handleOpenChange() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton>
+                <SidebarMenuButton disabled>
                   <MessagesSquare />
-                  <a @click="tabStore.activeTabId = 'chat'"> Chat </a>
+                  <span> Chat (coming soon)</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -343,7 +345,7 @@ function handleOpenChange() {
       <span class="truncate">{{ tab.title }}</span>
 
       <!-- Close button (except for the first tab) -->
-      <button v-if="tab.id !== 1" @click.stop="closeTab(tab.id)" class="text-red-500 hover:text-red-700">
+      <button  @click.stop="closeTab(tab.id)" class="text-red-500 hover:text-red-700">
         ✖
       </button>
     </div>
@@ -460,10 +462,15 @@ function handleOpenChange() {
 
     <!-- Tab Content -->
     <div class="flex flex-1 flex-col gap-4 p-4 pt-0 w-full" >
-    <KeepAlive>
-      <component :is="getActiveComponent" v-if="getActiveComponent" :key="activeTabKey"/>
-   
-    </KeepAlive>
+    
+      <component
+      :is="getActiveComponent"
+      v-if="getActiveComponent"
+      :key="activeTabKey"
+      :tab-id="activeTab"    
+      :tab-type="'cytoscape'"  
+    />
+
     </div>
  
     </SidebarInset>
