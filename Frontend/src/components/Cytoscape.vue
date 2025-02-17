@@ -16,7 +16,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "./ui/input";
-import { onMounted, onBeforeUnmount, ref, watch } from "vue";
+import { onMounted, onBeforeUnmount, onUnmounted, ref, watch } from "vue";
 
 import {
   Settings,
@@ -58,20 +58,27 @@ const loadState = () => {
 
 const saveState = () => {
   if (cy) {
-    console.log("Saving state for tab:", cy.json().elements);
+
     tabStore.updateTabState(props.tabId, props.tabType, {
       elements: cy.json().elements,
       zoom: cy.zoom(),
       pan: cy.pan(),
     });
-    console.log("recorded values weere:", loadState().elements);
+ 
   }
 };
 
 function initializeCytoscape() {
   // Initialize Cytoscape
-  const state = loadState();
-  console.log("Loaded elements with positions:", state.elements);
+  console.log("Initializing Cytoscape...");
+  let state = loadState();
+  if (cy) {
+    console.log("Destroying previous Cytoscape instance before reinitializing...");
+    cy.destroy();
+    cy = null;
+  }
+
+
   cy = cytoscape({
     boxSelectionEnabled: true,
     container: document.getElementById("cy"),
@@ -275,6 +282,7 @@ function initializeCytoscape() {
   cy.zoom(state.zoom);
   cy.pan(state.pan);
 
+  document.addEventListener("keydown", HandlecyClick);
   // Step 2: Start cola layout with infinite animation after fcose completes
 }
 
@@ -493,7 +501,7 @@ function RunLayout(effectors) {
     );
     //remove wanted nodes from fixedNodeConstraints
 
-    console.log("fixed constraints:", fixedNodeConstraints);
+  
   }
   // Step 1: Run fcose to organize orphan nodes
   cy.layout({
@@ -522,13 +530,6 @@ function RunLayout(effectors) {
     colaLayout.run();
   }
   // startSavingNodePositions();
-}
-
-function destroyCytoscape() {
-  if (cy) {
-    cy.destroy();
-    cy = null;
-  }
 }
 
 function HandlecyClick(event) {
@@ -915,24 +916,23 @@ const loadData = async () => {
 };
 
 onMounted(() => {
+  console.log("Cytoscape mounted");
   initializeCytoscape();
-  document.addEventListener("keydown", HandlecyClick);
-  console.log("cytoscape click event listener addded");
-  console.log(
-    "cytoscape mounted, length of elements:",
-    loadState().elements.length
-  );
+  
   if (loadState().elements.length === 0) {
     loadData();
   }
 });
 
-onBeforeUnmount(() => {
+onUnmounted(() => {
+  
+  
+  cy.stop(); // Stop any ongoing layouts
+  cy.off("layoutstop");
+  
   saveState();
-
-  cy.stop();
-
-  destroyCytoscape();
+  cy.remove('*'); // Clear the graph
+ 
   cy = null;
   document.removeEventListener("keydown", HandlecyClick);
   if (cy) {

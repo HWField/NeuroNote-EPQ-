@@ -28,7 +28,7 @@ const isRegisterView = ref(false);
 const email = ref("");
 const username = ref("");
 const password = ref("");
-const terms = ref(false);
+const terms = ref(true); //default to true
 const confirmPassword = ref("");
 const router = useRouter(); // Router instance for programmatic navigation
 const route = useRoute(); // Current route to access query parameters
@@ -49,7 +49,7 @@ const login = async () => {
         description: 'Sucesfully Logged in',
          variant: 'success'
       });
-      await new Promise(resolve => setTimeout(resolve, 500)); // Waitm for 500ms to show message before going to dashboard
+      //await new Promise(resolve => setTimeout(resolve, 500)); // Waitm for 500ms to show message before going to dashboard
     const redirect = route.query.redirect as string;
     if (redirect) {
       router.replace(decodeURIComponent(redirect)); // Navigate to the intended route
@@ -87,7 +87,7 @@ const register = async () => {
         description: 'Sucesfully Registered and Logged in',
          variant: 'success'
       });
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Waitm for 500ms to show message before going to dashboard
+      //await new Promise(resolve => setTimeout(resolve, 1000)); // Waitm for 500ms to show message before going to dashboard
     const redirect = route.query.redirect as string;
     if (redirect) {
       router.replace(decodeURIComponent(redirect)); // Navigate to the intended route

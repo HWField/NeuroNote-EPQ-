@@ -12,6 +12,8 @@ import LightDark from "@/components/LightDark.vue";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Toaster from '@/components/ui/toast/Toaster.vue'
+import { useToast } from '@/components/ui/toast/use-toast'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -72,7 +74,7 @@ import {
 } from "@/components/ui/command";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-
+import { useRouter, useRoute } from "vue-router"; // Vue Router for navigation
 import {
   Settings,
   Bell,
@@ -98,17 +100,17 @@ import draggable from "vuedraggable";
 
 import { useTabStore } from '@/stores/useTabStore';
 
-
+const router = useRouter(); // Router instance for programmatic navigation
+const route = useRoute(); // Current route to access query parameters
+const { toast } = useToast();
 const tabStore = useTabStore();
 const tabs = computed(() => tabStore.tabs);
 const activeTab = computed(() => tabStore.activeTab);
 
-// ✅ Ensures a fresh component instance when switching between tabs
-const activeTabKey = computed(() => {
-  return `${activeTab.value}-${tabs.value.find(tab => tab.id === activeTab.value)?.title}`;
-});
 
-// ✅ Ensures we get a valid component
+const activeTabKey = computed(() => `${activeTab.value}-${Date.now()}`);
+
+
 const getActiveComponent = computed(() => {
   return tabs.value.find(tab => tab.id === activeTab.value)?.component || null;
 });
@@ -126,7 +128,20 @@ function openNewTab() {
   tabStore.addTab('New Tab','cytoscape');
 }
 
+async function logOut() {
+  toast({
+        title: 'Success',
+        description: 'Sucesfully logged out',
+         variant: 'success'
+      });
+  //await new Promise(resolve => setTimeout(resolve, 500)); // Wait for 1 second to show message before going to dashboard
+  localStorage.removeItem('token');  // Remove expired token
+  tabStore.clearStore();  // Clear tab store
+  router.replace("/login");   // Or redirect to login page using Vue Router
+  console.error("Logging out")
 
+  
+}
 // This is sample data.
 const data = {
   user: {
@@ -220,6 +235,8 @@ function handleOpenChange() {
 </script>
 
 <template>
+  <Toaster /> 
+
   <CommandDialog v-model:open="open">
     <CommandInput placeholder="Type a command or search..." />
     <CommandList>
@@ -421,7 +438,7 @@ function handleOpenChange() {
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem @click="logOut()">
                   <LogOut />
                   Log out
                 </DropdownMenuItem>
@@ -461,6 +478,7 @@ function handleOpenChange() {
  
 
     <!-- Tab Content -->
+    <div v-if="activeTab">
     <div class="flex flex-1 flex-col gap-4 p-4 pt-0 w-full" >
     
       <component
@@ -472,7 +490,7 @@ function handleOpenChange() {
     />
 
     </div>
- 
+  </div>
     </SidebarInset>
   </SidebarProvider>
 </template>

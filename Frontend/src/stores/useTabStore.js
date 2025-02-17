@@ -2,50 +2,51 @@ import { defineStore } from "pinia";
 import { markRaw, ref } from "vue";
 import Cytoscape from "@/components/Cytoscape.vue";
 export const useTabStore = defineStore("tabStore", () => {
-  const tabs = ref([
-    {
-      id: 1,
-      title: "Tets",
-      component: markRaw(Cytoscape),
-      type: "cytoscape", // Component type
-      state: { elements: [], zoom: 1, pan: { x: 0, y: 0 } },
-    },
-    {
-      id: 2,
-      title: "numbewr3",
-      component: markRaw(Cytoscape),
-      type: "cytoscape", // Component type
-      state: { elements: [], zoom: 1, pan: { x: 0, y: 0 } },
-    },
-  ]);
+  
 
   const activeTab = ref(1); // Set first tab as active by default
 
+  const defaultTabs = [ {
+    id: 1,
+    title: "Test1",
+    component: markRaw(Cytoscape),
+    type: "cytoscape", // Component type
+    state: { elements: [], zoom: 1, pan: { x: 0, y: 0 } },
+  },
+  {
+    id: 2,
+    title: "Test2",
+    component: markRaw(Cytoscape),
+    type: "cytoscape", // Component type
+    state: { elements: [], zoom: 1, pan: { x: 0, y: 0 } },
+  },];
+
+  
+  const tabs = ref(defaultTabs);
   // Add a new tab
   function addTab(title, type) {
     const id = Date.now();
-    const component = type === 'cytoscape' ? markRaw(Cytoscape) : null; // Add other components as needed
+    const component = type === "cytoscape" ? markRaw(Cytoscape) : null; // Add other components as needed
     tabs.value.push({
       id,
       title,
       component,
       type,
-      state: { elements: [], zoom: 1, pan: { x: 0, y: 0 } }
+      state: { elements: [], zoom: 1, pan: { x: 0, y: 0 } },
     });
     activeTab.value = id;
   }
   // 🚀 Get a tab by id and type (to handle different component types)
   function getTab(id, type) {
-    return tabs.value.find(tab => tab.id === id && tab.type === type);
+    return tabs.value.find((tab) => tab.id === id && tab.type === type);
   }
 
   function updateTabState(id, type, newState) {
-    const tab = tabs.value.find(tab => tab.id === id && tab.type === type);
+    const tab = tabs.value.find((tab) => tab.id === id && tab.type === type);
     if (tab) {
       tab.state = { ...newState };
     }
   }
-
 
   // Remove a tab
   function removeTab(id) {
@@ -60,6 +61,14 @@ export const useTabStore = defineStore("tabStore", () => {
     activeTab.value = id;
   }
 
+  function clearStore() {
+    tabs.value = [...defaultTabs] // Clear the entire session storage
+    activeTab.value = 1; // Reset active tab
+    tabs.value.forEach((tab) => {
+      tab.component = markRaw(Cytoscape);
+    });
+  }
+
   return {
     tabs,
     activeTab,
@@ -68,5 +77,6 @@ export const useTabStore = defineStore("tabStore", () => {
     updateTabState,
     getTab,
     removeTab,
+    clearStore,
   };
 });
