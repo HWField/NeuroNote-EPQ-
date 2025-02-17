@@ -12,8 +12,8 @@ import LightDark from "@/components/LightDark.vue";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Toaster from '@/components/ui/toast/Toaster.vue'
-import { useToast } from '@/components/ui/toast/use-toast'
+import Toaster from "@/components/ui/toast/Toaster.vue";
+import { useToast } from "@/components/ui/toast/use-toast";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -98,7 +98,7 @@ import { computed } from "vue";
 import { ref, markRaw } from "vue";
 import draggable from "vuedraggable";
 
-import { useTabStore } from '@/stores/useTabStore';
+import { useTabStore } from "@/stores/useTabStore";
 
 const router = useRouter(); // Router instance for programmatic navigation
 const route = useRoute(); // Current route to access query parameters
@@ -106,13 +106,16 @@ const { toast } = useToast();
 const tabStore = useTabStore();
 const tabs = computed(() => tabStore.tabs);
 const activeTab = computed(() => tabStore.activeTab);
-
+const filteredTabs = computed(() =>
+  tabs.value.filter((tab) => tab.id !== 1 && tab.id !== 2)
+);
 
 const activeTabKey = computed(() => `${activeTab.value}-${Date.now()}`);
 
-
 const getActiveComponent = computed(() => {
-  return tabs.value.find(tab => tab.id === activeTab.value)?.component || null;
+  return (
+    tabs.value.find((tab) => tab.id === activeTab.value)?.component || null
+  );
 });
 
 function closeTab(id) {
@@ -125,22 +128,21 @@ function switchTab(id) {
 
 function openNewTab() {
   // Example: Adding a new tab dynamically
-  tabStore.addTab('New Tab','cytoscape');
+  tabStore.addTab("New Tab", "cytoscape");
 }
 
-async function logOut() {
+function logOut() {
   toast({
-        title: 'Success',
-        description: 'Sucesfully logged out',
-         variant: 'success'
-      });
+    title: "Success",
+    description: "Sucesfully logged out",
+    variant: "success",
+  });
   //await new Promise(resolve => setTimeout(resolve, 500)); // Wait for 1 second to show message before going to dashboard
-  localStorage.removeItem('token');  // Remove expired token
-  tabStore.clearStore();  // Clear tab store
-  router.replace("/login");   // Or redirect to login page using Vue Router
-  console.error("Logging out")
-
-  
+  localStorage.removeItem("token"); // Remove expired token
+  tabStore.clearStore(); // Clear tab store
+  console.error("tabstore after clear:", tabStore.tabs);
+  router.replace("/login"); // Or redirect to login page using Vue Router
+  console.error("Logging out");
 }
 // This is sample data.
 const data = {
@@ -209,7 +211,6 @@ const data = {
   ],
 };
 
-
 const activeTeam = ref(data.teams[0]);
 
 function setActiveTeam(team: (typeof data.teams)[number]) {
@@ -235,7 +236,7 @@ function handleOpenChange() {
 </script>
 
 <template>
-  <Toaster /> 
+  <Toaster />
 
   <CommandDialog v-model:open="open">
     <CommandInput placeholder="Type a command or search..." />
@@ -329,14 +330,18 @@ function handleOpenChange() {
                   <a href="#"> Search </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
+              <SidebarMenuItem
+                @click="switchTab(1)"
+                :class="{ 'bg-secondary': activeTab === 1 }"
+                class="rounded"
+              >
                 <SidebarMenuButton>
                   <Home />
-                  <a @click="tabStore.activeTabId = 'home'"> Home </a>
+                  Home
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
-                <SidebarMenuButton disabled>
+                <SidebarMenuButton @click="switchTab(2)" disabled>
                   <MessagesSquare />
                   <span> Chat (coming soon)</span>
                 </SidebarMenuButton>
@@ -347,27 +352,31 @@ function handleOpenChange() {
 
         <SidebarSeparator />
         <SidebarGroup>
-  <SidebarGroupLabel>Tabs:</SidebarGroupLabel>
+          <SidebarGroupLabel>Tabs:</SidebarGroupLabel>
 
-  <!-- Add new tab button -->
-  <SidebarGroupAction title="Add Tab" @click="openNewTab">
-    <Plus /> <span class="sr-only">Add Tab</span>
-  </SidebarGroupAction>
+          <!-- Add new tab button -->
+          <SidebarGroupAction title="Add Tab" @click="openNewTab">
+            <Plus /> <span class="sr-only">Add Tab</span>
+          </SidebarGroupAction>
 
-  <!-- Tab List -->
-  <SidebarGroupContent>
-    <div v-for="tab in tabs" :key="tab.id" class="flex items-center justify-between p-2 cursor-pointer rounded-md" 
-         :class="{ 'bg-gray-200': tab.id === activeTab }" @click="switchTab(tab.id)">
-      
-      <span class="truncate">{{ tab.title }}</span>
+          <!-- Tab List -->
+          <SidebarGroupContent>
+            <div
+              v-for="tab in filteredTabs"
+              :key="tab.id"
+              class=" text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex items-center justify-between p-2 cursor-pointer rounded-md"
+              :class="{ 'bg-secondary': tab.id === activeTab }"
+              @click="switchTab(tab.id)"
+            >
+              <span class="truncate">{{ tab.title }}</span>
 
-      <!-- Close button (except for the first tab) -->
-      <button  @click.stop="closeTab(tab.id)" class="text-red-500 hover:text-red-700">
-        ✖
-      </button>
-    </div>
-  </SidebarGroupContent>
-</SidebarGroup>
+                <X
+                @click.stop="closeTab(tab.id)"
+                class="w-4 h-4 hover:text-red-700"
+                />
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
 
       <SidebarFooter class="pb-[40px] md:pb-0"
@@ -470,27 +479,20 @@ function handleOpenChange() {
         <KeepAlive>
           <Cytoscape class="grid auto-rows-min gap-4 w-full" />
         </KeepAlive> -->
-        <!-- md:grid-cols-3 -->
+      <!-- md:grid-cols-3 -->
       <!-- </div> -->
-      
 
-     
- 
+      <!-- Tab Content -->
 
-    <!-- Tab Content -->
-    <div v-if="activeTab">
-    <div class="flex flex-1 flex-col gap-4 p-4 pt-0 w-full" >
-    
-      <component
-      :is="getActiveComponent"
-      v-if="getActiveComponent"
-      :key="activeTabKey"
-      :tab-id="activeTab"    
-      :tab-type="'cytoscape'"  
-    />
-
-    </div>
-  </div>
+      <div class="flex flex-1 flex-col gap-4 p-4 pt-0 w-full">
+        <component
+          :is="getActiveComponent"
+          v-if="getActiveComponent"
+          :key="activeTabKey"
+          :tab-id="activeTab"
+          :tab-type="'cytoscape'"
+        />
+      </div>
     </SidebarInset>
   </SidebarProvider>
 </template>

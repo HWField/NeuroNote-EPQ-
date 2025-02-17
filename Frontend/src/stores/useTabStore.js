@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 import { markRaw, ref } from "vue";
 import Cytoscape from "@/components/Cytoscape.vue";
+import Dashboard from "@/components/Dashboard.vue";
+import Chat from "@/components/Chat.vue";
 export const useTabStore = defineStore("tabStore", () => {
   
 
@@ -8,21 +10,28 @@ export const useTabStore = defineStore("tabStore", () => {
 
   const defaultTabs = [ {
     id: 1,
-    title: "Test1",
-    component: markRaw(Cytoscape),
+    title: "Dashboard",
+    component: markRaw(Dashboard),
     type: "cytoscape", // Component type
-    state: { elements: [], zoom: 1, pan: { x: 0, y: 0 } },
+   
   },
   {
     id: 2,
-    title: "Test2",
+    title: "Chat",
+    component: markRaw(Chat),
+    type: "cytoscape", // Component type
+    state: { },
+  },
+  {
+    id: 3,
+    title: "Note1",
     component: markRaw(Cytoscape),
     type: "cytoscape", // Component type
-    state: { elements: [], zoom: 1, pan: { x: 0, y: 0 } },
+    state: { },
   },];
 
   
-  const tabs = ref(defaultTabs);
+  const tabs = ref([...defaultTabs]); // Initialize tabs with default tabs
   // Add a new tab
   function addTab(title, type) {
     const id = Date.now();
@@ -32,7 +41,7 @@ export const useTabStore = defineStore("tabStore", () => {
       title,
       component,
       type,
-      state: { elements: [], zoom: 1, pan: { x: 0, y: 0 } },
+      state: {  },
     });
     activeTab.value = id;
   }
@@ -62,11 +71,31 @@ export const useTabStore = defineStore("tabStore", () => {
   }
 
   function clearStore() {
-    tabs.value = [...defaultTabs] // Clear the entire session storage
-    activeTab.value = 1; // Reset active tab
+    console.error("🧹 CLEARING TAB STORE!");
     tabs.value.forEach((tab) => {
-      tab.component = markRaw(Cytoscape);
+      console.log("before state" + tab.state);
+      tab.state = {}; // Reset state manually
+      console.log("after state" + tab.state);
     });
+    // Reset tabs with brand new objects (deep reset)
+    tabs.value = [ {
+      id: 1,
+      title: "Test1",
+      component: markRaw(Cytoscape),
+      type: "cytoscape", // Component type
+      state: {  },
+    },
+    {
+      id: 2,
+      title: "Test2",
+      component: markRaw(Cytoscape),
+      type: "cytoscape", // Component type
+      state: { },
+    },];
+  
+    activeTab.value = 1; // Reset active tab
+  
+    console.log("After Clear:", JSON.stringify(tabs.value, null, 2));
   }
 
   return {

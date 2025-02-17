@@ -53,18 +53,13 @@ const props = defineProps({
 
 const loadState = () => {
   const tab = tabStore.getTab(props.tabId, props.tabType);
-  return tab?.state || { elements: [], zoom: 1, pan: { x: 0, y: 0 } };
+  return tab?.state || {};
 };
 
 const saveState = () => {
   if (cy) {
-
-    tabStore.updateTabState(props.tabId, props.tabType, {
-      elements: cy.json().elements,
-      zoom: cy.zoom(),
-      pan: cy.pan(),
-    });
- 
+    console.log("saving state")
+    tabStore.updateTabState(props.tabId, props.tabType, cy.json());
   }
 };
 
@@ -72,19 +67,20 @@ function initializeCytoscape() {
   // Initialize Cytoscape
   console.log("Initializing Cytoscape...");
   let state = loadState();
+  console.log(state);
   if (cy) {
-    console.log("Destroying previous Cytoscape instance before reinitializing...");
+    console.log(
+      "Destroying previous Cytoscape instance before reinitializing..."
+    );
     cy.destroy();
     cy = null;
   }
 
-
   cy = cytoscape({
     boxSelectionEnabled: true,
     container: document.getElementById("cy"),
-    elements: state.elements,
-    zoom: state.zoom,
-    pan: state.pan,
+    elements: [],
+
     style: [
       {
         selector: "node",
@@ -268,19 +264,19 @@ function initializeCytoscape() {
     }
   });
 
-  cy.layout({
-    name: "cola",
-    infinite: true, // Infinite animation
-    animate: true,
-    randomize: false, // Preserve fcose positions
-    fit: false, // Do not fit the graph after layout
-    refresh: 0, // number of ticks per frame; higher is faster but more jerky
-    centerGraph: false,
-    eles: null,
-  }).run();
+  // cy.layout({
+  //   name: "cola",
+  //   infinite: true, // Infinite animation
+  //   animate: true,
+  //   randomize: false, // Preserve fcose positions
+  //   fit: false, // Do not fit the graph after layout
+  //   refresh: 0, // number of ticks per frame; higher is faster but more jerky
+  //   centerGraph: false,
+  //   eles: null,
+  // }).run();
 
-  cy.zoom(state.zoom);
-  cy.pan(state.pan);
+  // cy.zoom(state.zoom);
+  // cy.pan(state.pan);
 
   document.addEventListener("keydown", HandlecyClick);
   // Step 2: Start cola layout with infinite animation after fcose completes
@@ -500,8 +496,6 @@ function RunLayout(effectors) {
         !effectors.some((effector) => effector === constraint.nodeId)
     );
     //remove wanted nodes from fixedNodeConstraints
-
-  
   }
   // Step 1: Run fcose to organize orphan nodes
   cy.layout({
@@ -918,27 +912,42 @@ const loadData = async () => {
 onMounted(() => {
   console.log("Cytoscape mounted");
   initializeCytoscape();
-  
-  if (loadState().elements.length === 0) {
+  let state = loadState();
+  if (Object.keys(state).length !== 0) {
+    {
+      const rawState = JSON.parse(JSON.stringify(state));
+      cy.json(rawState);
+      UpdateNodes();
+      cy.layout({
+    name: "cola",
+    infinite: true, // Infinite animation
+    animate: true,
+    randomize: false, // Preserve fcose positions
+    fit: false, // Do not fit the graph after layout
+    refresh: 0, // number of ticks per frame; higher is faster but more jerky
+    centerGraph: false,
+    eles: null,
+  }).run();
+      console.log("Cytoscape state loaded");
+    }
+  } else {
     loadData();
   }
 });
 
 onUnmounted(() => {
-  
-  
-  cy.stop(); // Stop any ongoing layouts
-  cy.off("layoutstop");
-  
-  saveState();
-  cy.remove('*'); // Clear the graph
- 
-  cy = null;
-  document.removeEventListener("keydown", HandlecyClick);
-  if (cy) {
-    cy.destroy();
+  if (cy && cy.elements().length > 0) {
+    saveState();
   }
-  console.log("cytoscape unmounted");
+  if (cy) {
+    console.log("Destroying Cytoscape instance...");
+    cy.stop(); // Stop any ongoing layouts
+    cy.remove("*"); // Remove all elements from the graph
+    cy.destroy(); // Completely destroy the instance
+    cy = null; // Nullify reference to prevent memory leaks
+  }
+
+  document.removeEventListener("keydown", HandlecyClick);
 });
 </script>
 
