@@ -1,5 +1,7 @@
 import axios from 'axios';
 import router from "@/router"; // Adjust the path based on your project structure
+import { useUserStore } from "@/stores/useUserStore";
+
 // Create an Axios instance
 const api = axios.create({
   baseURL: 'http://127.0.0.1:8000',  // Replace with your Flask API base URL
@@ -11,7 +13,8 @@ const api = axios.create({
 // Interceptor to add JWT token to request headers
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');  // Retrieve the token from localStorage
+    //const token = localStorage.getItem('token');  // Retrieve the token from localStorage
+    const token = useUserStore().token;  // Retrieve the token from Pinia store
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;  // Attach token to Authorization header
     }
@@ -45,7 +48,7 @@ api.interceptors.response.use(
       console.error('Session expired, please log in again.');
 
       // Remove expired token
-      localStorage.removeItem('token');
+      useUserStore().logout();
 
       // Save the original route in the query parameters
       const currentRoute = window.location.pathname;

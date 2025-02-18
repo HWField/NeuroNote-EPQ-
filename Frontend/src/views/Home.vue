@@ -99,11 +99,15 @@ import { ref, markRaw } from "vue";
 import draggable from "vuedraggable";
 
 import { useTabStore } from "@/stores/useTabStore";
+import { useUserStore } from "@/stores/useUserStore";
 
 const router = useRouter(); // Router instance for programmatic navigation
 const route = useRoute(); // Current route to access query parameters
 const { toast } = useToast();
+
 const tabStore = useTabStore();
+const userStore = useUserStore();
+
 const tabs = computed(() => tabStore.tabs);
 const activeTab = computed(() => tabStore.activeTab);
 const filteredTabs = computed(() =>
@@ -138,7 +142,8 @@ function logOut() {
     variant: "success",
   });
   //await new Promise(resolve => setTimeout(resolve, 500)); // Wait for 1 second to show message before going to dashboard
-  localStorage.removeItem("token"); // Remove expired token
+  // localStorage.removeItem("token"); // Remove expired token
+  userStore.logout(); // Clear user store
   tabStore.clearStore(); // Clear tab store
   console.error("tabstore after clear:", tabStore.tabs);
   router.replace("/login"); // Or redirect to login page using Vue Router
@@ -392,17 +397,17 @@ function handleOpenChange() {
                   <Avatar class="h-8 w-8 rounded-lg">
                     <AvatarImage
                       :src="data.user.avatar"
-                      :alt="data.user.name"
+                      :alt="userStore.username"
                     />
                     <AvatarFallback class="rounded-lg">
-                      {{ data.user.name[0] }}
+                      {{ userStore.username[0] }}
                     </AvatarFallback>
                   </Avatar>
                   <div class="grid flex-1 text-left text-sm leading-tight">
                     <span class="truncate font-semibold">{{
-                      data.user.name
+                     userStore.username
                     }}</span>
-                    <span class="truncate text-xs">{{ data.user.email }}</span>
+                    <span class="truncate text-xs">{{ userStore.email }}</span>
                   </div>
                   <ChevronsUpDown class="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -422,14 +427,14 @@ function handleOpenChange() {
                         :src="data.user.avatar"
                         :alt="data.user.name"
                       />
-                      <AvatarFallback class="rounded-lg"> CN </AvatarFallback>
+                      <AvatarFallback class="rounded-lg"> {{userStore.username[0]}} </AvatarFallback>
                     </Avatar>
                     <div class="grid flex-1 text-left text-sm leading-tight">
                       <span class="truncate font-semibold">{{
-                        data.user.name
+                        userStore.username
                       }}</span>
                       <span class="truncate text-xs">{{
-                        data.user.email
+                        userStore.email
                       }}</span>
                     </div>
                   </div>

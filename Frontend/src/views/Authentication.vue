@@ -22,8 +22,9 @@ import { cn } from "@/lib/utils";
 import { ref } from "vue";
 import axios from "../axios"; // Import the Axios instance
 import { useRouter, useRoute } from "vue-router"; // Vue Router for navigation
-
+import { useUserStore } from "@/stores/useUserStore";
 const { toast } = useToast();
+const userStore = useUserStore();
 const isRegisterView = ref(false);
 const email = ref("");
 const username = ref("");
@@ -42,8 +43,15 @@ const login = async () => {
       terms: terms.value,
     });
 
+
     // Store the token in localStorage
-    localStorage.setItem("token", response.data.access_token);
+    //localStorage.setItem("token", response.data.access_token);
+    userStore.setUser({
+      username: response.data.username,
+      email: response.data.email,
+      role: response.data.userStatus,
+      token: response.data.access_token,
+    });
     toast({
         title: 'Success',
         description: 'Sucesfully Logged in',
@@ -81,7 +89,13 @@ const register = async () => {
     });
 
     // Store the token in localStorage
-    localStorage.setItem("token", response.data.access_token);
+    //localStorage.setItem("token", response.data.access_token);
+    userStore.setUser({
+      username: response.data.username,
+      email: response.data.email,
+      role: response.data.userStatus,
+      token: response.data.access_token,
+    });
     toast({
         title: 'Success',
         description: 'Sucesfully Registered and Logged in',
@@ -119,40 +133,40 @@ const register = async () => {
 };
 
 // Logout function
-const logout = () => {
-  // Remove token from localStorage
-  const token = localStorage.getItem("token");
-  if (token) {
-    localStorage.removeItem("token");
-    console.log("Logged out successfully");
-  } else {
-    console.error("No token found. Cannot logout.");
-  }
-};
+// const logout = () => {
+//   // Remove token from localStorage
+//   const token = localStorage.getItem("token");
+//   if (token) {
+//     localStorage.removeItem("token");
+//     console.log("Logged out successfully");
+//   } else {
+//     console.error("No token found. Cannot logout.");
+//   }
+// };
 
 // Function to access the protected route
-const accessProtectedRoute = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      console.error("No token found. Please login first.");
-      return;
-    }
+// const accessProtectedRoute = async () => {
+//   try {
+//     const token = localStorage.getItem("token");
+//     if (!token) {
+//       console.error("No token found. Please login first.");
+//       return;
+//     }
 
-    const response = await axios.get("/test", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+//     const response = await axios.get("/test", {
+//       headers: {
+//         Authorization: `Bearer ${token}`,
+//       },
+//     });
 
-    console.log("Access to protected route successful:", response.data);
-  } catch (error) {
-    console.error(
-      "Failed to access protected route:",
-      error.response ? error.response.data : error
-    );
-  }
-};
+//     console.log("Access to protected route successful:", response.data);
+//   } catch (error) {
+//     console.error(
+//       "Failed to access protected route:",
+//       error.response ? error.response.data : error
+//     );
+//   }
+// };
 </script>
 
 <template>

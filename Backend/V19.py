@@ -255,7 +255,7 @@ def login():
         # Create JWT token on successful login
         access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
         print("logged in") 
-        return jsonify(access_token=access_token), 200
+        return jsonify(access_token=access_token, username = user.username, email = user.email, userStatus = user.user_status), 200
         
     else:
         return jsonify({"message": "Invalid password"}), 400
@@ -296,7 +296,7 @@ def register():
         user = dbsession.query(User).filter_by(email=email).first()
         access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
         print("logged in")
-        return jsonify(access_token=access_token), 200
+        return jsonify(access_token=access_token , username = user.username, email = user.email, userStatus = user.user_status), 200
        
         
     

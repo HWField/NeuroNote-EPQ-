@@ -3,6 +3,7 @@ import HomeView from '@/views/Home.vue'
 import AuthenticationView from '@/views/Authentication.vue'
 import TipTap from '@/components/TipTap.vue'
 import Error from '@/views/Error.vue'
+import { useUserStore } from "@/stores/useUserStore";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,6 +17,7 @@ const router = createRouter({
       path: '/dashboard',
       name: 'dashboard',
       component: HomeView,
+      meta: { requiresAuth: true } // Protect this route
     },
     {
       path: '/login',
@@ -46,4 +48,12 @@ const router = createRouter({
   ],
 })
 
+router.beforeEach((to, from, next) => {
+  const userStore = useUserStore() // Access store inside navigation guard
+  if (to.meta.requiresAuth && !userStore.isAuthenticated) {
+    next({ name: 'login', query: { redirect: to.fullPath } }) // Redirect to login if not authenticated
+  } else {
+    next() // Allow navigation
+  }
+})
 export default router

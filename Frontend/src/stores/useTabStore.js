@@ -12,14 +12,14 @@ export const useTabStore = defineStore("tabStore", () => {
     id: 1,
     title: "Dashboard",
     component: markRaw(Dashboard),
-    type: "cytoscape", // Component type
+    type: "dashboard", // Component type
    
   },
   {
     id: 2,
     title: "Chat",
     component: markRaw(Chat),
-    type: "cytoscape", // Component type
+    type: "chat", // Component type
     state: { },
   },
   {
@@ -80,14 +80,21 @@ export const useTabStore = defineStore("tabStore", () => {
     // Reset tabs with brand new objects (deep reset)
     tabs.value = [ {
       id: 1,
-      title: "Test1",
-      component: markRaw(Cytoscape),
-      type: "cytoscape", // Component type
-      state: {  },
+      title: "Dashboard",
+      component: markRaw(Dashboard),
+      type: "dashboard", // Component type
+     
     },
     {
       id: 2,
-      title: "Test2",
+      title: "Chat",
+      component: markRaw(Chat),
+      type: "chat", // Component type
+      state: { },
+    },
+    {
+      id: 3,
+      title: "Note1",
       component: markRaw(Cytoscape),
       type: "cytoscape", // Component type
       state: { },
