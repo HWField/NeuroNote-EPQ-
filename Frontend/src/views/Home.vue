@@ -342,7 +342,7 @@ function handleOpenChange() {
               >
                 <SidebarMenuButton>
                   <Home />
-                  Home
+                  Dashboard
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
@@ -365,7 +365,9 @@ function handleOpenChange() {
           </SidebarGroupAction>
 
           <!-- Tab List -->
-          <SidebarGroupContent>
+          
+          <SidebarGroupContent> 
+            <ScrollArea>
             <div
               v-for="tab in filteredTabs"
               :key="tab.id"
@@ -380,7 +382,9 @@ function handleOpenChange() {
                 class="w-4 h-4 hover:text-red-700"
                 />
             </div>
+          </ScrollArea>
           </SidebarGroupContent>
+    
         </SidebarGroup>
       </SidebarContent>
 
@@ -470,7 +474,7 @@ function handleOpenChange() {
         <div class="flex items-center">
           <SidebarTrigger class="ml-1" />
           <Separator orientation="vertical" class="mx-2" />
-          <span class="text-lg font-semibold">This is the Home Tab</span>
+            <span class="text-lg font-semibold">{{ tabs.find(tab => tab.id === activeTab)?.title || 'Home' }}</span>
 
           <div class="absolute top-4 right-4">
             <LightDark class="bg-white p-4 rounded-lg shadow-lg"></LightDark>

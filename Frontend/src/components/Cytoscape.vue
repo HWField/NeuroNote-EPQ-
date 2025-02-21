@@ -58,7 +58,7 @@ const loadState = () => {
 
 const saveState = () => {
   if (cy) {
-    console.log("saving state")
+    console.log("saving state");
     tabStore.updateTabState(props.tabId, props.tabType, cy.json());
   }
 };
@@ -919,15 +919,15 @@ onMounted(() => {
       cy.json(rawState);
       UpdateNodes();
       cy.layout({
-    name: "cola",
-    infinite: true, // Infinite animation
-    animate: true,
-    randomize: false, // Preserve fcose positions
-    fit: false, // Do not fit the graph after layout
-    refresh: 0, // number of ticks per frame; higher is faster but more jerky
-    centerGraph: false,
-    eles: null,
-  }).run();
+        name: "cola",
+        infinite: true, // Infinite animation
+        animate: true,
+        randomize: false, // Preserve fcose positions
+        fit: false, // Do not fit the graph after layout
+        refresh: 0, // number of ticks per frame; higher is faster but more jerky
+        centerGraph: false,
+        eles: null,
+      }).run();
       console.log("Cytoscape state loaded");
     }
   } else {
@@ -1045,10 +1045,10 @@ onUnmounted(() => {
   </div>
   <!-- desktop toolbar -->
   <div
-    class="hidden md:flex absolute top-24 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2"
+    class="hidden md:flex absolute top-[12%] left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2"
   >
     <Button class="flex items-center">
-      <Search class="w-5 h-5" />
+      <Search class="" />
       <span>Search</span>
     </Button>
 
