@@ -2,7 +2,9 @@ import { defineStore } from "pinia";
 import { markRaw, ref } from "vue";
 import Cytoscape from "@/components/Cytoscape.vue";
 import Dashboard from "@/components/Dashboard.vue";
+import TipTap from "@/components/Document editor/TipTap.vue";
 import Chat from "@/components/Chat.vue";
+import Note from "@/components/Note.vue";
 export const useTabStore = defineStore("tabStore", () => {
   
 
@@ -25,7 +27,7 @@ export const useTabStore = defineStore("tabStore", () => {
   {
     id: 3,
     title: "Note1",
-    component: markRaw(Cytoscape),
+    component: markRaw(TipTap),
     type: "cytoscape", // Component type
     state: { },
   },];

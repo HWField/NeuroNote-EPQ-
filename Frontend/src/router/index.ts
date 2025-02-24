@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/Home.vue'
 import AuthenticationView from '@/views/Authentication.vue'
-import TipTap from '@/components/TipTap.vue'
 import Error from '@/views/Error.vue'
 import { useUserStore } from "@/stores/useUserStore";
 
@@ -27,11 +26,6 @@ const router = createRouter({
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       // component: () => import('../App.vue'),
-    },
-    {
-      path: '/test',
-      name: 'test',
-      component: TipTap,
     },
     {
       path : '/error',

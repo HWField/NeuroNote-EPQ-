@@ -100,6 +100,7 @@ import draggable from "vuedraggable";
 
 import { useTabStore } from "@/stores/useTabStore";
 import { useUserStore } from "@/stores/useUserStore";
+import Input from "@/components/ui/input/Input.vue";
 
 const router = useRouter(); // Router instance for programmatic navigation
 const route = useRoute(); // Current route to access query parameters
@@ -273,7 +274,7 @@ function handleOpenChange() {
                   class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
                   <div
-                    class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"
+                    class="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-secondary"
                   >
                     <component :is="activeTeam.logo" class="size-4" />
                   </div>
@@ -356,7 +357,8 @@ function handleOpenChange() {
         </SidebarGroup>
 
         <SidebarSeparator />
-        <SidebarGroup>
+
+        <SidebarGroup class="flex flex-col h-full overflow-hidden">
           <SidebarGroupLabel>Tabs:</SidebarGroupLabel>
 
           <!-- Add new tab button -->
@@ -365,26 +367,24 @@ function handleOpenChange() {
           </SidebarGroupAction>
 
           <!-- Tab List -->
-          
-          <SidebarGroupContent> 
-            <ScrollArea>
-            <div
-              v-for="tab in filteredTabs"
-              :key="tab.id"
-              class=" text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex items-center justify-between p-2 cursor-pointer rounded-md"
-              :class="{ 'bg-secondary': tab.id === activeTab }"
-              @click="switchTab(tab.id)"
-            >
-              <span class="truncate">{{ tab.title }}</span>
+          <ScrollArea class="flex-1 min-h-0 overflow-y-auto">
+            <SidebarGroupContent>
+              <div
+                v-for="tab in filteredTabs"
+                :key="tab.id"
+                class="text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex items-center justify-between p-2 cursor-pointer rounded-md"
+                :class="{ 'bg-secondary': tab.id === activeTab }"
+                @click="switchTab(tab.id)"
+              >
+                <span class="truncate">{{ tab.title }}</span>
 
                 <X
-                @click.stop="closeTab(tab.id)"
-                class="w-4 h-4 hover:text-red-700"
+                  @click.stop="closeTab(tab.id)"
+                  class="w-4 h-4 hover:text-red-700"
                 />
-            </div>
+              </div>
+            </SidebarGroupContent>
           </ScrollArea>
-          </SidebarGroupContent>
-    
         </SidebarGroup>
       </SidebarContent>
 
@@ -409,7 +409,7 @@ function handleOpenChange() {
                   </Avatar>
                   <div class="grid flex-1 text-left text-sm leading-tight">
                     <span class="truncate font-semibold">{{
-                     userStore.username
+                      userStore.username
                     }}</span>
                     <span class="truncate text-xs">{{ userStore.email }}</span>
                   </div>
@@ -431,7 +431,9 @@ function handleOpenChange() {
                         :src="data.user.avatar"
                         :alt="data.user.name"
                       />
-                      <AvatarFallback class="rounded-lg"> {{userStore.username[0]}} </AvatarFallback>
+                      <AvatarFallback class="rounded-lg">
+                        {{ userStore.username[0] }}
+                      </AvatarFallback>
                     </Avatar>
                     <div class="grid flex-1 text-left text-sm leading-tight">
                       <span class="truncate font-semibold">{{
@@ -474,7 +476,7 @@ function handleOpenChange() {
         <div class="flex items-center">
           <SidebarTrigger class="ml-1" />
           <Separator orientation="vertical" class="mx-2" />
-            <span class="text-lg font-semibold">{{ tabs.find(tab => tab.id === activeTab)?.title || 'Home' }}</span>
+          <span class="text-lg font-semibold">Route</span>
 
           <div class="absolute top-4 right-4">
             <LightDark class="bg-white p-4 rounded-lg shadow-lg"></LightDark>
@@ -492,8 +494,8 @@ function handleOpenChange() {
       <!-- </div> -->
 
       <!-- Tab Content -->
-
-      <div class="flex flex-1 flex-col gap-4 p-4 pt-0 w-full">
+      <!-- mx auto relative  -->
+      <div class="h-full w-full overflow-hidden">
         <component
           :is="getActiveComponent"
           v-if="getActiveComponent"

@@ -644,6 +644,9 @@ function HandlecyClick(event) {
         });
       }
     });
+  } else if (event.key === "c") {
+    centerGraph();
+  
   } else if (event.key === "l") {
     const selectedNodes = cy.$("node:selected").map((node) => node);
     selectedNodes.forEach((node) => {
@@ -911,6 +914,7 @@ const loadData = async () => {
 
 onMounted(() => {
   console.log("Cytoscape mounted");
+  
   initializeCytoscape();
   let state = loadState();
   if (Object.keys(state).length !== 0) {
@@ -936,6 +940,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  console.log("Cytoscape unmounted");
   if (cy && cy.elements().length > 0) {
     saveState();
   }
@@ -949,14 +954,102 @@ onUnmounted(() => {
 
   document.removeEventListener("keydown", HandlecyClick);
 });
+
+const navbarContainer = ref(null);
+const isLargeNavbarVisible = ref(true); // Controls visibility of the large navbar
+
+// Resize observer
+const handleResize = () => {
+  if (navbarContainer.value) {
+    const containerWidth = navbarContainer.value.offsetWidth;
+    // Toggle navbar visibility based on container width
+    isLargeNavbarVisible.value = containerWidth >= 600; // Adjust threshold as needed
+  }
+};
+
+// Setup ResizeObserver
+onMounted(() => {
+  const observer = new ResizeObserver(handleResize);
+  observer.observe(navbarContainer.value); // Observe the navbar container
+  // Initial check
+  handleResize();
+});
+
+// Cleanup observer on component unmount
+onBeforeUnmount(() => {
+  const observer = new ResizeObserver(handleResize);
+  observer.disconnect();
+});
 </script>
 
 <template>
-  <!-- mobile toolbar -->
-  <div
-    class="md:hidden absolute bottom-20 left-1/2 transform w-full -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2"
-  >
-    <div class="flex justify-around">
+  <div ref="navbarContainer" class="h-full w-full relative">
+    <!-- Large toolbar -->
+
+    <div
+      v-if="isLargeNavbarVisible"
+      class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
+    >
+      <Button class="flex items-center">
+        <Search class="" />
+        <span>Search</span>
+      </Button>
+
+      <Button class="flex items-center">
+        <Lock class="" />
+        <span>Lock</span>
+      </Button>
+      <!-- <Separator orientation="vertical"></Separator> -->
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
+          <Button class="">
+            <Plus></Plus>
+            <span>New</span>
+          </Button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+          >
+            <Tag class="w-5 h-5 text-gray-600" />
+            <span>Tag</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            @click="CreateNote('document')"
+          >
+            <FileText class="w-5 h-5 text-gray-600" />
+            <span>Page</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            @click="CreateNote('whiteboard')"
+          >
+            <LayoutGrid class="w-5 h-5 text-gray-600" />
+            <span>Whiteboard</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <!-- <Separator orientation="vertical"></Separator> -->
+
+      <Button @click="centerGraph()"> <House></House> Center </Button>
+
+      <Button @click="drillDown(cy.$('node:selected')[0])">
+        <ChevronsDown></ChevronsDown> Drill
+      </Button>
+
+      <Button variant="destructive" @click="ShuffleGraph()">
+        <Shuffle></Shuffle> Shuffle
+      </Button>
+    </div>
+
+    <!-- Small toolbar -->
+    <div
+      v-else
+      class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
+    >
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button class="">
@@ -1042,64 +1135,7 @@ onUnmounted(() => {
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
+
+    <div id="cy" class="w-full h-full absolute"></div>
   </div>
-  <!-- desktop toolbar -->
-  <div
-    class="hidden md:flex absolute top-[12%] left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2"
-  >
-    <Button class="flex items-center">
-      <Search class="" />
-      <span>Search</span>
-    </Button>
-
-    <Button class="flex items-center">
-      <Lock class="" />
-      <span>Lock</span>
-    </Button>
-    <!-- <Separator orientation="vertical"></Separator> -->
-    <DropdownMenu>
-      <DropdownMenuTrigger as-child>
-        <Button class="">
-          <Plus></Plus>
-          <span>New</span>
-        </Button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-        <DropdownMenuItem
-          class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        >
-          <Tag class="w-5 h-5 text-gray-600" />
-          <span>Tag</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-          @click="CreateNote('document')"
-        >
-          <FileText class="w-5 h-5 text-gray-600" />
-          <span>Page</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-          @click="CreateNote('whiteboard')"
-        >
-          <LayoutGrid class="w-5 h-5 text-gray-600" />
-          <span>Whiteboard</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-
-    <!-- <Separator orientation="vertical"></Separator> -->
-
-    <Button @click="centerGraph()"> <House></House> Center </Button>
-
-    <Button @click="drillDown(cy.$('node:selected')[0])">
-      <ChevronsDown></ChevronsDown> Drill
-    </Button>
-
-    <Button variant="destructive" @click="ShuffleGraph()">
-      <Shuffle></Shuffle> Shuffle
-    </Button>
-  </div>
-  <div id="cy" class="w-full h-full overflow-hidden border-solid"></div>
 </template>
