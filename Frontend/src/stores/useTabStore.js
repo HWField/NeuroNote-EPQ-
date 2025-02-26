@@ -44,6 +44,7 @@ export const useTabStore = defineStore("tabStore", () => {
       component,
       type,
       state: {  },
+      breadcrumb: [],
     });
     activeTab.value = id;
   }
@@ -57,6 +58,13 @@ export const useTabStore = defineStore("tabStore", () => {
     if (tab) {
       tab.state = { ...newState };
     }
+  }
+
+  function navigate(id, breadcrumb) {
+    const tab = tabs.value.find((tab) => tab.id === id);
+    if (tab) {
+      tab.breadcrumb = breadcrumb
+  }
   }
 
   // Remove a tab

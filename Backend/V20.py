@@ -1,5 +1,6 @@
 # version that adds login / registration / user management 
-
+import json
+from sqlalchemy.dialects.postgresql import JSONB
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Table, and_, UniqueConstraint
@@ -100,7 +101,7 @@ class Note(Base):
     colour = Column(String, default="")
     x = Column(Integer, nullable=True)
     y = Column(Integer, nullable=True)
-    content = Column(String, default="")
+    content = Column(JSONB, default="")
     viewport = Column(String, default="")
     background = Column(String, default="")
     
@@ -321,7 +322,7 @@ def register():
 def create():
     data = request.json
     type = data.get('type')
-    
+    userId = get_jwt_identity()
     if type == 'edge':
         source_id = data.get('source')
         target_id = data.get('target')
@@ -375,7 +376,7 @@ def create():
         
     elif type == 'tag':
         name = data.get('name')
-        tag = Tag(name=name, user_id = 1)
+        tag = Tag(name=name, user_id = userId)
         tag.set_user_specific_id(dbsession)
         dbsession.add(tag)
         try:
@@ -407,7 +408,7 @@ def create():
         name = data.get('name')
         format = data.get('format')
      
-        note = Note(name=name, format=format, user_id=int(get_jwt_identity()))
+        note = Note(name=name, format=format, user_id=int(userId))
         note.set_user_specific_id(dbsession)
         dbsession.add(note)
         try:
@@ -535,7 +536,7 @@ def  delete():
     
     
 @app.route('/update', methods=['POST'])
-# @login_required
+@jwt_required()
 def update():   
     data = request.json
     operation = data.get('operation')
@@ -606,11 +607,12 @@ def update():
     elif operation == "content":
         data = request.json
         note_id = data.get('id')
-        note_id = int(note_id.split('_')[1])
-        viewport = data.get('viewport')
-        content = data.get('content')
-        background = data.get('background')
+        # note_id = int(note_id.split('_')[1])
+        # viewport = data.get('viewport')
+        content = (data.get('content'))
+        # background = data.get('background')
         name = data.get('name')
+        
         print("------- note", note_id, "has made a save request")
 
         # Validate input
@@ -619,7 +621,7 @@ def update():
             return jsonify({'status': 'error', 'message': 'Invalid input data'}), 400
 
         # Query the note
-        note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=note_id).first()
+        note = dbsession.query(Note).filter_by(user_id=int(get_jwt_identity()), user_specific_id=note_id).first()
         if note is None:
             print("------- note", note_id, "has not been found")
             return jsonify({'status': 'error', 'message': 'Note not found'}), 404
@@ -627,9 +629,9 @@ def update():
             print("------- note", note.name, "has been found")
 
         # Update the content
-        note.viewport = viewport
+        # note.viewport = viewport
         note.content = content
-        note.background = background
+        # note.background = background
         note.name = name
         print("------- note: ", note.name, ", has had content, viewport and background set")
 
@@ -666,7 +668,9 @@ def update():
 # @login_required
 @jwt_required()
 def load():
+    
     data = request.json
+    
     operation = data.get('operation')
     current_user = get_jwt_identity()
     
@@ -785,7 +789,7 @@ def load():
         
     elif operation == "content":
         note_id = data.get('id')
-        note_id = int(note_id.split('_')[1])    
+        # note_id = int(note_id.split('_')[1])    
         print(note_id, "is being sent")
 
         # Validate input

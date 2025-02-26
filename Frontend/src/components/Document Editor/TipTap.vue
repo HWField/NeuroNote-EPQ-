@@ -1,23 +1,72 @@
-
-
 <script setup>
 import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
-import Mention from '@tiptap/extension-mention'
-import Highlight from '@tiptap/extension-highlight'
-import TextAlign from '@tiptap/extension-text-align'
+import Mention from "@tiptap/extension-mention";
+import Highlight from "@tiptap/extension-highlight";
+import TextAlign from "@tiptap/extension-text-align";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import Typography from "@tiptap/extension-typography";
-import Image from '@tiptap/extension-image'
+import Image from "@tiptap/extension-image";
 import { Editor, EditorContent } from "@tiptap/vue-3";
-import StarterKit from '@tiptap/starter-kit'
+import StarterKit from "@tiptap/starter-kit";
 import { ColorHighlighter } from "@/components/Document Editor/ColorHighlighter.ts";
 import { SmilieReplacer } from "@/components/Document Editor/SymbolReplacer.ts";
-import suggestion from '@/components/Document Editor/suggestion.js'
+import suggestion from "@/components/Document Editor/suggestion.js";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { Button } from "@/components/ui/Button";
+
+import axios from "../../axios.js";
+
+
+import { ref, onBeforeUnmount } from 'vue';
+import { onMounted } from 'vue';
+
+
+function SaveToBackend() {
+  let noteContent = editor.getJSON()
+  axios
+    .post("/update", {
+      operation: "content",
+      name: "note 1(updateasjson)",
+      content: noteContent,
+      id: 1,
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+    });
+}
+
+function LoadFromBackend() {
+  axios
+    .post("/load", {
+      id: '1',
+      operation: "content",
+    })
+    .then((response) => {
+      console.log("Type of content:", typeof response.data.content);
+      editor.commands.setContent(response.data.content);
+    })
+    .catch((error) => {
+      console.error("Error fetching data on load:", error);
+    });
+}
+
+onMounted(() => {
+  LoadFromBackend();
+  editor.chain().focus().run();
+});
+
+
+onBeforeUnmount(() => {
+  SaveToBackend();
+  if (editor) {
+    editor.destroy();
+  }
+});
+
+
 let editor = new Editor({
   extensions: [
     Document,
@@ -29,20 +78,20 @@ let editor = new Editor({
     SmilieReplacer,
     StarterKit,
     TextAlign.configure({
-          types: ['heading', 'paragraph'],
-        }),
+      types: ["heading", "paragraph"],
+    }),
     Highlight,
     Mention.configure({
-          HTMLAttributes: {
-            class: 'mention',
-          },
-          suggestion,
-        }),
+      HTMLAttributes: {
+        class: "mention",
+      },
+      suggestion,
+    }),
     Image,
   ],
   editorProps: {
     attributes: {
-      class: '',
+      class: "",
     },
   },
   content: `
@@ -90,59 +139,99 @@ let editor = new Editor({
       
       `,
 });
+
+
+
 </script>
 
-
 <template>
- 
-  <div class="flex justify-center mx-auto bg-primary-foreground p-3 shadow-lg rounded-lg mt-4 space-x-2 max-w-max ">
-    <Button @click="editor.chain().focus().toggleHeading({ level: 1 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }">
+
+   <div class="flex w-full h-full flex-col"> 
+    <div class="flex justify-center mx-auto bg-primary-foreground p-3 shadow-lg rounded-lg mt-4 space-x-2 max-w-max">
+    <Button
+      @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+      :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }"
+    >
       H1
     </Button>
-    <Button @click="editor.chain().focus().toggleHeading({ level: 2 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }">
+    <Button
+      @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+      :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }"
+    >
       H2
     </Button>
-    <Button @click="editor.chain().focus().toggleHeading({ level: 3 }).run()" :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }">
+    <Button
+      @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
+      :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }"
+    >
       H3
     </Button>
-    <Button @click="editor.chain().focus().setParagraph().run()" :class="{ 'is-active': editor.isActive('paragraph') }">
+    <Button
+      @click="editor.chain().focus().setParagraph().run()"
+      :class="{ 'is-active': editor.isActive('paragraph') }"
+    >
       Paragraph
     </Button>
-    <Button @click="editor.chain().focus().toggleBold().run()" :class="{ 'is-active': editor.isActive('bold') }">
+    <Button
+      @click="editor.chain().focus().toggleBold().run()"
+      :class="{ 'is-active': editor.isActive('bold') }"
+    >
       Bold
     </Button>
-    <Button @click="editor.chain().focus().toggleItalic().run()" :class="{ 'is-active': editor.isActive('italic') }">
+    <Button
+      @click="editor.chain().focus().toggleItalic().run()"
+      :class="{ 'is-active': editor.isActive('italic') }"
+    >
       Italic
     </Button>
-    <Button @click="editor.chain().focus().toggleStrike().run()" :class="{ 'is-active': editor.isActive('strike') }">
+    <Button
+      @click="editor.chain().focus().toggleStrike().run()"
+      :class="{ 'is-active': editor.isActive('strike') }"
+    >
       Strike
     </Button>
-    <Button @click="editor.chain().focus().toggleHighlight().run()" :class="{ 'is-active': editor.isActive('highlight') }">
+    <Button
+      @click="editor.chain().focus().toggleHighlight().run()"
+      :class="{ 'is-active': editor.isActive('highlight') }"
+    >
       Highlight
     </Button>
-    <Button @click="editor.chain().focus().setTextAlign('left').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'left' }) }">
+    <Button
+      @click="editor.chain().focus().setTextAlign('left').run()"
+      :class="{ 'is-active': editor.isActive({ textAlign: 'left' }) }"
+    >
       Left
     </Button>
-    <Button @click="editor.chain().focus().setTextAlign('center').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'center' }) }">
+    <Button
+      @click="editor.chain().focus().setTextAlign('center').run()"
+      :class="{ 'is-active': editor.isActive({ textAlign: 'center' }) }"
+    >
       Center
     </Button>
-    <Button @click="editor.chain().focus().setTextAlign('right').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'right' }) }">
+    <Button
+      @click="editor.chain().focus().setTextAlign('right').run()"
+      :class="{ 'is-active': editor.isActive({ textAlign: 'right' }) }"
+    >
       Right
     </Button>
-    <Button @click="editor.chain().focus().setTextAlign('justify').run()" :class="{ 'is-active': editor.isActive({ textAlign: 'justify' }) }">
+    <Button
+      @click="editor.chain().focus().setTextAlign('justify').run()"
+      :class="{ 'is-active': editor.isActive({ textAlign: 'justify' }) }"
+    >
       Justify
     </Button>
-
-</div>
-
-<div class="min-h-full min-w-full flex ">
-    <div class="min-h-full min-w-full flex justify-center overflow-none mb-40">
-      <editor-content class=" max-w-[1500px] justify-center bg-primary-foreground rounded-lg border-4 border-gray-800 m-4 p-4" :editor="editor" />
     </div>
-  </div>
+
+    <div class="flex justify-center ">
+      <ScrollArea class="editor w-full max-w-[2000px] h-[80vh] overflow-y-auto  bg-primary-foreground rounded-lg border-4 border-gray-800 m-4">
+        <editor-content class="p-4" :editor="editor" />
+      </ScrollArea>
+      </div>
+   
+    </div>
+  
+  
 </template>
-
-
 
 <style lang="scss">
 /* Basic editor styles */
@@ -150,19 +239,19 @@ let editor = new Editor({
 // .ProseMirror:focus {
 //     outline: none;
 //   }
-//   .ProseMirror {        
+//   .ProseMirror {
 //   min-height: 100px;
 //   max-height: 100%;
 //   overflow: scroll;
 // }
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+// *,
+// *::before,
+// *::after {
+//   box-sizing: border-box;
+// }
 .tiptap {
-  caret-color: #6A00F5;
-  margin: 1.5rem;
+  caret-color: #6a00f5;
+
 
   &:focus {
     outline: none;
@@ -266,7 +355,7 @@ let editor = new Editor({
     background: var(--black);
     border-radius: 0.5rem;
     color: var(--white);
-    font-family: 'JetBrainsMono', monospace;
+    font-family: "JetBrainsMono", monospace;
     margin: 1.5rem 0;
     padding: 0.75rem 1rem;
 
@@ -279,7 +368,7 @@ let editor = new Editor({
   }
 
   mark {
-    background-color: #FAF594;
+    background-color: #faf594;
     border-radius: 0.4rem;
     box-decoration-break: clone;
     padding: 0.1rem 0.3rem;

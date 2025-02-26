@@ -476,7 +476,7 @@ function handleOpenChange() {
         <div class="flex items-center">
           <SidebarTrigger class="ml-1" />
           <Separator orientation="vertical" class="mx-2" />
-          <span class="text-lg font-semibold">Route</span>
+            <span class="text-lg font-semibold">{{ activeTab.title }}</span>
 
           <div class="absolute top-4 right-4">
             <LightDark class="bg-white p-4 rounded-lg shadow-lg"></LightDark>

@@ -593,9 +593,9 @@ function HandlecyClick(event) {
   } else if (event.key === "n") {
     const selectedTag = cy.$('node[type="tag"]:selected');
     if (selectedTag.length > 0) {
-      CreateNote("child");
+      CreateNote("document");
     } else {
-      CreateNote("none");
+      CreateNote("document");
     }
   } else if (event.key === "t") {
     const selectedTag = cy.$('node[type="tag"]:selected');
@@ -1020,7 +1020,7 @@ onBeforeUnmount(() => {
             @click="CreateNote('document')"
           >
             <FileText class="w-5 h-5 text-gray-600" />
-            <span>Page</span>
+            <span>Document</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
@@ -1099,7 +1099,7 @@ onBeforeUnmount(() => {
             class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
           >
             <FileText class="w-5 h-5 text-gray-600" />
-            <span>Page</span>
+            <span>Docuement</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"

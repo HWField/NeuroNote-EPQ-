@@ -1,12 +1,20 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
-
+import { ref, watch } from "vue";
+import { useColorMode } from '@vueuse/core'
 export const useUserStore = defineStore("userStore", () => {
   const isAuthenticated = ref(false);
   const username = ref("");
   const email = ref("");
   const role = ref("");
   const token = ref("");
+  const theme = useColorMode(); theme.value = 'auto';
+  
+
+
+
+
+
+
 
   function setUser(userData) {
     username.value = userData.username;
