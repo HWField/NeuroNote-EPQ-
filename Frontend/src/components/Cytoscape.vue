@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "./ui/input";
 import { onMounted, onBeforeUnmount, onUnmounted, ref, watch } from "vue";
 
+import { useGraphStore } from "@/stores/useGraphStore";
 import {
   Settings,
   Bell,
@@ -44,22 +45,23 @@ import {
 import { useTabStore } from "@/stores/useTabStore";
 import axios from "../axios";
 const tabStore = useTabStore();
+const graphStore = useGraphStore();
 let cy = null; // Reference for Cytoscape instance
 
 const props = defineProps({
   tabId: Number,
-  tabType: String, // New property to identify the component type (e.g., 'cytoscape')
+  // tabType: String, // New property to identify the component type (e.g., 'cytoscape')
 });
 
 const loadState = () => {
-  const tab = tabStore.getTab(props.tabId, props.tabType);
+  const tab = tabStore.getTab(props.tabId);
   return tab?.state || {};
 };
 
 const saveState = () => {
   if (cy) {
     console.log("saving state");
-    tabStore.updateTabState(props.tabId, props.tabType, cy.json());
+    tabStore.updateTabState(props.tabId, cy.json());
   }
 };
 
@@ -143,12 +145,14 @@ function initializeCytoscape() {
         style: {
           width: 2,
           "line-color": "#aaa",
+          opacity: 0.1,
           "curve-style": "bezier",
           "target-arrow-shape": "triangle",
           "target-arrow-color": "#aaa",
           "arrow-scale": 1,
-
-          "transition-property": "line-color target-arrow-color arrow-scale", // Enable smooth transition for multiple properties
+"z-index": 0,
+          "transition-property":
+            "line-color target-arrow-color opacity arrow-scale", // Enable smooth transition for multiple properties
           "transition-duration": "0.3s", // Different transition durations for each property
           "transition-timing-function": "ease", // Different easing functions for each property
         },
@@ -171,6 +175,7 @@ function initializeCytoscape() {
           "background-color": "#FFC300" /* Yellow background */,
           "border-color": "#FF5733", // Light red color
           "border-width": "10px",
+          "z-index": 9999,
           "transition-property": "border-color background-color border-width", // Enable smooth transition for multiple properties
           "transition-duration": "0.3s", // Different transition durations for each property
           "transition-timing-function": "ease", // Different easing functions for each property
@@ -182,8 +187,9 @@ function initializeCytoscape() {
           "line-color": "#FF5733",
           "target-arrow-color": "#FF5733",
           "arrow-scale": 1.5,
-
-          "transition-property": "line-color target-arrow-color arrow-scale", // Enable smooth transition for multiple properties
+          opacity: 0.8,
+          "transition-property":
+            "line-color target-arrow-color opacity arrow-scale", // Enable smooth transition for multiple properties
           "transition-duration": "0.3s", // Different transition durations for each property
           "transition-timing-function": "ease", // Different easing functions for each property
         },
@@ -264,19 +270,50 @@ function initializeCytoscape() {
     }
   });
 
-  // cy.layout({
-  //   name: "cola",
-  //   infinite: true, // Infinite animation
-  //   animate: true,
-  //   randomize: false, // Preserve fcose positions
-  //   fit: false, // Do not fit the graph after layout
-  //   refresh: 0, // number of ticks per frame; higher is faster but more jerky
-  //   centerGraph: false,
-  //   eles: null,
-  // }).run();
+  cy.on("unselect", 'node', function (event) {
+        cy.nodes().removeClass("highlighted");
+        cy.edges().removeClass("highlighted");
+      });
 
-  // cy.zoom(state.zoom);
-  // cy.pan(state.pan);
+  cy.on("select", 'node[type="tag"]', function (event) {
+    const selectedNodes = cy.$("node:selected").map((node) => node);
+    selectedNodes.forEach((node) => {
+      if (node.data("type") === "tag") {
+        const selectedNode = node; // The selected node
+        const nodeId = selectedNode.id(); // ID of the selected node
+
+        // Find child nodes and edges
+        const childEdges = cy.edges(`[source = "${nodeId}"]`);
+        const childNodes = childEdges.targets(); // Get the target nodes of those edges
+        const selectedNodes = new Set();
+        const selectedEdges = new Set();
+        // Store original styles and animate in the new highlights
+        childEdges.forEach((edge) => {
+          selectedEdges.add(edge.id());
+          edge.addClass("highlighted");
+        });
+
+        childNodes.forEach((node) => {
+          selectedNodes.add(node.id());
+          node.addClass("highlighted");
+          // node.select();
+        });
+      }
+    });
+  });
+  cy.layout({
+    name: "cola",
+    infinite: true, // Infinite animation
+    animate: true,
+    randomize: false, // Preserve fcose positions
+    fit: false, // Do not fit the graph after layout
+    refresh: 0, // number of ticks per frame; higher is faster but more jerky
+    centerGraph: false,
+    eles: null,
+  }).run();
+
+  cy.zoom(state.zoom);
+  cy.pan(state.pan);
 
   document.addEventListener("keydown", HandlecyClick);
   // Step 2: Start cola layout with infinite animation after fcose completes
@@ -514,7 +551,9 @@ function RunLayout(effectors) {
     const colaLayout = cy.layout({
       name: "cola",
       infinite: true, // Infinite animation
+      nodeSpacing: function( node ){ return 5; }, // extra spacing around nodes
       animate: true,
+
       randomize: false, // Preserve fcose positions
       fit: false, // Do not fit the graph after layout
       refresh: 0, // number of ticks per frame; higher is faster but more jerky
@@ -646,7 +685,6 @@ function HandlecyClick(event) {
     });
   } else if (event.key === "c") {
     centerGraph();
-  
   } else if (event.key === "l") {
     const selectedNodes = cy.$("node:selected").map((node) => node);
     selectedNodes.forEach((node) => {
@@ -687,6 +725,7 @@ function HandlecyClick(event) {
     cy.elements().forEach((ele) => {
       ele.removeClass("greyed-out");
     });
+
   } else if (event.key === "r") {
     const selectedNode = cy.$("node:selected");
     if (selectedNode.length === 1) {
@@ -896,47 +935,20 @@ function drillDown(ele) {
     });
 }
 
-const loadData = async () => {
-  try {
-    const response = await axios.post("/load", {
-      operation: "all",
-    });
-    AddNodes(response.data); // Call the updateGraph function with the new data
-    UpdateNodes();
-    RunLayout("all");
-  } catch (error) {
-    console.error(
-      "Error fetching data:",
-      error.response ? error.response.data : error
-    );
-  }
-};
+function loadData() {
+  let elements = graphStore.elements;
+  AddNodes({ elements });
+  UpdateNodes();
+  RunLayout("all");
+}
 
 onMounted(() => {
   console.log("Cytoscape mounted");
-  
+
   initializeCytoscape();
   let state = loadState();
-  if (Object.keys(state).length !== 0) {
-    {
-      const rawState = JSON.parse(JSON.stringify(state));
-      cy.json(rawState);
-      UpdateNodes();
-      cy.layout({
-        name: "cola",
-        infinite: true, // Infinite animation
-        animate: true,
-        randomize: false, // Preserve fcose positions
-        fit: false, // Do not fit the graph after layout
-        refresh: 0, // number of ticks per frame; higher is faster but more jerky
-        centerGraph: false,
-        eles: null,
-      }).run();
-      console.log("Cytoscape state loaded");
-    }
-  } else {
-    loadData();
-  }
+  loadData();
+  // some apply state logic
 });
 
 onUnmounted(() => {

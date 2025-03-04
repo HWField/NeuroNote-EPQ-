@@ -89,7 +89,7 @@ export default {
 /* Dropdown menu */
 .dropdown-menu {
   background: var(--white);
-  border: 1px solid var(--gray-1);
+
   border-radius: 0.7rem;
   box-shadow: var(--shadow);
   display: flex;
@@ -98,6 +98,7 @@ export default {
   overflow: auto;
   padding: 0.4rem;
   position: relative;
+  @apply bg-slate-800  border border-slate-600 text-white;
 
   button {
     align-items: center;
@@ -110,10 +111,12 @@ export default {
     &:hover,
     &:hover.is-selected {
       background-color: var(--gray-3);
+      @apply bg-slate-600 rounded;
     }
 
     &.is-selected {
       background-color: var(--gray-2);
+      @apply bg-slate-600 rounded;
     }
   }
 }

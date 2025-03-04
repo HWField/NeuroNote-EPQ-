@@ -15,8 +15,8 @@ import { Label } from "@/components/ui/label";
 import LightDark from "@/components/LightDark.vue";
 import { Checkbox } from "@/components/ui/checkbox";
 import { buttonVariants } from "@/components/ui/button";
-import Toaster from '@/components/ui/toast/Toaster.vue'
-import { useToast } from '@/components/ui/toast/use-toast'
+import Toaster from "@/components/ui/toast/Toaster.vue";
+import { useToast } from "@/components/ui/toast/use-toast";
 
 import { cn } from "@/lib/utils";
 import { ref } from "vue";
@@ -43,38 +43,33 @@ const login = async () => {
       terms: terms.value,
     });
 
-
     // Store the token in localStorage
     //localStorage.setItem("token", response.data.access_token);
-    userStore.setUser({
+    toast({
+      title: "Success",
+      description: "Sucesfully Logged in",
+      variant: "success",
+    });
+
+    const redirect = route.query.redirect as string;
+
+    userStore.Login({
       username: response.data.username,
       email: response.data.email,
       role: response.data.userStatus,
       token: response.data.access_token,
+      redirect: redirect ? redirect : null,
     });
-    toast({
-        title: 'Success',
-        description: 'Sucesfully Logged in',
-         variant: 'success'
-      });
-      //await new Promise(resolve => setTimeout(resolve, 500)); // Waitm for 500ms to show message before going to dashboard
-    const redirect = route.query.redirect as string;
-    if (redirect) {
-      router.replace(decodeURIComponent(redirect)); // Navigate to the intended route
-    } else {
-      router.replace("/dashboard"); // Default route after login
-      
-    }
 
     // Handle successful login
     console.log(response.data.access_token, "success logging in");
   } catch (error) {
     console.error("Login failed", error.response ? error.response.data : error);
     toast({
-        title: 'Login failed',
-        description: error.response.data.message,
-         variant: 'destructive'
-      });
+      title: "Login failed",
+      description: error.response.data.message,
+      variant: "destructive",
+    });
   }
 };
 
@@ -97,17 +92,16 @@ const register = async () => {
       token: response.data.access_token,
     });
     toast({
-        title: 'Success',
-        description: 'Sucesfully Registered and Logged in',
-         variant: 'success'
-      });
-      //await new Promise(resolve => setTimeout(resolve, 1000)); // Waitm for 500ms to show message before going to dashboard
+      title: "Success",
+      description: "Sucesfully Registered and Logged in",
+      variant: "success",
+    });
+    //await new Promise(resolve => setTimeout(resolve, 1000)); // Waitm for 500ms to show message before going to dashboard
     const redirect = route.query.redirect as string;
     if (redirect) {
       router.replace(decodeURIComponent(redirect)); // Navigate to the intended route
     } else {
       router.replace("/dashboard"); // Default route after login
-      
     }
 
     // Handle successful login
@@ -123,12 +117,15 @@ const register = async () => {
       "Registration failed:",
       error.response ? error.response.data : error
     );
-    console.error("Registration failed", error.response ? error.response.data : error);
+    console.error(
+      "Registration failed",
+      error.response ? error.response.data : error
+    );
     toast({
-        title: 'Registration failed',
-        description: error.response.data.message,
-         variant: 'destructive'
-      });
+      title: "Registration failed",
+      description: error.response.data.message,
+      variant: "destructive",
+    });
   }
 };
 
@@ -170,8 +167,9 @@ const register = async () => {
 </script>
 
 <template>
-  <Toaster /> <!-- Toast component to show messages -->
-    <!-- <Button
+  <Toaster />
+  <!-- Toast component to show messages -->
+  <!-- <Button
     variant="outline" @click="() => {
       toast({
         description: 'Your message has been sent.',
@@ -179,20 +177,20 @@ const register = async () => {
       });
     }"
   >Show Toast</Button> -->
-   <div class="absolute top-4 right-4">
+  <div class="absolute top-4 right-4">
     <LightDark class="bg-white p-4 rounded-lg shadow-lg"></LightDark>
   </div>
   <!-- Large login form -->
- 
+
   <div
-    class="container hidden h-screen flex-col lg:grid lg:max-w-none lg:grid-cols-2 lg:px-0 "
+    class="container hidden h-screen flex-col lg:grid lg:max-w-none lg:grid-cols-2 lg:px-0"
   >
     <!-- compensate for the height of the inset -->
     <div
-      class="relative hidden inset-5 flex-col h-[calc(100vh-2.5rem)] bg-none p-10  text-white lg:flex"
+      class="relative hidden inset-5 flex-col h-[calc(100vh-2.5rem)] bg-none p-10 text-white lg:flex"
     >
       <img
-        class="h-full object-cover absolute rounded-2xl border-2 inset-0 drop-shadow-lg  border-input bg-none"
+        class="h-full object-cover absolute rounded-2xl border-2 inset-0 drop-shadow-lg border-input bg-none"
         src="/Images/login.jpg"
         alt="Logo"
       />
@@ -283,10 +281,10 @@ const register = async () => {
               />
             </div> -->
             <div class="items-center flex space-x-2">
-              <Checkbox class="h-6 w-6" id="terms" v-model:checked="terms"/>
+              <Checkbox class="h-6 w-6" id="terms" v-model:checked="terms" />
               <label
                 for="terms"
-                class="text-sm  leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                class="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Accept terms and conditions
               </label>
@@ -324,14 +322,10 @@ const register = async () => {
       alt="Background Image"
     /> -->
 
-    
   <div
     class="flex items-center justify-center h-screen lg:hidden bg-cover bg-center bg-[url(/Images/login.jpg)]"
   >
-  
-  
     <Card class="w-full max-w-sm rounded-2xl shadow-xl">
-      
       <form @submit.prevent="isRegisterView ? register() : login()">
         <CardHeader>
           <CardTitle class="text-2xl">
@@ -377,7 +371,7 @@ const register = async () => {
             />
           </div> -->
           <div class="items-center flex space-x-2">
-            <Checkbox class="h-4 w-4" id="terms"  v-model:checked="terms" />
+            <Checkbox class="h-4 w-4" id="terms" v-model:checked="terms" />
             <label
               for="terms"
               class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"

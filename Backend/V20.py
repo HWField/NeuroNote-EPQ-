@@ -3,7 +3,7 @@ import json
 from sqlalchemy.dialects.postgresql import JSONB
 from flask import Flask, render_template, jsonify, request
 from flask_socketio import SocketIO
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Table, and_, UniqueConstraint
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey, Table, and_, UniqueConstraint, CheckConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker, relationship, backref, scoped_session, declarative_base
 # from sqlalchemy.ext.declarative import declarative_base
@@ -61,19 +61,46 @@ tag_parent_association = Table('tag_parent', Base.metadata,
     Column('parent_id', Integer, ForeignKey('tags.id'))
 )
 
+class Entity(Base):
+    """Abstract Entity class representing Notes and Tags."""
+    __tablename__ = 'entities'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)  # Global unique ID
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)  # User-specific entity owner
+    user_specific_id = Column(Integer, nullable=False)  # Unique per-user entity ID
+    type = Column(String, nullable=False)  # Either 'note' or 'tag'
+
+    __table_args__ = (UniqueConstraint('user_id', 'user_specific_id', name='uq_user_specific_id'),)
+
+    user = relationship('User', backref='entities')
+
+    def __init__(self, user_id, entity_type):
+        self.user_id = user_id
+        self.type = entity_type
+        self.user_specific_id = self._generate_user_specific_id()
+
+    def _generate_user_specific_id(self):
+        """Find the next available user-specific ID for this user."""
+        last_entity = dbsession.query(Entity)\
+            .filter_by(user_id=self.user_id)\
+            .order_by(Entity.user_specific_id.desc())\
+            .first()
+        return 1 if not last_entity else last_entity.user_specific_id + 1
+    
+
 class Tag(Base):
     __tablename__ = 'tags'
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, ForeignKey('entities.id'), primary_key=True)  # Inherits ID from Entity
     name = Column(String, nullable=False)
-    x = Column(Integer, nullable=True)
-    y = Column(Integer, nullable=True)
+    # x = Column(Integer, nullable=True)
+    # y = Column(Integer, nullable=True)
     colour = Column(String, default="")
     
     # Foreign key to associate with a user
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    # user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
 
     # Relationships
-    user = relationship('User', back_populates='tags')  # Back-reference to User
+    # user = relationship('User', back_populates='tags')  # Back-reference to User
     parents = relationship(
         'Tag', 
         secondary=tag_parent_association,
@@ -81,48 +108,69 @@ class Tag(Base):
         secondaryjoin=id == tag_parent_association.c.parent_id,
         backref=backref('children', lazy='dynamic')
     )
-    user_specific_id = Column(Integer, nullable=False, index=True)  # ID specific to the user
-    __table_args__ = (
-        UniqueConstraint('user_specific_id', 'user_id', name='_tag_user_specific_id_uc'),
-    )
-    def set_user_specific_id(self, session):
-        # Query to find the current max user_specific_id for this user
-        max_id = session.query(func.max(Tag.user_specific_id)).filter(Tag.user_id == self.user_id).scalar()
-        self.user_specific_id = (max_id or 0) + 1
+    # user_specific_id = Column(Integer, nullable=False, index=True)  # ID specific to the user
+    # __table_args__ = (
+    #     UniqueConstraint('user_specific_id', 'user_id', name='_tag_user_specific_id_uc'),
+    # )
+    # def set_user_specific_id(self, session):
+    #     # Query to find the current max user_specific_id for this user
+    #     max_id = session.query(func.max(Tag.user_specific_id)).filter(Tag.user_id == self.user_id).scalar()
+    #     self.user_specific_id = (max_id or 0) + 1
+    def __init__(self, user_id, name, parents=None):
+        entity = Entity(user_id, "tag")
+        dbsession.add(entity)
+        dbsession.flush()  # Ensure Entity is saved to get its ID
+        self.id = entity.id
+        self.name = name
+        if parents:
+            self.parents = parents  # If parents are passed, associate them with this tag
+        else:
+            self.parents = []  
         
 
 
 class Note(Base):
     __tablename__ = 'notes'
 
-    id = Column(Integer, primary_key=True)
+    id = Column(Integer, ForeignKey('entities.id'), primary_key=True)  # Inherits ID from Entity
     format = Column(String, default="document")
     name = Column(String, nullable=False)
     colour = Column(String, default="")
-    x = Column(Integer, nullable=True)
-    y = Column(Integer, nullable=True)
+    # x = Column(Integer, nullable=True)
+    # y = Column(Integer, nullable=True)
     content = Column(JSONB, default="")
     viewport = Column(String, default="")
     background = Column(String, default="")
-    
-    # Foreign key to associate with a user
-    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-
-    # Relationships
-    user = relationship('User', back_populates='notes')  # Back-reference to User
     tags = relationship('Tag', secondary=note_tag_association, backref=backref('notes', lazy='dynamic'))
     
+    def __init__(self, user_id, name, format=None, tags=None):
+        entity = Entity(user_id, "note")
+        dbsession.add(entity)
+        dbsession.flush()  # Ensure Entity is saved to get its ID
+        self.id = entity.id
+        self.name = name
+        self.format = format
+        if tags is not None:
+            self.tags = tags  # Assign the passed tags list to the note
+
+    # Foreign key to associate with a user
+    # user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+
+    # Relationships
+    # user = relationship('User', back_populates='notes')  # Back-reference to User
     
     
-    user_specific_id = Column(Integer, nullable=False)  # ID specific to the user
     
-    __table_args__ = (
-        UniqueConstraint('user_specific_id', 'user_id', name='_user_specific_id_uc'),
-    )
-    def set_user_specific_id(self, session):
-        # Query to find the current max user_specific_id for this user
-        max_id = session.query(func.max(Note.user_specific_id)).filter(Note.user_id == self.user_id).scalar()
-        self.user_specific_id = (max_id or 0) + 1
+    
+    # user_specific_id = Column(Integer, nullable=False)  # ID specific to the user
+    
+    # __table_args__ = (
+    #     UniqueConstraint('user_specific_id', 'user_id', name='_user_specific_id_uc'),
+    # )
+    # def set_user_specific_id(self, session):
+    #     # Query to find the current max user_specific_id for this user
+    #     max_id = session.query(func.max(Note.user_specific_id)).filter(Note.user_id == self.user_id).scalar()
+    #     self.user_specific_id = (max_id or 0) + 1
         
        
 class User(Base, UserMixin):
@@ -132,94 +180,144 @@ class User(Base, UserMixin):
     password = Column(String)
     username = Column(String)
     user_status = Column(String, default="User")  # User, admin, staff
+    preferences = Column(JSONB, default={})  # JSONB column for storing user preferences
 
     # Relationship to Notes and Tags (optional for easier query access)
-    notes = relationship('Note', back_populates='user', cascade="all, delete-orphan")
-    tags = relationship('Tag', back_populates='user', cascade="all, delete-orphan") 
+    # notes = relationship('Note', back_populates='user', cascade="all, delete-orphan")
+    # tags = relationship('Tag', back_populates='user', cascade="all, delete-orphan") 
 
 # Create the tables if they don't exist
 Base.metadata.create_all(engine)
 
 
 def populate_sample_data():
-    current_max_tag_id = 0
-    current_max_note_id = 0
-
     user = User(email="admin@admin", password=generate_password_hash("admin", method='pbkdf2:sha256'), username="admin", user_status="admin")
     dbsession.add(user)
     dbsession.commit()  # Save the user to generate an ID
 
 
-    EPQ_tag = Tag(name="EPQ", x=0, y=0, user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    dbsession.add(EPQ_tag)
+    # EPQ_tag = Tag(name="EPQ", user_id = user.id,)
+
+    # dbsession.add(EPQ_tag)
     
-    planning_tag = Tag(name="Planning A01", parents=[EPQ_tag], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    dbsession.add(planning_tag)
+    # planning_tag = Tag(name="Planning A01", parents=[EPQ_tag], user_id = user.id)
 
-    research_tag = Tag(name="Research A02", parents=[EPQ_tag], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    dbsession.add(research_tag)
+    # dbsession.add(planning_tag)
+
+    # research_tag = Tag(name="Research A02", parents=[EPQ_tag], user_id = user.id)
+
+    # dbsession.add(research_tag)
     
-    ui_tag = Tag(name="UI", parents=[research_tag], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    technical_tag = Tag(name="Technical", parents=[research_tag], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    ai_tag = Tag(name="AI", parents=[research_tag], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    visualisation_tag = Tag(name="Visualisation", parents=[research_tag], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    dbsession.add(ui_tag)
-    dbsession.add(technical_tag)
-    dbsession.add(ai_tag)
-    dbsession.add(visualisation_tag)
+    # ui_tag = Tag(name="UI", parents=[research_tag], user_id = user.id)
 
-    evaluation_tag = Tag(name="Evaluation A04", parents=[EPQ_tag], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    dbsession.add(evaluation_tag)
+    # technical_tag = Tag(name="Technical", parents=[research_tag], user_id = user.id)
+    
+    # ai_tag = Tag(name="AI", parents=[research_tag], user_id = user.id)
+    
+    # visualisation_tag = Tag(name="Visualisation", parents=[research_tag], user_id = user.id)
+    
+    # dbsession.add(ui_tag)
+    # dbsession.add(technical_tag)
+    # dbsession.add(ai_tag)
+    # dbsession.add(visualisation_tag)
 
-    skilldevelopment_tag = Tag(name="Skill Development A03", parents=[EPQ_tag] ,user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    dbsession.add(skilldevelopment_tag)
+    # evaluation_tag = Tag(name="Evaluation A04", parents=[EPQ_tag], user_id = user.id)
+    
+    # dbsession.add(evaluation_tag)
+
+    # skilldevelopment_tag = Tag(name="Skill Development A03", parents=[EPQ_tag] ,user_id = user.id)
+    
+    # dbsession.add(skilldevelopment_tag)
 
 
 
-    project_tag = Tag(name="Project Choice", parents=[EPQ_tag], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    dbsession.add(project_tag)
+    # project_tag = Tag(name="Project Choice", parents=[EPQ_tag], user_id = user.id)
+    
+    # dbsession.add(project_tag)
 
-    homework_tag = Tag(name="Homework", parents=[EPQ_tag], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    dbsession.add(homework_tag)
+    # homework_tag = Tag(name="Homework", parents=[EPQ_tag], user_id = user.id)
+    
+    # dbsession.add(homework_tag)
 
-    diary_tag = Tag(name="Diary", parents=[EPQ_tag], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    dbsession.add(diary_tag)
+    # diary_tag = Tag(name="Diary", parents=[EPQ_tag], user_id = user.id)
+    
+    # dbsession.add(diary_tag)
 
-    airefereencing_tag = Tag(name="AI Referencing", parents=[EPQ_tag], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    dbsession.add(airefereencing_tag)
+    # airefereencing_tag = Tag(name="AI Referencing", parents=[EPQ_tag], user_id = user.id)
+    
+    # dbsession.add(airefereencing_tag)
 
-    completed_tag = Tag(name="Completed", parents=[], user_id = user.id, user_specific_id = current_max_tag_id + 1)
-    current_max_tag_id += 1
-    dbsession.add(completed_tag)
+    # completed_tag = Tag(name="Completed", parents=[], user_id = user.id)
+    
+    # dbsession.add(completed_tag)
 
-    research1_note = Note(name="Note 1", tags=[diary_tag, homework_tag, technical_tag], user_id = user.id, user_specific_id = current_max_note_id + 1)
-    current_max_note_id += 1
-    research2_note = Note(name="Note 2", tags=[diary_tag, homework_tag, ai_tag], user_id = user.id, user_specific_id = current_max_note_id + 1)
-    current_max_note_id += 1
-    airefrence1_note = Note(name="Note 3", tags=[airefereencing_tag], user_id = user.id, user_specific_id = current_max_note_id + 1)
-    current_max_note_id += 1
-    airefrence2_note = Note(name="Note 4", tags=[airefereencing_tag, completed_tag], user_id = user.id, user_specific_id = current_max_note_id + 1)
-    current_max_note_id += 1
-    dbsession.add(research1_note)
-    dbsession.add(research2_note)
-    dbsession.add(airefrence1_note)
-    dbsession.add(airefrence2_note)
+    # research1_note = Note(name="Note 1", tags=[diary_tag, homework_tag, technical_tag], user_id = user.id)
+  
+    # research2_note = Note(name="Note 2", tags=[diary_tag, homework_tag, ai_tag], user_id = user.id)
+  
+    # airefrence1_note = Note(name="Note 3", tags=[airefereencing_tag], user_id = user.id)
+  
+    # airefrence2_note = Note(name="Note 4", tags=[airefereencing_tag, completed_tag], user_id = user.id)
+  
+    # dbsession.add(research1_note)
+    # dbsession.add(research2_note)
+    # dbsession.add(airefrence1_note)
+    # dbsession.add(airefrence2_note)
+    tags = {}
+    tag_names = [
+        "Physics", "Homework", "Classwork", "Mechanics", "Electricity", "Waves", "Thermodynamics",
+        "Nuclear Physics", "Quantum Physics", "Astrophysics", "Forces", "Energy", "Momentum", "Electromagnetism",
+        "Particle Physics", "Optics", "Oscillations", "Kinematics", "Dynamics", "Magnetism", "Radioactivity",
+        "Capacitors", "Materials", "Fluids", "Circular Motion", "Gravitational Fields", "Magnetic Fields",
+        "Electronics", "Experimental Techniques", "Mathematical Methods"
+    ]
+
+    parent_map = {
+        "Homework": "Physics", "Classwork": "Physics", "Mechanics": "Physics", "Electricity": "Physics",
+        "Waves": "Physics", "Thermodynamics": "Physics", "Nuclear Physics": "Physics", "Quantum Physics": "Physics",
+        "Astrophysics": "Physics", "Forces": "Mechanics", "Energy": "Mechanics", "Momentum": "Mechanics",
+        "Electromagnetism": "Electricity", "Particle Physics": "Nuclear Physics", "Optics": "Waves",
+        "Oscillations": "Waves", "Kinematics": "Mechanics", "Dynamics": "Mechanics", "Magnetism": "Electromagnetism",
+        "Radioactivity": "Nuclear Physics", "Capacitors": "Electricity", "Materials": "Mechanics", "Fluids": "Mechanics",
+        "Circular Motion": "Mechanics", "Gravitational Fields": "Astrophysics", "Magnetic Fields": "Electromagnetism",
+        "Electronics": "Electricity", "Experimental Techniques": "Physics", "Mathematical Methods": "Physics"
+    }
+
+    for name in tag_names:
+        parent = [tags[parent_map[name]]] if name in parent_map else []
+        tags[name] = Tag(name=name, parents=parent, user_id=user.id)
+        dbsession.add(tags[name])
+
+    notes = [
+        Note(name="Newton's Laws Homework", tags=[tags["Homework"], tags["Forces"]], user_id=user.id),
+        Note(name="Classwork on Projectile Motion", tags=[tags["Classwork"], tags["Kinematics"]], user_id=user.id),
+        Note(name="Momentum Conservation Problems", tags=[tags["Homework"], tags["Momentum"]], user_id=user.id),
+        Note(name="Work Done and Energy Transfer", tags=[tags["Classwork"], tags["Energy"]], user_id=user.id),
+        Note(name="Gravitational Potential Energy Notes", tags=[tags["Classwork"], tags["Gravitational Fields"]], user_id=user.id),
+        Note(name="Simple Harmonic Motion Equations", tags=[tags["Classwork"], tags["Oscillations"]], user_id=user.id),
+        Note(name="Refraction and Lenses", tags=[tags["Classwork"], tags["Optics"]], user_id=user.id),
+        Note(name="Wave Interference Homework", tags=[tags["Homework"], tags["Waves"]], user_id=user.id),
+        Note(name="Ohm's Law Experiment", tags=[tags["Classwork"], tags["Electricity"], tags["Experimental Techniques"]], user_id=user.id),
+        Note(name="Capacitor Charge and Discharge", tags=[tags["Classwork"], tags["Capacitors"]], user_id=user.id),
+        Note(name="Radioactivity and Half-Life", tags=[tags["Classwork"], tags["Radioactivity"]], user_id=user.id),
+        Note(name="Photoelectric Effect Explanation", tags=[tags["Classwork"], tags["Quantum Physics"]], user_id=user.id),
+        Note(name="Magnetic Field Lines Investigation", tags=[tags["Classwork"], tags["Magnetic Fields"]], user_id=user.id),
+        Note(name="Thermodynamics First Law", tags=[tags["Classwork"], tags["Thermodynamics"]], user_id=user.id),
+        Note(name="Black Hole Physics", tags=[tags["Classwork"], tags["Astrophysics"]], user_id=user.id),
+        Note(name="Particle Accelerators Notes", tags=[tags["Classwork"], tags["Particle Physics"]], user_id=user.id),
+        Note(name="Circular Motion in Satellites", tags=[tags["Classwork"], tags["Circular Motion"]], user_id=user.id),
+        Note(name="Electric Fields and Potential", tags=[tags["Classwork"], tags["Electromagnetism"]], user_id=user.id),
+        Note(name="Fluid Dynamics Principles", tags=[tags["Classwork"], tags["Fluids"]], user_id=user.id),
+        Note(name="Mathematical Methods for Physics", tags=[tags["Classwork"], tags["Mathematical Methods"]], user_id=user.id)
+    ]
+
+    for note in notes:
+        dbsession.add(note)
+
+    dbsession.commit()
 
     # Commit the changes to the database
-    dbsession.commit()
+    # dbsession.commit()
 
 # Populate sample data if not already present
 if dbsession.query(Tag).count() == 0:
@@ -255,21 +353,21 @@ def login():
         # Create JWT token on successful login
         access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
         print("logged in") 
-        return jsonify(access_token=access_token, username = user.username, email = user.email, userStatus = user.user_status), 200
+        return jsonify(access_token=access_token, username = user.username, email = user.email, userStatus = user.user_status, preferences = user.preferences), 200
         
     else:
         return jsonify({"message": "Invalid password"}), 400
 
 
-@app.route('/test', methods=['GET'])
-@jwt_required()  # Protect this route with JWT authentication
-def test():
-    # try:
-        current_user = get_jwt_identity()  # Retrieve the identity from the JWT token
-    #     print("Decoded user identity:", current_user)  # Debugging line
-    #     return jsonify(current_user), 200
-    # except Exception as e:
-        return jsonify("message", current_user), 200
+# @app.route('/test', methods=['GET'])
+# @jwt_required()  # Protect this route with JWT authentication
+# def test():
+#     # try:
+#         current_user = get_jwt_identity()  # Retrieve the identity from the JWT token
+#     #     print("Decoded user identity:", current_user)  # Debugging line
+#     #     return jsonify(current_user), 200
+#     # except Exception as e:
+#         return jsonify("message", current_user), 200
 
 
 @app.route('/register', methods=['POST'])
@@ -540,6 +638,7 @@ def  delete():
 def update():   
     data = request.json
     operation = data.get('operation')
+    user = get_jwt_identity()
     
     if operation == "location":
         node_id = data.get('id')
@@ -621,9 +720,13 @@ def update():
             return jsonify({'status': 'error', 'message': 'Invalid input data'}), 400
 
         # Query the note
-        note = dbsession.query(Note).filter_by(user_id=int(get_jwt_identity()), user_specific_id=note_id).first()
+        # note = dbsession.query(Note).filter_by(user_id=int(get_jwt_identity()), user_specific_id=note_id).first()
+        note = dbsession.query(Note).join(Entity).filter(
+            Entity.user_id == int(user),  # Ensure it belongs to the logged-in user
+            Entity.user_specific_id == note_id  # Find using per-user unique ID
+            ).first()
         if note is None:
-            print("------- note", note_id, "has not been found")
+            print("------- user tried to access", int(user), "user and note", note_id, "has not been found")
             return jsonify({'status': 'error', 'message': 'Note not found'}), 404
         else:
             print("------- note", note.name, "has been found")
@@ -674,36 +777,35 @@ def load():
     operation = data.get('operation')
     current_user = get_jwt_identity()
     
-    if operation == "all":
+    if operation == "graph":
         elements = []
-        for tag in dbsession.query(Tag).filter_by(user_id=current_user).all():
-            
+        for tag in dbsession.query(Tag).join(Entity).filter(Entity.user_id == current_user).all():    
             element = {
-                'id': tag.user_specific_id,
+                'id': tag.id,
                 'name': tag.name,
-                'children': [child.user_specific_id for child in tag.children],
-                'notes': [note.user_specific_id for note in tag.notes],
+                'children': [child.id for child in tag.children],
+                'notes': [note.id for note in tag.notes],
                 'type': "tag",  # Add type property
                 'data': 
             {
-                'x': tag.x,
-                'y': tag.y,
+                # 'x': tag.x,
+                # 'y': tag.y,
                 'colour': tag.colour,
             }
             }
             elements.append(element)
             
-        for note in dbsession.query(Note).filter_by(user_id=current_user).all():
+        for note in dbsession.query(Note).join(Entity).filter(Entity.user_id == current_user).all():
             element = {
-                'id': note.user_specific_id,
+                'id': note.id,
                 'name': note.name,
-                'tags': [tag.user_specific_id for tag in note.tags],
+                'tags': [tag.id for tag in note.tags],
                 'type': "note",  # Add type property
                 'format': note.format,
                 'data': 
                 {
-                    'x': note.x,
-                    'y': note.y,
+                    # 'x': note.x,
+                    # 'y': note.y,
                     'colour': note.colour,
                 }
             }
@@ -711,81 +813,81 @@ def load():
         
         return jsonify(elements=elements)
     
-    elif operation == "search": 
-        query = data.get('query')
+    # elif operation == "search": 
+    #     query = data.get('query')
         
-        def get_descendants(tag):
-            """Recursively fetch all descendant tags."""
-            descendants = []
-            for child in tag.children:
-                descendants.append(child)
-                descendants.extend(get_descendants(child))
-            return descendants
+    #     def get_descendants(tag):
+    #         """Recursively fetch all descendant tags."""
+    #         descendants = []
+    #         for child in tag.children:
+    #             descendants.append(child)
+    #             descendants.extend(get_descendants(child))
+    #         return descendants
 
-        elements = []
-        processed_tags = set()  # Keep track of added tags
-        processed_notes = set()  # Keep track of added notes
+    #     elements = []
+    #     processed_tags = set()  # Keep track of added tags
+    #     processed_notes = set()  # Keep track of added notes
 
-        # Find tags matching the query
-        matched_tags = dbsession.query(Tag).filter(and_(
-        Tag.user_id == current_user,  # Match the current user's tags
-        Tag.name.ilike(f"%{query}%"))).all()
+    #     # Find tags matching the query
+    #     matched_tags = dbsession.query(Tag).filter(and_(
+    #     Tag.user_id == current_user,  # Match the current user's tags
+    #     Tag.name.ilike(f"%{query}%"))).all()
 
-        # Process each matched tag and its descendants
-        for tag in matched_tags:
-            all_tags = [tag] + get_descendants(tag)  # Include the tag and its descendants
+    #     # Process each matched tag and its descendants
+    #     for tag in matched_tags:
+    #         all_tags = [tag] + get_descendants(tag)  # Include the tag and its descendants
 
-            for current_tag in all_tags:
-                # Add tag to elements if not already processed
-                if current_tag.id not in processed_tags:
-                    elements.append({
-                        'id': current_tag.user_specific_id,
-                        'name': current_tag.name,
-                        'children': [child.user_specific_id for child in current_tag.children],
-                        'notes': [note.user_specific_id for note in current_tag.notes],
-                        'type': "tag",
-                        'data': {
-                'x': current_tag.x,
-                'y': current_tag.y,
-                'colour': current_tag.colour,
-            }
-                    })
-                    processed_tags.add(current_tag.id)
+    #         for current_tag in all_tags:
+    #             # Add tag to elements if not already processed
+    #             if current_tag.id not in processed_tags:
+    #                 elements.append({
+    #                     'id': current_tag.user_specific_id,
+    #                     'name': current_tag.name,
+    #                     'children': [child.user_specific_id for child in current_tag.children],
+    #                     'notes': [note.user_specific_id for note in current_tag.notes],
+    #                     'type': "tag",
+    #                     'data': {
+    #             'x': current_tag.x,
+    #             'y': current_tag.y,
+    #             'colour': current_tag.colour,
+    #         }
+    #                 })
+    #                 processed_tags.add(current_tag.id)
 
-                # Add notes associated with this tag
-                for note in current_tag.notes:
-                    if note.id not in processed_notes:
-                        elements.append({
-                            'id': note.user_specific_id,
-                            'name': note.name,
-                            'tags': [], #don't include tags for notes to prevent errors as tries to link to non existent tags
-                            'type': "note",
-                            'data': {
-                'x': note.x,
-                'y': note.y,
-                'colour': note.colour,
-            }
-                        })
-                        processed_notes.add(note.id)
-        matched_notes = dbsession.query(Note).filter(and_(Note.user_id == current_user, Note.name.ilike(f"%{query}%"))).all()
+    #             # Add notes associated with this tag
+    #             for note in current_tag.notes:
+    #                 if note.id not in processed_notes:
+    #                     elements.append({
+    #                         'id': note.user_specific_id,
+    #                         'name': note.name,
+    #                         'tags': [], #don't include tags for notes to prevent errors as tries to link to non existent tags
+    #                         'type': "note",
+    #                         'data': {
+    #             'x': note.x,
+    #             'y': note.y,
+    #             'colour': note.colour,
+    #         }
+    #                     })
+    #                     processed_notes.add(note.id)
+    #     matched_notes = dbsession.query(Note).filter(and_(Note.user_id == current_user, Note.name.ilike(f"%{query}%"))).all()
         
-        for note in matched_notes:
-            if note.id not in processed_notes:
-                elements.append({
-                    'id': note.user_specific_id ,
-                    'name': note.name,
-                    'tags': [tag.id for tag in note.tags],
-                    'type': "note",
-                    'format': note.format,
-                    'data': {
-                'x': note.x,
-                'y': note.y,
-                'colour': note.colour,
-            }
-                })
-                processed_notes.add(note.id)
-        print(elements)
-        return jsonify(elements=elements)
+    #     for note in matched_notes:
+    #         if note.id not in processed_notes:
+    #             elements.append({
+    #                 'id': note.user_specific_id ,
+    #                 'name': note.name,
+    #                 'tags': [tag.id for tag in note.tags],
+    #                 'type': "note",
+    #                 'format': note.format,
+    #                 'data': {
+    #             'x': note.x,
+    #             'y': note.y,
+    #             'colour': note.colour,
+    #         }
+    #             })
+    #             processed_notes.add(note.id)
+    #     print(elements)
+    #     return jsonify(elements=elements)
         
     elif operation == "content":
         note_id = data.get('id')
@@ -797,14 +899,20 @@ def load():
             return jsonify({'status': 'error', 'message': 'Invalid input data'}), 400
 
         # Query the note
-        note = dbsession.query(Note).filter_by(user_id=current_user, user_specific_id=note_id).first()
+        note = dbsession.query(Note).join(Entity).filter(
+            Entity.user_id == current_user,  # Ensure it belongs to the logged-in user
+            Entity.user_specific_id == note_id  # Find using per-user unique ID
+            ).first()
         if note is None:
             return jsonify({'status': 'error', 'message': 'Note not found'}), 404
         
       
 
         return jsonify({'status': 'success', 'content': note.content, 'viewport': note.viewport, 'background': note.background, 'name': note.name})
-        
+    
+    elif operation == "user":
+        user = dbsession.query(User).filter_by(id=current_user).first()
+        return jsonify({'status': 'success', 'username': user.username, 'email': user.email, 'userStatus': user.user_status, 'preferences': user.preferences})
 
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=8000)

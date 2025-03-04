@@ -5,6 +5,7 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import { Calendar } from "@/components/ui/calendar";
 import { Settings } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
+import ScrollArea from "./ui/scroll-area/ScrollArea.vue";
 // import { DateValue, getLocalTimeZone, today } from '@internationalized/date';
 
 const userStore = useUserStore();
@@ -59,6 +60,7 @@ const mockNotes = ref([
       <div class="w-1/2 h-full flex flex-col ml-2">
         <div class="h-full bg-secondary border-gray-800 border-4 rounded-lg mb-2">
           <h1 class="text-2xl font-bold m-5">Recent Notes:</h1>
+          <ScrollArea class="overflow-y-auto">
           <ul>
             <li
               v-for="note in mockNotes.slice(0, 5)"
@@ -68,7 +70,9 @@ const mockNotes = ref([
               {{ note.title }}
             </li>
           </ul>
+        </ScrollArea>
         </div>
+        
         <div class="h-full bg-secondary border-gray-800 border-4 rounded-lg mt-2">
           <div class="flex justify-between items-center m-5">
             <h1 class="text-2xl font-bold">Shortcuts</h1>

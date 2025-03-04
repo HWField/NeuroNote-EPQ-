@@ -1,37 +1,76 @@
 <script setup>
+import Gapcursor from "@tiptap/extension-gapcursor";
 import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
+
 import Mention from "@tiptap/extension-mention";
+
+
+import TagsList from "@/components/Document Editor/TagsList.vue";
+import CommandsList from "@/components/Document Editor/CommandsList.vue";
+import { VueRenderer } from '@tiptap/vue-3'
+import tippy from 'tippy.js'
+
+import { PluginKey } from "prosemirror-state";
+
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
+import Placeholder from "@tiptap/extension-placeholder";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
 import Typography from "@tiptap/extension-typography";
 import Image from "@tiptap/extension-image";
+
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import css from "highlight.js/lib/languages/css";
+import js from "highlight.js/lib/languages/javascript";
+import ts from "highlight.js/lib/languages/typescript";
+import html from "highlight.js/lib/languages/xml";
+import py from "highlight.js/lib/languages/python";
+import csharp from "highlight.js/lib/languages/csharp";
+import { all, createLowlight } from "lowlight";
+
+// import Commands from './commands.js'
+// import suggestion from './suggestion.js'
+
 import { Editor, EditorContent } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import { ColorHighlighter } from "@/components/Document Editor/ColorHighlighter.ts";
 import { SmilieReplacer } from "@/components/Document Editor/SymbolReplacer.ts";
-import suggestion from "@/components/Document Editor/suggestion.js";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { Button } from "@/components/ui/Button";
 
 import axios from "../../axios.js";
 
+import { ref, onBeforeUnmount } from "vue";
+import { onMounted } from "vue";
 
-import { ref, onBeforeUnmount } from 'vue';
-import { onMounted } from 'vue';
+// create a lowlight instance
+const lowlight = createLowlight(all);
 
+// you can also register languages
+lowlight.register("html", html);
+lowlight.register("css", css);
+lowlight.register("js", js);
+lowlight.register("ts", ts);
+lowlight.register("py", py);
+lowlight.register("csharp", csharp);
+
+const focusEditor = (event) => {
+  if (editor) {
+    editor.chain().focus().run();
+  }
+};
 
 function SaveToBackend() {
-  let noteContent = editor.getJSON()
+  let noteContent = editor.getJSON();
   axios
     .post("/update", {
       operation: "content",
       name: "note 1(updateasjson)",
       content: noteContent,
-      id: 1,
+      id: "31",
     })
     .catch((error) => {
       console.error("Error fetching data:", error);
@@ -41,7 +80,7 @@ function SaveToBackend() {
 function LoadFromBackend() {
   axios
     .post("/load", {
-      id: '1',
+      id: "31",
       operation: "content",
     })
     .then((response) => {
@@ -58,7 +97,6 @@ onMounted(() => {
   editor.chain().focus().run();
 });
 
-
 onBeforeUnmount(() => {
   SaveToBackend();
   if (editor) {
@@ -66,6 +104,9 @@ onBeforeUnmount(() => {
   }
 });
 
+const CustomDocument = Document.extend({
+  content: "heading block* ",
+});
 
 let editor = new Editor({
   extensions: [
@@ -73,21 +114,304 @@ let editor = new Editor({
     Paragraph,
     Text,
     Code,
+    CodeBlockLowlight.configure({
+      lowlight,
+    }),
     Typography,
     ColorHighlighter,
     SmilieReplacer,
-    StarterKit,
+    CustomDocument,
+    StarterKit.configure({
+      document: false,
+    }),
     TextAlign.configure({
       types: ["heading", "paragraph"],
     }),
     Highlight,
+
     Mention.configure({
       HTMLAttributes: {
         class: "mention",
       },
-      suggestion,
+      suggestion: {
+        items: ({ query }) => {
+          return [
+            {
+              title: "Heading 1",
+              command: ({ editor, range }) => {
+                console.log("Executing command:", { range });
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .setNode("heading", { level: 1 })
+                  .run();
+              },
+            },
+            {
+              title: "Heading 2",
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .setNode("heading", { level: 2 })
+                  .run();
+              },
+            },
+            {
+              title: "Bold",
+              command: ({ editor, range }) => {
+                editor.chain().focus().deleteRange(range).setMark("bold").run();
+              },
+            },
+            {
+              title: "Italic",
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .setMark("italic")
+                  .run();
+              },
+            },
+            {
+              title: "Underline",
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .setMark("underline")
+                  .run();
+              },
+            },
+            {
+              title: "Strike",
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .setMark("strike")
+                  .run();
+              },
+            },
+            {
+              title: "Bullet List",
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .toggleBulletList()
+                  .run();
+              },
+            },
+            {
+              title: "Ordered List",
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .toggleOrderedList()
+                  .run();
+              },
+            },
+            {
+              title: "Code Block",
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .toggleCodeBlock()
+                  .run();
+              },
+            },
+          ]
+            .filter((item) =>
+              item.title.toLowerCase().startsWith(query.toLowerCase())
+            )
+            .slice(0, 10);
+        },
+        char: "/",
+        pluginKey: new PluginKey("commandkey"),
+        render: () => {
+          let component;
+          let popup;
+
+          return {
+            onStart: (props) => {
+              component = new VueRenderer(CommandsList, {
+                // using vue 2:
+                // parent: this,
+                // propsData: props,
+                // using vue 3:
+                props,
+                editor: props.editor,
+              });
+
+              if (!props.clientRect) {
+                return;
+              }
+
+              popup = tippy("body", {
+                getReferenceClientRect: props.clientRect,
+                appendTo: () => document.body,
+                content: component.element,
+                showOnCreate: true,
+                interactive: true,
+                trigger: "manual",
+                placement: "bottom-start",
+              });
+            },
+
+            onUpdate(props) {
+              component.updateProps(props);
+
+              if (!props.clientRect) {
+                return;
+              }
+
+              popup[0].setProps({
+                getReferenceClientRect: props.clientRect,
+              });
+            },
+
+            onKeyDown(props) {
+              if (props.event.key === "Escape") {
+                popup[0].hide();
+
+                return true;
+              }
+
+              return component.ref?.onKeyDown(props);
+            },
+
+            onExit() {
+              popup[0].destroy();
+              component.destroy();
+            },
+          };
+        },
+      },
+    }),
+
+    Mention.configure({
+      HTMLAttributes: {
+        class: "mention",
+      },
+      suggestion: {
+        items: ({ query }) => {
+          return [
+            "Lea Thompson",
+            "Cyndi Lauper",
+            "Tom Cruise",
+            "Madonna",
+            "Jerry Hall",
+            "Joan Collins",
+            "Winona Ryder",
+            "Christina Applegate",
+            "Alyssa Milano",
+            "Molly Ringwald",
+            "Ally Sheedy",
+            "Debbie Harry",
+            "Olivia Newton-John",
+            "Elton John",
+            "Michael J. Fox",
+            "Axl Rose",
+            "Emilio Estevez",
+            "Ralph Macchio",
+            "Rob Lowe",
+            "Jennifer Grey",
+            "Mickey Rourke",
+            "John Cusack",
+            "Matthew Broderick",
+            "Justine Bateman",
+            "Lisa Bonet",
+          ]
+            .filter((item) =>
+              item.toLowerCase().startsWith(query.toLowerCase())
+            )
+            .slice(0, 5);
+        },
+        char: "#",
+        pluginKey: new PluginKey("tagkey"),
+        render: () => {
+          let component;
+          let popup;
+
+          return {
+            onStart: (props) => {
+              component = new VueRenderer(TagsList, {
+                // using vue 2:
+                // parent: this,
+                // propsData: props,
+                // using vue 3:
+                props,
+                editor: props.editor,
+              });
+
+              if (!props.clientRect) {
+                return;
+              }
+
+              popup = tippy("body", {
+                getReferenceClientRect: props.clientRect,
+                appendTo: () => document.body,
+                content: component.element,
+                showOnCreate: true,
+                interactive: true,
+                trigger: "manual",
+                placement: "bottom-start",
+              });
+            },
+
+            onUpdate(props) {
+              component.updateProps(props);
+
+              if (!props.clientRect) {
+                return;
+              }
+
+              popup[0].setProps({
+                getReferenceClientRect: props.clientRect,
+              });
+            },
+
+            onKeyDown(props) {
+              if (props.event.key === "Escape") {
+                popup[0].hide();
+
+                return true;
+              }
+
+              return component.ref?.onKeyDown(props);
+            },
+
+            onExit() {
+              popup[0].destroy();
+              component.destroy();
+            },
+          };
+
+      }},
     }),
     Image,
+    Gapcursor,
+    Placeholder.configure({
+      placeholder: ({ node, editor }) => {
+        const firstNode = editor.state.doc.firstChild;
+        if (firstNode === node && node.type.name === "heading") {
+          return "Note Name:";
+        }
+
+        // return 'Can you add some further context?'
+      },
+    }),
   ],
   editorProps: {
     attributes: {
@@ -110,11 +434,11 @@ let editor = new Editor({
           You can also teach the editor new things. For example to recognize hex colors and add a color swatch on the fly: #FFF, #0D0D0D, #616161, #A975FF, #FB5151, #FD9170, #FFCB6B, #68CEF8, #80cbc4, #9DEF8F
         </p>
 
-        
+
         <h3 style="text-align:center">
           Devs Just Want to Have Fun by Cyndi Lauper
         </h3>
-        <img src="https://placehold.co/600x400" />
+        <img src="https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885_1280.jpg" />
         <p style="text-align:center">
           I come home in the morning light<br>
           My mother says, <mark>“When you gonna live your life right?”</mark><br>
@@ -136,101 +460,99 @@ let editor = new Editor({
           Oh devs just wanna have fun<br>
           (devs, they wanna, wanna have fun, devs wanna have)
         </p>
-      
+
       `,
 });
-
-
-
 </script>
 
 <template>
-
-   <div class="flex w-full h-full flex-col"> 
-    <div class="flex justify-center mx-auto bg-primary-foreground p-3 shadow-lg rounded-lg mt-4 space-x-2 max-w-max">
-    <Button
-      @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
-      :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }"
+  <div class="flex w-full h-full flex-col">
+    <div
+      class="flex justify-center mx-auto bg-primary-foreground p-3 shadow-lg rounded-lg mt-4 space-x-2 max-w-max"
     >
-      H1
-    </Button>
-    <Button
-      @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-      :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }"
-    >
-      H2
-    </Button>
-    <Button
-      @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
-      :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }"
-    >
-      H3
-    </Button>
-    <Button
-      @click="editor.chain().focus().setParagraph().run()"
-      :class="{ 'is-active': editor.isActive('paragraph') }"
-    >
-      Paragraph
-    </Button>
-    <Button
-      @click="editor.chain().focus().toggleBold().run()"
-      :class="{ 'is-active': editor.isActive('bold') }"
-    >
-      Bold
-    </Button>
-    <Button
-      @click="editor.chain().focus().toggleItalic().run()"
-      :class="{ 'is-active': editor.isActive('italic') }"
-    >
-      Italic
-    </Button>
-    <Button
-      @click="editor.chain().focus().toggleStrike().run()"
-      :class="{ 'is-active': editor.isActive('strike') }"
-    >
-      Strike
-    </Button>
-    <Button
-      @click="editor.chain().focus().toggleHighlight().run()"
-      :class="{ 'is-active': editor.isActive('highlight') }"
-    >
-      Highlight
-    </Button>
-    <Button
-      @click="editor.chain().focus().setTextAlign('left').run()"
-      :class="{ 'is-active': editor.isActive({ textAlign: 'left' }) }"
-    >
-      Left
-    </Button>
-    <Button
-      @click="editor.chain().focus().setTextAlign('center').run()"
-      :class="{ 'is-active': editor.isActive({ textAlign: 'center' }) }"
-    >
-      Center
-    </Button>
-    <Button
-      @click="editor.chain().focus().setTextAlign('right').run()"
-      :class="{ 'is-active': editor.isActive({ textAlign: 'right' }) }"
-    >
-      Right
-    </Button>
-    <Button
-      @click="editor.chain().focus().setTextAlign('justify').run()"
-      :class="{ 'is-active': editor.isActive({ textAlign: 'justify' }) }"
-    >
-      Justify
-    </Button>
+      <Button
+        @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+        :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }"
+      >
+        H1
+      </Button>
+      <Button
+        @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
+        :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }"
+      >
+        H2
+      </Button>
+      <Button
+        @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
+        :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }"
+      >
+        H3
+      </Button>
+      <Button
+        @click="editor.chain().focus().setParagraph().run()"
+        :class="{ 'is-active': editor.isActive('paragraph') }"
+      >
+        Paragraph
+      </Button>
+      <Button
+        @click="editor.chain().focus().toggleBold().run()"
+        :class="{ 'is-active': editor.isActive('bold') }"
+      >
+        Bold
+      </Button>
+      <Button
+        @click="editor.chain().focus().toggleItalic().run()"
+        :class="{ 'is-active': editor.isActive('italic') }"
+      >
+        Italic
+      </Button>
+      <Button
+        @click="editor.chain().focus().toggleStrike().run()"
+        :class="{ 'is-active': editor.isActive('strike') }"
+      >
+        Strike
+      </Button>
+      <Button
+        @click="editor.chain().focus().toggleHighlight().run()"
+        :class="{ 'is-active': editor.isActive('highlight') }"
+      >
+        Highlight
+      </Button>
+      <Button
+        @click="editor.chain().focus().setTextAlign('left').run()"
+        :class="{ 'is-active': editor.isActive({ textAlign: 'left' }) }"
+      >
+        Left
+      </Button>
+      <Button
+        @click="editor.chain().focus().setTextAlign('center').run()"
+        :class="{ 'is-active': editor.isActive({ textAlign: 'center' }) }"
+      >
+        Center
+      </Button>
+      <Button
+        @click="editor.chain().focus().setTextAlign('right').run()"
+        :class="{ 'is-active': editor.isActive({ textAlign: 'right' }) }"
+      >
+        Right
+      </Button>
+      <Button
+        @click="editor.chain().focus().setTextAlign('justify').run()"
+        :class="{ 'is-active': editor.isActive({ textAlign: 'justify' }) }"
+      >
+        Justify
+      </Button>
     </div>
 
-    <div class="flex justify-center ">
-      <ScrollArea class="editor w-full max-w-[2000px] h-[80vh] overflow-y-auto  bg-primary-foreground rounded-lg border-4 border-gray-800 m-4">
+    <div class="flex justify-center">
+      <ScrollArea
+        class="editor w-full max-w-[2000px] h-[80vh] overflow-y-auto bg-primary-foreground rounded-lg border-4 border-gray-800 m-4"
+        @click="focusEditor"
+      >
         <editor-content class="p-4" :editor="editor" />
       </ScrollArea>
-      </div>
-   
     </div>
-  
-  
+  </div>
 </template>
 
 <style lang="scss">
@@ -249,24 +571,30 @@ let editor = new Editor({
 // *::after {
 //   box-sizing: border-box;
 // }
+::selection {
+  background: #6a00f5;
+  color: white;
+}
+
 .tiptap {
   caret-color: #6a00f5;
-
 
   &:focus {
     outline: none;
   }
+  &.ProseMirror-selectednode {
+    outline: 3px solid var(--purple);
+  }
   // :first-child {
   //   margin-top: 0;
   // }
-
-  /* Code and preformatted text styles */
-  code {
-    background-color: var(--purple-light);
-    border-radius: 0.4rem;
-    color: var(--black);
-    font-size: 0.85rem;
-    padding: 0.25em 0.3em;
+  .editor h1:first-child {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
   }
 
   /* Color swatches */
@@ -288,11 +616,12 @@ let editor = new Editor({
   }
 
   .mention {
-    background-color: var(--purple-light);
+    // background-color: var(--purple-light);
     border-radius: 0.4rem;
     box-decoration-break: clone;
-    color: var(--purple);
+    // color: var(--purple);
     padding: 0.1rem 0.3rem;
+    @apply bg-purple-800 text-purple-200;
   }
 
   ul,
@@ -344,17 +673,15 @@ let editor = new Editor({
 
   /* Code and preformatted text styles */
   code {
-    background-color: var(--purple-light);
+    background-color: #c8a2c8;
     border-radius: 0.4rem;
-    color: var(--black);
+    // color: #C8A2C8;
     font-size: 0.85rem;
     padding: 0.25em 0.3em;
   }
-
   pre {
-    background: var(--black);
+    @apply bg-gray-800 text-gray-200 dark:bg-slate-800 dark:text-gray-200;
     border-radius: 0.5rem;
-    color: var(--white);
     font-family: "JetBrainsMono", monospace;
     margin: 1.5rem 0;
     padding: 0.75rem 1rem;
@@ -364,6 +691,59 @@ let editor = new Editor({
       color: inherit;
       font-size: 0.8rem;
       padding: 0;
+    }
+
+    /* Code styling */
+    .hljs-comment,
+    .hljs-quote {
+      @apply text-gray-400;
+    }
+
+    .hljs-variable,
+    .hljs-template-variable,
+    .hljs-attribute,
+    .hljs-tag,
+    .hljs-name,
+    .hljs-regexp,
+    .hljs-link,
+    .hljs-name,
+    .hljs-selector-id,
+    .hljs-selector-class {
+      @apply text-rose-400;
+    }
+
+    .hljs-number,
+    .hljs-meta,
+    .hljs-built_in,
+    .hljs-builtin-name,
+    .hljs-literal,
+    .hljs-type,
+    .hljs-params {
+      @apply text-orange-300;
+    }
+
+    .hljs-string,
+    .hljs-symbol,
+    .hljs-bullet {
+      @apply text-lime-200;
+    }
+
+    .hljs-title,
+    .hljs-section {
+      @apply text-yellow-200;
+    }
+
+    .hljs-keyword,
+    .hljs-selector-tag {
+      @apply text-sky-300;
+    }
+
+    .hljs-emphasis {
+      font-style: italic;
+    }
+
+    .hljs-strong {
+      font-weight: 700;
     }
   }
 
@@ -384,6 +764,28 @@ let editor = new Editor({
     border: none;
     border-top: 1px solid var(--gray-2);
     margin: 2rem 0;
+  }
+
+  img {
+    display: block;
+    height: auto;
+    margin: 2.5rem 0;
+    max-width: 40%;
+    border-radius: 0.25rem;
+
+    &.ProseMirror-selectednode {
+      outline: 3px solid #6a00f5;
+      border-radius: 0.25rem;
+      display: inline-block; /* Prevent selection from extending - might break later so watch */
+    }
+  }
+
+  .is-empty::before {
+    color: var(--gray-4);
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
   }
 }
 </style>

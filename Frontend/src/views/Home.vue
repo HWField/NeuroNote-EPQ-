@@ -6,7 +6,7 @@ export const containerClass = "w-full h-full";
 
 <script setup lang="ts">
 import Cytoscape from "@/components/Cytoscape.vue";
-import tabview from "@/components/tabview.vue";
+import tabview from "@/components/GenericTab.vue";
 import Note from "@/components/Note.vue";
 import LightDark from "@/components/LightDark.vue";
 
@@ -133,7 +133,7 @@ function switchTab(id) {
 
 function openNewTab() {
   // Example: Adding a new tab dynamically
-  tabStore.addTab("New Tab", "cytoscape");
+  tabStore.addTab("New Tab:", "generic");
 }
 
 function logOut() {
@@ -144,11 +144,8 @@ function logOut() {
   });
   //await new Promise(resolve => setTimeout(resolve, 500)); // Wait for 1 second to show message before going to dashboard
   // localStorage.removeItem("token"); // Remove expired token
-  userStore.logout(); // Clear user store
-  tabStore.clearStore(); // Clear tab store
-  console.error("tabstore after clear:", tabStore.tabs);
-  router.replace("/login"); // Or redirect to login page using Vue Router
-  console.error("Logging out");
+  userStore.Logout(); // Clear user store
+  // router.replace("/login"); // Or redirect to login page using Vue Router
 }
 // This is sample data.
 const data = {
@@ -501,7 +498,6 @@ function handleOpenChange() {
           v-if="getActiveComponent"
           :key="activeTabKey"
           :tab-id="activeTab"
-          :tab-type="'cytoscape'"
         />
       </div>
     </SidebarInset>
