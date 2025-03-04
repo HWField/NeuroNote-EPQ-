@@ -4,12 +4,13 @@ import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
 
 import Mention from "@tiptap/extension-mention";
-
+import { Commands } from "@/components/Document Editor/commands.js";
+import suggestion from '@/components/Document Editor/TagSuggestion.js'
 
 import TagsList from "@/components/Document Editor/TagsList.vue";
 import CommandsList from "@/components/Document Editor/CommandsList.vue";
-import { VueRenderer } from '@tiptap/vue-3'
-import tippy from 'tippy.js'
+import { VueRenderer } from "@tiptap/vue-3";
+import tippy from "tippy.js";
 
 import { PluginKey } from "prosemirror-state";
 
@@ -45,6 +46,10 @@ import axios from "../../axios.js";
 
 import { ref, onBeforeUnmount } from "vue";
 import { onMounted } from "vue";
+
+
+
+// Instead of CustomMentionTwo
 
 // create a lowlight instance
 const lowlight = createLowlight(all);
@@ -129,10 +134,16 @@ let editor = new Editor({
     }),
     Highlight,
 
+
+    
     Mention.configure({
       HTMLAttributes: {
-        class: "mention",
+        class: 'mention',
       },
+      suggestion,
+    }),
+    // CustomMentionTwo,
+    Commands.configure({
       suggestion: {
         items: ({ query }) => {
           return [
@@ -235,11 +246,11 @@ let editor = new Editor({
             .filter((item) =>
               item.title.toLowerCase().startsWith(query.toLowerCase())
             )
-            .slice(0, 10);
+            .slice(0, 5);
         },
-        char: "/",
-        pluginKey: new PluginKey("commandkey"),
         render: () => {
+          // Your existing render function with VueRenderer and tippy
+          // ...
           let component;
           let popup;
 
@@ -300,106 +311,6 @@ let editor = new Editor({
       },
     }),
 
-    Mention.configure({
-      HTMLAttributes: {
-        class: "mention",
-      },
-      suggestion: {
-        items: ({ query }) => {
-          return [
-            "Lea Thompson",
-            "Cyndi Lauper",
-            "Tom Cruise",
-            "Madonna",
-            "Jerry Hall",
-            "Joan Collins",
-            "Winona Ryder",
-            "Christina Applegate",
-            "Alyssa Milano",
-            "Molly Ringwald",
-            "Ally Sheedy",
-            "Debbie Harry",
-            "Olivia Newton-John",
-            "Elton John",
-            "Michael J. Fox",
-            "Axl Rose",
-            "Emilio Estevez",
-            "Ralph Macchio",
-            "Rob Lowe",
-            "Jennifer Grey",
-            "Mickey Rourke",
-            "John Cusack",
-            "Matthew Broderick",
-            "Justine Bateman",
-            "Lisa Bonet",
-          ]
-            .filter((item) =>
-              item.toLowerCase().startsWith(query.toLowerCase())
-            )
-            .slice(0, 5);
-        },
-        char: "#",
-        pluginKey: new PluginKey("tagkey"),
-        render: () => {
-          let component;
-          let popup;
-
-          return {
-            onStart: (props) => {
-              component = new VueRenderer(TagsList, {
-                // using vue 2:
-                // parent: this,
-                // propsData: props,
-                // using vue 3:
-                props,
-                editor: props.editor,
-              });
-
-              if (!props.clientRect) {
-                return;
-              }
-
-              popup = tippy("body", {
-                getReferenceClientRect: props.clientRect,
-                appendTo: () => document.body,
-                content: component.element,
-                showOnCreate: true,
-                interactive: true,
-                trigger: "manual",
-                placement: "bottom-start",
-              });
-            },
-
-            onUpdate(props) {
-              component.updateProps(props);
-
-              if (!props.clientRect) {
-                return;
-              }
-
-              popup[0].setProps({
-                getReferenceClientRect: props.clientRect,
-              });
-            },
-
-            onKeyDown(props) {
-              if (props.event.key === "Escape") {
-                popup[0].hide();
-
-                return true;
-              }
-
-              return component.ref?.onKeyDown(props);
-            },
-
-            onExit() {
-              popup[0].destroy();
-              component.destroy();
-            },
-          };
-
-      }},
-    }),
     Image,
     Gapcursor,
     Placeholder.configure({
@@ -418,50 +329,50 @@ let editor = new Editor({
       class: "",
     },
   },
-  content: `
-        <p>
-          → With the Typography extension, Tiptap understands »what you mean« and adds correct characters to your text — it’s like a “typography nerd” on your side.
-        </p>
-        <p>
-          Try it out and type <code>(c)</code>, <code>-></code>, <code>>></code>, <code>1/2</code>, <code>!=</code>, <code>--</code> or <code>1x1</code> here:
-        </p>
-        <p></p>
-        <p>
-          Or add completely custom input rules. We added a custom extension here that replaces smilies like <code>:-)</code>, <code><3</code> or <code>>:P</code> with emojis. Try it out:
-        </p>
-        <p></p>
-        <p>
-          You can also teach the editor new things. For example to recognize hex colors and add a color swatch on the fly: #FFF, #0D0D0D, #616161, #A975FF, #FB5151, #FD9170, #FFCB6B, #68CEF8, #80cbc4, #9DEF8F
-        </p>
+  // content: `
+  //       <p>
+  //         → With the Typography extension, Tiptap understands »what you mean« and adds correct characters to your text — it’s like a “typography nerd” on your side.
+  //       </p>
+  //       <p>
+  //         Try it out and type <code>(c)</code>, <code>-></code>, <code>>></code>, <code>1/2</code>, <code>!=</code>, <code>--</code> or <code>1x1</code> here:
+  //       </p>
+  //       <p></p>
+  //       <p>
+  //         Or add completely custom input rules. We added a custom extension here that replaces smilies like <code>:-)</code>, <code><3</code> or <code>>:P</code> with emojis. Try it out:
+  //       </p>
+  //       <p></p>
+  //       <p>
+  //         You can also teach the editor new things. For example to recognize hex colors and add a color swatch on the fly: #FFF, #0D0D0D, #616161, #A975FF, #FB5151, #FD9170, #FFCB6B, #68CEF8, #80cbc4, #9DEF8F
+  //       </p>
 
 
-        <h3 style="text-align:center">
-          Devs Just Want to Have Fun by Cyndi Lauper
-        </h3>
-        <img src="https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885_1280.jpg" />
-        <p style="text-align:center">
-          I come home in the morning light<br>
-          My mother says, <mark>“When you gonna live your life right?”</mark><br>
-          Oh mother dear we’re not the fortunate ones<br>
-          And devs, they wanna have fun<br>
-          Oh devs just want to have fun</p>
-        <p style="text-align:center">
-          The phone rings in the middle of the night<br>
-          My father yells, "What you gonna do with your life?"<br>
-          Oh daddy dear, you know you’re still number one<br>
-          But <s>girls</s>devs, they wanna have fun<br>
-          Oh devs just want to have
-        </p>
-        <p style="text-align:center">
-          That’s all they really want<br>
-          Some fun<br>
-          When the working day is done<br>
-          Oh devs, they wanna have fun<br>
-          Oh devs just wanna have fun<br>
-          (devs, they wanna, wanna have fun, devs wanna have)
-        </p>
+  //       <h3 style="text-align:center">
+  //         Devs Just Want to Have Fun by Cyndi Lauper
+  //       </h3>
+  //       <img src="https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885_1280.jpg" />
+  //       <p style="text-align:center">
+  //         I come home in the morning light<br>
+  //         My mother says, <mark>“When you gonna live your life right?”</mark><br>
+  //         Oh mother dear we’re not the fortunate ones<br>
+  //         And devs, they wanna have fun<br>
+  //         Oh devs just want to have fun</p>
+  //       <p style="text-align:center">
+  //         The phone rings in the middle of the night<br>
+  //         My father yells, "What you gonna do with your life?"<br>
+  //         Oh daddy dear, you know you’re still number one<br>
+  //         But <s>girls</s>devs, they wanna have fun<br>
+  //         Oh devs just want to have
+  //       </p>
+  //       <p style="text-align:center">
+  //         That’s all they really want<br>
+  //         Some fun<br>
+  //         When the working day is done<br>
+  //         Oh devs, they wanna have fun<br>
+  //         Oh devs just wanna have fun<br>
+  //         (devs, they wanna, wanna have fun, devs wanna have)
+  //       </p>
 
-      `,
+  //     `,
 });
 </script>
 
@@ -625,7 +536,9 @@ let editor = new Editor({
   }
 
   ul,
+  
   ol {
+    list-style-type: disc;
     padding: 0 1rem;
     margin: 1.25rem 1rem 1.25rem 0.4rem;
 
@@ -760,10 +673,23 @@ let editor = new Editor({
     padding-left: 1rem;
   }
 
+  // hr {
+  //   border: none;
+  //   border-top: 1px solid var(--gray-2);
+  //   margin: 2rem 0;
+  // }
   hr {
     border: none;
-    border-top: 1px solid var(--gray-2);
+    border-top:  solid ;
+    @apply border-t border-t-gray-600;
+    cursor: pointer;
     margin: 2rem 0;
+   
+
+    &.ProseMirror-selectednode {
+      border-top: solid ;
+      @apply border-t  border-t-purple-600;
+    }
   }
 
   img {
