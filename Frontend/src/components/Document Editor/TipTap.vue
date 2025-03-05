@@ -6,7 +6,7 @@ import Document from "@tiptap/extension-document";
 import Mention from "@tiptap/extension-mention";
 import { Commands } from "@/components/Document Editor/commands.js";
 import suggestion from '@/components/Document Editor/TagSuggestion.js'
-
+import Heading from "@tiptap/extension-heading";
 import TagsList from "@/components/Document Editor/TagsList.vue";
 import CommandsList from "@/components/Document Editor/CommandsList.vue";
 import { VueRenderer } from "@tiptap/vue-3";
@@ -39,7 +39,8 @@ import StarterKit from "@tiptap/starter-kit";
 import { ColorHighlighter } from "@/components/Document Editor/ColorHighlighter.ts";
 import { SmilieReplacer } from "@/components/Document Editor/SymbolReplacer.ts";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
+import { Extension } from "@tiptap/core";
+import { Node } from "@tiptap/core";
 import { Button } from "@/components/ui/Button";
 
 import axios from "../../axios.js";
@@ -47,9 +48,6 @@ import axios from "../../axios.js";
 import { ref, onBeforeUnmount } from "vue";
 import { onMounted } from "vue";
 
-
-
-// Instead of CustomMentionTwo
 
 // create a lowlight instance
 const lowlight = createLowlight(all);
@@ -110,14 +108,61 @@ onBeforeUnmount(() => {
 });
 
 const CustomDocument = Document.extend({
-  content: "heading block* ",
+  content: "title block+ ",
 });
 
+const Title = Heading.extend({
+  name: "title",
+  marks: '',
+  group: "title",
+  content: "inline*",
+  defining: true,
+  
+  parseHTML() {
+    return [
+      { tag: "div.note-title-container h1" },
+      { tag: "h1:first-child" }
+    ]
+  },
+  
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'div', 
+      { class: 'note-title-container' }, 
+      ['h1', HTMLAttributes, 0]
+    ]
+  }
+}).configure({ levels: [1] });
+
+
+// const NoteTitle = Node.create({
+//   name: 'noteTitle',
+//   group: 'block',
+//   content: 'heading',
+//   marks: '',
+  
+//   parseHTML() {
+//     return [
+//       { 
+//         tag: 'div.note-title-container' 
+//       },
+//     ]
+//   },
+  
+//   renderHTML({ HTMLAttributes }) {
+//     return ['div', { class: 'note-title-container' }, 0]
+//   }
+// })
+
+
+  
 let editor = new Editor({
   extensions: [
     Document,
     Paragraph,
+    Heading,
     Text,
+    Title,
     Code,
     CodeBlockLowlight.configure({
       lowlight,
@@ -125,6 +170,8 @@ let editor = new Editor({
     Typography,
     ColorHighlighter,
     SmilieReplacer,
+  
+    
     CustomDocument,
     StarterKit.configure({
       document: false,
@@ -133,9 +180,6 @@ let editor = new Editor({
       types: ["heading", "paragraph"],
     }),
     Highlight,
-
-
-    
     Mention.configure({
       HTMLAttributes: {
         class: 'mention',
@@ -310,19 +354,19 @@ let editor = new Editor({
         },
       },
     }),
-
     Image,
     Gapcursor,
-    Placeholder.configure({
-      placeholder: ({ node, editor }) => {
-        const firstNode = editor.state.doc.firstChild;
-        if (firstNode === node && node.type.name === "heading") {
-          return "Note Name:";
-        }
+ Placeholder.configure({
+  // emptyEditorClass: 'h1',
+  showOnlyCurrent: false,
+  placeholder: ({ node }) => {
+    if (node.type.name === "title") {
+      return "Untitled Note:";
+    }
 
-        // return 'Can you add some further context?'
-      },
-    }),
+    // return "Lets get writing...";
+  },
+}),
   ],
   editorProps: {
     attributes: {
@@ -373,6 +417,12 @@ let editor = new Editor({
   //       </p>
 
   //     `,
+  content: `
+    <div class="note-title-container">
+      <h1>Untitled Note</h1>
+    </div>
+    <p></p>
+  `,
 });
 </script>
 
@@ -526,13 +576,50 @@ let editor = new Editor({
     }
   }
 
+   // Note title container styling
+   .note-title-container {
+    position: relative;
+    margin: 0 0 2rem;
+    padding: 1rem 0;
+    border-bottom: 2px solid #6a00f5;
+    
+    // Pseudo-elements for visual distinction
+    // &::before {
+    //   content: '';
+    //   position: absolute;
+    //   top: 0;
+    //   left: 0;
+    //   right: 0;
+    //   height: 1px;
+    //   @apply bg-purple-600;
+    // }
+  // .is-empty::before,
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      @apply text-purple-800 dark:text-purple-300;
+      // float: left;
+      // height: 0;      
+    }
+    
+    // Add a subtle background for visual emphasis
+    @apply bg-purple-100/30 dark:bg-purple-900/10 rounded-md px-4;
+  }
+
   .mention {
     // background-color: var(--purple-light);
     border-radius: 0.4rem;
     box-decoration-break: clone;
     // color: var(--purple);
     padding: 0.1rem 0.3rem;
-    @apply bg-purple-800 text-purple-200;
+    @apply bg-purple-800  text-purple-200;
+  }
+
+  .note-title-container .mention {
+    font-size: 0.9rem; // Smaller font size
+    padding: 0.05rem 0.2rem; // Smaller padding
+    vertical-align: middle; // Better alignment with title text
+    @apply bg-purple-700 text-purple-100; // Slightly different color if desired
   }
 
   ul,
@@ -707,11 +794,18 @@ let editor = new Editor({
   }
 
   .is-empty::before {
-    color: var(--gray-4);
+    // color: var(--gray-4);
     content: attr(data-placeholder);
     float: left;
     height: 0;
     pointer-events: none;
+
+
+    
+    margin: 0;
+      font-size: 1.8rem;
+      @apply text-purple-800 dark:text-purple-300;
+  
   }
 }
 </style>
