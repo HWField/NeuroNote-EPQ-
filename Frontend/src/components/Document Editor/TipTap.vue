@@ -2,26 +2,32 @@
 import Gapcursor from "@tiptap/extension-gapcursor";
 import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
-
 import Mention from "@tiptap/extension-mention";
 import { Commands } from "@/components/Document Editor/commands.js";
-import suggestion from '@/components/Document Editor/TagSuggestion.js'
+import suggestion from "@/components/Document Editor/TagSuggestion.js";
 import Heading from "@tiptap/extension-heading";
 import TagsList from "@/components/Document Editor/TagsList.vue";
 import CommandsList from "@/components/Document Editor/CommandsList.vue";
 import { VueRenderer } from "@tiptap/vue-3";
 import tippy from "tippy.js";
-
+import Underline from "@tiptap/extension-underline";
+import Youtube from "@tiptap/extension-youtube";
 import { PluginKey } from "prosemirror-state";
-
+import OrderedList from "@tiptap/extension-ordered-list";
+import BulletList from "@tiptap/extension-bullet-list";
+import ListItem from "@tiptap/extension-list-item";
 import Highlight from "@tiptap/extension-highlight";
 import TextAlign from "@tiptap/extension-text-align";
 import Placeholder from "@tiptap/extension-placeholder";
 import Paragraph from "@tiptap/extension-paragraph";
 import Text from "@tiptap/extension-text";
+import TaskItem from "@tiptap/extension-task-item";
+import TaskList from "@tiptap/extension-task-list";
 import Typography from "@tiptap/extension-typography";
 import Image from "@tiptap/extension-image";
-
+import Details from "@tiptap-pro/extension-details";
+import DetailsContent from "@tiptap-pro/extension-details-content";
+import DetailsSummary from "@tiptap-pro/extension-details-summary";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import css from "highlight.js/lib/languages/css";
 import js from "highlight.js/lib/languages/javascript";
@@ -30,10 +36,6 @@ import html from "highlight.js/lib/languages/xml";
 import py from "highlight.js/lib/languages/python";
 import csharp from "highlight.js/lib/languages/csharp";
 import { all, createLowlight } from "lowlight";
-
-// import Commands from './commands.js'
-// import suggestion from './suggestion.js'
-
 import { Editor, EditorContent } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import { ColorHighlighter } from "@/components/Document Editor/ColorHighlighter.ts";
@@ -43,11 +45,89 @@ import { Extension } from "@tiptap/core";
 import { Node } from "@tiptap/core";
 import { Button } from "@/components/ui/Button";
 
+// Add after your other imports, near the top of the file
+import { 
+  Heading1, Heading2, Heading3, Bold, Italic, Underline as UnderlineIcon, 
+  Strikethrough, List, ListOrdered, Quote, 
+  Youtube as YoutubeIcon, Image as ImageIcon, CheckSquare, 
+  Code as CodeIcon, AlignLeft, AlignCenter, AlignRight, 
+  AlignJustify, FoldVertical 
+} from "lucide-vue-next";
+
 import axios from "../../axios.js";
 
 import { ref, onBeforeUnmount } from "vue";
 import { onMounted } from "vue";
 
+import "katex/dist/katex.min.css";
+import "@benrbray/prosemirror-math/dist/prosemirror-math.css";
+
+import {
+  makeInlineMathInputRule,
+  makeBlockMathInputRule,
+  REGEX_INLINE_MATH_DOLLARS,
+  REGEX_BLOCK_MATH_DOLLARS,
+} from "@benrbray/prosemirror-math";
+import {
+  mathPlugin,
+  mathBackspaceCmd,
+  mathSerializer,
+} from "@benrbray/prosemirror-math";
+import { keymap } from "@tiptap/pm/keymap";
+import { inputRules } from "@tiptap/pm/inputrules";
+
+const mathKeymap = keymap({
+  Backspace: mathBackspaceCmd,
+});
+
+const MathInline = Node.create({
+  name: "math_inline",
+  group: "inline math",
+  content: "text*",
+  inline: true,
+  atom: true,
+  parseHTML() {
+    return [{ tag: "math-inline" }];
+  },
+  renderHTML() {
+    return ["math-inline", { class: "math-node" }, 0];
+  },
+});
+
+const MathDisplay = Node.create({
+  name: "math_display",
+  group: "block math",
+  content: "text*",
+  atom: true,
+  code: true,
+  parseHTML() {
+    return [{ tag: "math-display" }];
+  },
+  renderHTML() {
+    return ["math-display", { class: "math-node" }, 0];
+  },
+});
+console.error("MathInline type:", MathInline.type);
+console.error("MathDisplay type:", MathDisplay.type);
+const mathInputRules = inputRules({
+  rules: [
+    // Call the functions with regex patterns and node types
+    makeInlineMathInputRule(REGEX_INLINE_MATH_DOLLARS, MathInline.type),
+    makeBlockMathInputRule(REGEX_BLOCK_MATH_DOLLARS, MathDisplay.type),
+  ],
+});
+
+const Math = Extension.create({
+  name: "math",
+
+  addProseMirrorPlugins() {
+    return [
+      mathInputRules,
+      mathKeymap,
+      mathPlugin, // Use directly as a plugin instance, don't call it as a function
+    ];
+  },
+});
 
 // create a lowlight instance
 const lowlight = createLowlight(all);
@@ -113,65 +193,83 @@ const CustomDocument = Document.extend({
 
 const Title = Heading.extend({
   name: "title",
-  marks: '',
+  marks: "",
   group: "title",
   content: "inline*",
   defining: true,
-  
+  selectable: false,
+
   parseHTML() {
-    return [
-      { tag: "div.note-title-container h1" },
-      { tag: "h1:first-child" }
-    ]
+    return [{ tag: "div.note-title-container h1" }, { tag: "h1:first-child" }];
   },
-  
+
   renderHTML({ HTMLAttributes }) {
     return [
-      'div', 
-      { class: 'note-title-container' }, 
-      ['h1', HTMLAttributes, 0]
-    ]
-  }
+      "div",
+      { class: "note-title-container" },
+      ["h1", HTMLAttributes, 0],
+    ];
+  },
 }).configure({ levels: [1] });
-
 
 // const NoteTitle = Node.create({
 //   name: 'noteTitle',
 //   group: 'block',
 //   content: 'heading',
 //   marks: '',
-  
+
 //   parseHTML() {
 //     return [
-//       { 
-//         tag: 'div.note-title-container' 
+//       {
+//         tag: 'div.note-title-container'
 //       },
 //     ]
 //   },
-  
+
 //   renderHTML({ HTMLAttributes }) {
 //     return ['div', { class: 'note-title-container' }, 0]
 //   }
 // })
 
-
-  
 let editor = new Editor({
   extensions: [
     Document,
+    Details.configure({
+      persist: true,
+      HTMLAttributes: {
+        class: "details",
+      },
+    }),
+    DetailsSummary,
+    DetailsContent,
     Paragraph,
     Heading,
+    Underline,
     Text,
     Title,
+    TaskList,
+    TaskItem.configure({
+      nested: true,
+    }),
+    Youtube.configure({
+      controls: true,
+      nocookie: true,
+      modestBranding: true,
+    }),
     Code,
     CodeBlockLowlight.configure({
       lowlight,
     }),
+    OrderedList,
+    BulletList,
+    ListItem,
     Typography,
     ColorHighlighter,
     SmilieReplacer,
-  
-    
+    MathInline,
+    MathDisplay,
+    Math,
+
     CustomDocument,
     StarterKit.configure({
       document: false,
@@ -179,10 +277,10 @@ let editor = new Editor({
     TextAlign.configure({
       types: ["heading", "paragraph"],
     }),
-    Highlight,
+    Highlight.configure({ multicolor: true }),
     Mention.configure({
       HTMLAttributes: {
-        class: 'mention',
+        class: "mention",
       },
       suggestion,
     }),
@@ -193,6 +291,7 @@ let editor = new Editor({
           return [
             {
               title: "Heading 1",
+              icon: Heading1,
               command: ({ editor, range }) => {
                 console.log("Executing command:", { range });
                 editor
@@ -205,6 +304,7 @@ let editor = new Editor({
             },
             {
               title: "Heading 2",
+              icon: Heading2,
               command: ({ editor, range }) => {
                 editor
                   .chain()
@@ -216,12 +316,14 @@ let editor = new Editor({
             },
             {
               title: "Bold",
+              icon: Bold,
               command: ({ editor, range }) => {
                 editor.chain().focus().deleteRange(range).setMark("bold").run();
               },
             },
             {
               title: "Italic",
+              icon: Italic,
               command: ({ editor, range }) => {
                 editor
                   .chain()
@@ -233,6 +335,7 @@ let editor = new Editor({
             },
             {
               title: "Underline",
+              icon: UnderlineIcon,
               command: ({ editor, range }) => {
                 editor
                   .chain()
@@ -244,6 +347,7 @@ let editor = new Editor({
             },
             {
               title: "Strike",
+              icon: Strikethrough,
               command: ({ editor, range }) => {
                 editor
                   .chain()
@@ -255,6 +359,7 @@ let editor = new Editor({
             },
             {
               title: "Bullet List",
+              icon: List,
               command: ({ editor, range }) => {
                 editor
                   .chain()
@@ -265,7 +370,64 @@ let editor = new Editor({
               },
             },
             {
+              title: "Block Quote",
+              icon: Quote,
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .toggleBlockquote()
+                  .run();
+              },
+            },
+            {
+              title: "YouTube",
+              icon: YoutubeIcon,
+              command: ({ editor, range }) => {
+                const url = window.prompt("Enter the YouTube video URL");
+
+                if (url) {
+                  editor
+                    .chain()
+                    .focus()
+                    .deleteRange(range)
+                    .setYoutubeVideo({ src: url })
+                    .run();
+                }
+              },
+            },
+            {
+              title: "Image",
+              icon: ImageIcon,
+              command: ({ editor, range }) => {
+                const url = window.prompt("Enter the image URL");
+
+                if (url) {
+                  editor
+                    .chain()
+                    .focus()
+                    .deleteRange(range)
+                    .setImage({ src: url })
+                    .run();
+                }
+              },
+            },
+            {
+              title: "Task List",
+              icon: CheckSquare,
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .toggleTaskList()
+                  .run();
+              },
+            },
+            {
               title: "Ordered List",
+              icon: ListOrdered,
               command: ({ editor, range }) => {
                 editor
                   .chain()
@@ -277,6 +439,7 @@ let editor = new Editor({
             },
             {
               title: "Code Block",
+              icon: CodeIcon,
               command: ({ editor, range }) => {
                 editor
                   .chain()
@@ -286,11 +449,43 @@ let editor = new Editor({
                   .run();
               },
             },
+            {
+              title: "Details",
+              icon: FoldVertical,
+              command: ({ editor, range }) => {
+                editor
+                  .chain()
+                  .focus()
+                  .deleteRange(range)
+                  .insertContent({
+                    type: "details",
+                    content: [
+                      {
+                        type: "detailsSummary",
+                        content: [{ type: "text", text: "\u200B" }],
+                      },
+                      {
+                        type: "detailsContent",
+                        content: [
+                          {
+                            type: "paragraph",
+                            content: [{ type: "text", text: "\u200B" }],
+                          },
+                        ],
+                        HTMLAttributes: {
+                          open: true,
+                        },
+                      },
+                    ],
+                  })
+                  .run();
+              },
+            },
           ]
             .filter((item) =>
               item.title.toLowerCase().startsWith(query.toLowerCase())
             )
-            .slice(0, 5);
+            // .slice(0, 5);
         },
         render: () => {
           // Your existing render function with VueRenderer and tippy
@@ -356,67 +551,23 @@ let editor = new Editor({
     }),
     Image,
     Gapcursor,
- Placeholder.configure({
-  // emptyEditorClass: 'h1',
-  showOnlyCurrent: false,
-  placeholder: ({ node }) => {
-    if (node.type.name === "title") {
-      return "Untitled Note:";
-    }
+    Placeholder.configure({
+      // emptyEditorClass: 'h1',
+      showOnlyCurrent: false,
+      placeholder: ({ node }) => {
+        if (node.type.name === "title") {
+          return "Untitled Note:";
+        }
 
-    // return "Lets get writing...";
-  },
-}),
+        // return "Lets get writing...";
+      },
+    }),
   ],
   editorProps: {
     attributes: {
       class: "",
     },
   },
-  // content: `
-  //       <p>
-  //         → With the Typography extension, Tiptap understands »what you mean« and adds correct characters to your text — it’s like a “typography nerd” on your side.
-  //       </p>
-  //       <p>
-  //         Try it out and type <code>(c)</code>, <code>-></code>, <code>>></code>, <code>1/2</code>, <code>!=</code>, <code>--</code> or <code>1x1</code> here:
-  //       </p>
-  //       <p></p>
-  //       <p>
-  //         Or add completely custom input rules. We added a custom extension here that replaces smilies like <code>:-)</code>, <code><3</code> or <code>>:P</code> with emojis. Try it out:
-  //       </p>
-  //       <p></p>
-  //       <p>
-  //         You can also teach the editor new things. For example to recognize hex colors and add a color swatch on the fly: #FFF, #0D0D0D, #616161, #A975FF, #FB5151, #FD9170, #FFCB6B, #68CEF8, #80cbc4, #9DEF8F
-  //       </p>
-
-
-  //       <h3 style="text-align:center">
-  //         Devs Just Want to Have Fun by Cyndi Lauper
-  //       </h3>
-  //       <img src="https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885_1280.jpg" />
-  //       <p style="text-align:center">
-  //         I come home in the morning light<br>
-  //         My mother says, <mark>“When you gonna live your life right?”</mark><br>
-  //         Oh mother dear we’re not the fortunate ones<br>
-  //         And devs, they wanna have fun<br>
-  //         Oh devs just want to have fun</p>
-  //       <p style="text-align:center">
-  //         The phone rings in the middle of the night<br>
-  //         My father yells, "What you gonna do with your life?"<br>
-  //         Oh daddy dear, you know you’re still number one<br>
-  //         But <s>girls</s>devs, they wanna have fun<br>
-  //         Oh devs just want to have
-  //       </p>
-  //       <p style="text-align:center">
-  //         That’s all they really want<br>
-  //         Some fun<br>
-  //         When the working day is done<br>
-  //         Oh devs, they wanna have fun<br>
-  //         Oh devs just wanna have fun<br>
-  //         (devs, they wanna, wanna have fun, devs wanna have)
-  //       </p>
-
-  //     `,
   content: `
     <div class="note-title-container">
       <h1>Untitled Note</h1>
@@ -517,6 +668,39 @@ let editor = new Editor({
 </template>
 
 <style lang="scss">
+math-inline {
+  font-family: "KaTeX_Main", serif;
+  min-width: 1em;
+  min-height: 1em;
+  font-size: 1em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  @apply bg-purple-600;
+}
+
+math-inline.ProseMirror-selectednode {
+  outline: 2px solid #6a00f5;
+  background-color: rgba(106, 0, 245, 0.1);
+}
+
+math-display {
+  display: block;
+  font-family: "KaTeX_Main", serif;
+  font-size: 1.2em;
+  padding: 0.5rem 0;
+  cursor: pointer;
+}
+
+math-display.ProseMirror-selectednode {
+  outline: 2px solid #6a00f5;
+  background-color: rgba(106, 0, 245, 0.1);
+}
+
+/* Additional KaTeX-related styles */
+.katex-html {
+  display: none;
+}
 /* Basic editor styles */
 
 // .ProseMirror:focus {
@@ -576,13 +760,13 @@ let editor = new Editor({
     }
   }
 
-   // Note title container styling
-   .note-title-container {
+  // Note title container styling
+  .note-title-container {
     position: relative;
     margin: 0 0 2rem;
     padding: 1rem 0;
     border-bottom: 2px solid #6a00f5;
-    
+
     // Pseudo-elements for visual distinction
     // &::before {
     //   content: '';
@@ -593,15 +777,15 @@ let editor = new Editor({
     //   height: 1px;
     //   @apply bg-purple-600;
     // }
-  // .is-empty::before,
+    // .is-empty::before,
     h1 {
       margin: 0;
       font-size: 1.8rem;
       @apply text-purple-800 dark:text-purple-300;
       // float: left;
-      // height: 0;      
+      // height: 0;
     }
-    
+
     // Add a subtle background for visual emphasis
     @apply bg-purple-100/30 dark:bg-purple-900/10 rounded-md px-4;
   }
@@ -622,10 +806,38 @@ let editor = new Editor({
     @apply bg-purple-700 text-purple-100; // Slightly different color if desired
   }
 
+  /* Task list specific styles */
+  ul[data-type="taskList"] {
+    list-style: none;
+    margin-left: 0;
+    padding: 0;
+
+    li {
+      align-items: flex-start;
+      display: flex;
+
+      > label {
+        flex: 0 0 auto;
+        margin-right: 0.5rem;
+        user-select: none;
+      }
+
+      > div {
+        flex: 1 1 auto;
+      }
+    }
+
+    input[type="checkbox"] {
+      cursor: pointer;
+    }
+
+    ul[data-type="taskList"] {
+      margin: 0;
+    }
+  }
+
   ul,
-  
   ol {
-    list-style-type: disc;
     padding: 0 1rem;
     margin: 1.25rem 1rem 1.25rem 0.4rem;
 
@@ -633,6 +845,14 @@ let editor = new Editor({
       margin-top: 0.25em;
       margin-bottom: 0.25em;
     }
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+
+  ol {
+    list-style-type: decimal;
   }
 
   /* Heading styles */
@@ -671,6 +891,62 @@ let editor = new Editor({
     font-size: 1rem;
   }
 
+  /* Details */
+  .details {
+    display: flex;
+    gap: 0.25rem;
+    margin: 1.5rem 0;
+    border: 1px solid;
+    @apply border border-gray-600;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+
+    summary {
+      font-weight: 700;
+    }
+
+    > button {
+      align-items: center;
+      background: transparent;
+      border-radius: 4px;
+      display: flex;
+      font-size: 0.625rem;
+      height: 1.25rem;
+      justify-content: center;
+      line-height: 1;
+      margin-top: 0.1rem;
+      padding: 0;
+      width: 1.25rem;
+
+      &:hover {
+        background-color: var(--gray-3);
+        @apply bg-slate-600 rounded;
+      }
+
+      &::before {
+        content: "\25B6";
+      }
+    }
+
+    &.is-open > button::before {
+      transform: rotate(90deg);
+    }
+
+    > div {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+
+      > [data-type="detailsContent"] > :last-child {
+        margin-bottom: 0.5rem;
+      }
+    }
+
+    .details {
+      margin: 0.5rem 0;
+    }
+  }
   /* Code and preformatted text styles */
   code {
     background-color: #c8a2c8;
@@ -755,7 +1031,8 @@ let editor = new Editor({
   }
 
   blockquote {
-    border-left: 3px solid var(--gray-3);
+    border-left: 3px solid;
+    @apply border-l-4 border-l-gray-600;
     margin: 1.5rem 0;
     padding-left: 1rem;
   }
@@ -767,14 +1044,13 @@ let editor = new Editor({
   // }
   hr {
     border: none;
-    border-top:  solid ;
+    border-top: solid;
     @apply border-t border-t-gray-600;
     cursor: pointer;
     margin: 2rem 0;
-   
 
     &.ProseMirror-selectednode {
-      border-top: solid ;
+      border-top: solid;
       @apply border-t  border-t-purple-600;
     }
   }
@@ -800,12 +1076,9 @@ let editor = new Editor({
     height: 0;
     pointer-events: none;
 
-
-    
     margin: 0;
-      font-size: 1.8rem;
-      @apply text-purple-800 dark:text-purple-300;
-  
+    font-size: 1.8rem;
+    @apply text-purple-800 dark:text-purple-300;
   }
 }
 </style>

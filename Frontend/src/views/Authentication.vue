@@ -85,19 +85,23 @@ const register = async () => {
 
     // Store the token in localStorage
     //localStorage.setItem("token", response.data.access_token);
-    userStore.setUser({
+
+    let redirect = route.query.redirect as string;
+    
+    userStore.Login({
       username: response.data.username,
       email: response.data.email,
       role: response.data.userStatus,
       token: response.data.access_token,
+      redirect: redirect ? redirect : null,
     });
+
     toast({
       title: "Success",
       description: "Sucesfully Registered and Logged in",
       variant: "success",
     });
     //await new Promise(resolve => setTimeout(resolve, 1000)); // Waitm for 500ms to show message before going to dashboard
-    const redirect = route.query.redirect as string;
     if (redirect) {
       router.replace(decodeURIComponent(redirect)); // Navigate to the intended route
     } else {
@@ -115,10 +119,6 @@ const register = async () => {
   } catch (error) {
     console.error(
       "Registration failed:",
-      error.response ? error.response.data : error
-    );
-    console.error(
-      "Registration failed",
       error.response ? error.response.data : error
     );
     toast({

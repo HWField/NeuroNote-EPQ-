@@ -1,23 +1,35 @@
 <template>
-    <div class="dropdown-menu">
-      <template v-if="items.length">
-        <button
-          :class="{ 'is-selected': index === selectedIndex }"
-          v-for="(item, index) in items"
-          :key="index"
-          @click="selectItem(index)"
-        >
-          {{ item.title }}
-        </button>
-      </template>
-      <div class="item" v-else>
-        No result
+  <div class="dropdown-menu">
+    <ScrollArea class="command-scroll-area">
+      <div class="p-1">
+        <template v-if="items.length">
+          <button
+            :class="{ 'is-selected': index === selectedIndex }"
+            v-for="(item, index) in items"
+            :key="index"
+            @click="selectItem(index)"
+            class="command-item"
+          >
+            <div class="command-icon">
+              <component :is="item.icon" size="18" />
+            </div>
+            <span>{{ item.title }}</span>
+          </button>
+        </template>
+        <div class="item" v-else>
+          No result
+        </div>
       </div>
-    </div>
-  </template>
+    </ScrollArea>
+  </div>
+</template>
   
   <script>
+  import { ScrollArea } from "@/components/ui/scroll-area";
   export default {
+    components: {
+    ScrollArea  // Add this line
+  },
     props: {
       items: {
         type: Array,
@@ -88,6 +100,11 @@
   <style lang="scss">
   /* Dropdown menu */
   .dropdown-menu {
+
+    .command-scroll-area {
+    height: 300px; /* Fixed height rather than max-height */
+  }
+
     background: var(--white);
     border: 1px solid var(--gray-1);
     border-radius: 0.7rem;
@@ -99,7 +116,7 @@
     padding: 0.4rem;
     position: relative;
     // @apply bg-gray-800 text-gray-200 dark:bg-slate-800 dark:text-gray-200;
-    @apply bg-slate-800  border border-slate-600 text-white;
+    @apply bg-slate-600  border border-slate-600 text-white;
   
     button {
       align-items: center;

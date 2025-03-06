@@ -1,0 +1,48 @@
+/* Math node styles */
+math-inline {
+	font-family: "KaTeX_Main", serif;
+	min-width: 1em;
+	min-height: 1em;
+	font-size: 1em;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+  }
+  
+  math-inline.ProseMirror-selectednode {
+	outline: 2px solid #6a00f5;
+	background-color: rgba(106, 0, 245, 0.1);
+  }
+  
+  math-display {
+	display: block;
+	font-family: "KaTeX_Main", serif;
+	font-size: 1.2em;
+	padding: 0.5rem 0;
+	cursor: pointer;
+  }
+  
+  math-display.ProseMirror-selectednode {
+	outline: 2px solid #6a00f5;
+	background-color: rgba(106, 0, 245, 0.1);
+  }
+  
+  .math-node {
+	min-width: 1em;
+	min-height: 1em;
+	font-size: 0.95em;
+	font-family: "KaTeX_Main";
+	cursor: pointer;
+  }
+  
+  .math-node .math-render {
+	padding: 0.25rem;
+  }
+  
+  .math-node .math-src {
+	display: none;
+  }
+  
+  .math-node.ProseMirror-selectednode .math-src {
+	display: inline;
+  }

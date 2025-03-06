@@ -18,14 +18,14 @@ export const useUserStore = defineStore("userStore", () => {
   
   const router = useRouter(); // Router instance for programmatic navigation
 
-  async function fetchUser() {
+  async function FetchUser() {
     if (isAuthenticated) {
       try {
         const response = await axios.post("/load", {
           operation: "user",
         });
         console.log("user data:", response.data);
-        setUser(response.data);
+        UpdateUser(response.data);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
@@ -51,9 +51,7 @@ export const useUserStore = defineStore("userStore", () => {
     }
   }
 
-
-
-  function setUser(data) {
+  function UpdateUser(data) {
     username.value = data.username;
     email.value = data.email;
     role.value = data.userStatus;
@@ -81,7 +79,7 @@ export const useUserStore = defineStore("userStore", () => {
     }
   }
 
-  function logout() {
+  function Logout() {
     username.value = "";
     email.value = "";
     role.value = "";
@@ -105,9 +103,9 @@ export const useUserStore = defineStore("userStore", () => {
     role,
     token,
     Login,
-    logout,
-    setUser,
-    fetchUser,
+    Logout,
+    UpdateUser,
+    FetchUser,
   };
 }, 
 // ✅ Enable persistence
