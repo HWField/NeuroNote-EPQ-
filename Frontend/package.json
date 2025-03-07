@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
+    "build": "vite build",
     "preview": "vite preview",
     "build-only": "vite build",
-    "type-check": "vue-tsc --build"
+    "type-check": "vue-tsc --build",
+    "analyze": "vite build --mode analyze"
   },
   "dependencies": {
     "@benrbray/prosemirror-math": "^1.0.0",
@@ -71,6 +72,7 @@
     "@vue/tsconfig": "^0.7.0",
     "autoprefixer": "^10.4.20",
     "npm-run-all2": "^7.0.2",
+    "rollup-plugin-visualizer": "^5.14.0",
     "sass-embedded": "^1.83.4",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.6.3",

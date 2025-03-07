@@ -7,7 +7,7 @@ import { Commands } from "@/components/Document Editor/commands.js";
 import suggestion from "@/components/Document Editor/TagSuggestion.js";
 import Heading from "@tiptap/extension-heading";
 import TagsList from "@/components/Document Editor/TagsList.vue";
-import CommandsList from "@/components/Document Editor/CommandsList.vue";
+import CommandsList, {commands} from "@/components/Document Editor/CommandsList.vue";
 import { VueRenderer } from "@tiptap/vue-3";
 import tippy from "tippy.js";
 import Underline from "@tiptap/extension-underline";
@@ -35,7 +35,9 @@ import ts from "highlight.js/lib/languages/typescript";
 import html from "highlight.js/lib/languages/xml";
 import py from "highlight.js/lib/languages/python";
 import csharp from "highlight.js/lib/languages/csharp";
-import { all, createLowlight } from "lowlight";
+import json from "highlight.js/lib/languages/json";
+import sql from "highlight.js/lib/languages/sql";
+import { createLowlight } from "lowlight";
 import { Editor, EditorContent } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
 import { ColorHighlighter } from "@/components/Document Editor/ColorHighlighter.ts";
@@ -44,14 +46,40 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Extension } from "@tiptap/core";
 import { Node } from "@tiptap/core";
 import { Button } from "@/components/ui/Button";
-
-// Add after your other imports, near the top of the file
 import { 
-  Heading1, Heading2, Heading3, Bold, Italic, Underline as UnderlineIcon, 
-  Strikethrough, List, ListOrdered, Quote, 
-  Youtube as YoutubeIcon, Image as ImageIcon, CheckSquare, 
-  Code as CodeIcon, AlignLeft, AlignCenter, AlignRight, 
-  AlignJustify, FoldVertical 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { 
+  Bold as BoldIcon, 
+  Italic as ItalicIcon, 
+  Underline as UnderlineIcon, 
+  Strikethrough as StrikethroughIcon, 
+  Code as CodeIcon,
+  AlignLeft as AlignLeftIcon,
+  AlignCenter as AlignCenterIcon,
+  AlignRight as AlignRightIcon,
+  AlignJustify as AlignJustifyIcon,
+  ChevronDown as ChevronDownIcon,
+  Text as TextIcon,
+  X as XIcon,
+  Paintbrush as PaintbrushIcon,
 } from "lucide-vue-next";
 
 import axios from "../../axios.js";
@@ -59,86 +87,18 @@ import axios from "../../axios.js";
 import { ref, onBeforeUnmount } from "vue";
 import { onMounted } from "vue";
 
-import "katex/dist/katex.min.css";
-import "@benrbray/prosemirror-math/dist/prosemirror-math.css";
 
-import {
-  makeInlineMathInputRule,
-  makeBlockMathInputRule,
-  REGEX_INLINE_MATH_DOLLARS,
-  REGEX_BLOCK_MATH_DOLLARS,
-} from "@benrbray/prosemirror-math";
-import {
-  mathPlugin,
-  mathBackspaceCmd,
-  mathSerializer,
-} from "@benrbray/prosemirror-math";
-import { keymap } from "@tiptap/pm/keymap";
-import { inputRules } from "@tiptap/pm/inputrules";
+const lowlight = createLowlight();
 
-const mathKeymap = keymap({
-  Backspace: mathBackspaceCmd,
-});
-
-const MathInline = Node.create({
-  name: "math_inline",
-  group: "inline math",
-  content: "text*",
-  inline: true,
-  atom: true,
-  parseHTML() {
-    return [{ tag: "math-inline" }];
-  },
-  renderHTML() {
-    return ["math-inline", { class: "math-node" }, 0];
-  },
-});
-
-const MathDisplay = Node.create({
-  name: "math_display",
-  group: "block math",
-  content: "text*",
-  atom: true,
-  code: true,
-  parseHTML() {
-    return [{ tag: "math-display" }];
-  },
-  renderHTML() {
-    return ["math-display", { class: "math-node" }, 0];
-  },
-});
-console.error("MathInline type:", MathInline.type);
-console.error("MathDisplay type:", MathDisplay.type);
-const mathInputRules = inputRules({
-  rules: [
-    // Call the functions with regex patterns and node types
-    makeInlineMathInputRule(REGEX_INLINE_MATH_DOLLARS, MathInline.type),
-    makeBlockMathInputRule(REGEX_BLOCK_MATH_DOLLARS, MathDisplay.type),
-  ],
-});
-
-const Math = Extension.create({
-  name: "math",
-
-  addProseMirrorPlugins() {
-    return [
-      mathInputRules,
-      mathKeymap,
-      mathPlugin, // Use directly as a plugin instance, don't call it as a function
-    ];
-  },
-});
-
-// create a lowlight instance
-const lowlight = createLowlight(all);
-
-// you can also register languages
+// lowlight languages editor can use
 lowlight.register("html", html);
 lowlight.register("css", css);
 lowlight.register("js", js);
 lowlight.register("ts", ts);
 lowlight.register("py", py);
 lowlight.register("csharp", csharp);
+lowlight.register("json", json);
+lowlight.register("sql", sql);
 
 const focusEditor = (event) => {
   if (editor) {
@@ -212,24 +172,6 @@ const Title = Heading.extend({
   },
 }).configure({ levels: [1] });
 
-// const NoteTitle = Node.create({
-//   name: 'noteTitle',
-//   group: 'block',
-//   content: 'heading',
-//   marks: '',
-
-//   parseHTML() {
-//     return [
-//       {
-//         tag: 'div.note-title-container'
-//       },
-//     ]
-//   },
-
-//   renderHTML({ HTMLAttributes }) {
-//     return ['div', { class: 'note-title-container' }, 0]
-//   }
-// })
 
 let editor = new Editor({
   extensions: [
@@ -266,10 +208,6 @@ let editor = new Editor({
     Typography,
     ColorHighlighter,
     SmilieReplacer,
-    MathInline,
-    MathDisplay,
-    Math,
-
     CustomDocument,
     StarterKit.configure({
       document: false,
@@ -284,209 +222,41 @@ let editor = new Editor({
       },
       suggestion,
     }),
-    // CustomMentionTwo,
+    Extension.create({
+  name: 'customSelectAll',
+  
+  addKeyboardShortcuts() {
+    return {
+      'Mod-a': ({ editor }) => {
+        const { state } = editor;
+        const { doc } = state;
+        
+        // Skip the title node (first node) and find the position right after it
+        if (doc.firstChild && doc.childCount > 1) {
+          // Get the position after the first node (title)
+          const startPos = doc.firstChild.nodeSize;
+          
+          // Set selection from start of content to end of document
+          editor.commands.setTextSelection({
+            from: startPos,
+            to: doc.content.size
+          });
+          
+          return true;
+        }
+        
+        return false;
+      }
+    }
+  }
+}),
     Commands.configure({
       suggestion: {
-        items: ({ query }) => {
-          return [
-            {
-              title: "Heading 1",
-              icon: Heading1,
-              command: ({ editor, range }) => {
-                console.log("Executing command:", { range });
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .setNode("heading", { level: 1 })
-                  .run();
-              },
-            },
-            {
-              title: "Heading 2",
-              icon: Heading2,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .setNode("heading", { level: 2 })
-                  .run();
-              },
-            },
-            {
-              title: "Bold",
-              icon: Bold,
-              command: ({ editor, range }) => {
-                editor.chain().focus().deleteRange(range).setMark("bold").run();
-              },
-            },
-            {
-              title: "Italic",
-              icon: Italic,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .setMark("italic")
-                  .run();
-              },
-            },
-            {
-              title: "Underline",
-              icon: UnderlineIcon,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .setMark("underline")
-                  .run();
-              },
-            },
-            {
-              title: "Strike",
-              icon: Strikethrough,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .setMark("strike")
-                  .run();
-              },
-            },
-            {
-              title: "Bullet List",
-              icon: List,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .toggleBulletList()
-                  .run();
-              },
-            },
-            {
-              title: "Block Quote",
-              icon: Quote,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .toggleBlockquote()
-                  .run();
-              },
-            },
-            {
-              title: "YouTube",
-              icon: YoutubeIcon,
-              command: ({ editor, range }) => {
-                const url = window.prompt("Enter the YouTube video URL");
-
-                if (url) {
-                  editor
-                    .chain()
-                    .focus()
-                    .deleteRange(range)
-                    .setYoutubeVideo({ src: url })
-                    .run();
-                }
-              },
-            },
-            {
-              title: "Image",
-              icon: ImageIcon,
-              command: ({ editor, range }) => {
-                const url = window.prompt("Enter the image URL");
-
-                if (url) {
-                  editor
-                    .chain()
-                    .focus()
-                    .deleteRange(range)
-                    .setImage({ src: url })
-                    .run();
-                }
-              },
-            },
-            {
-              title: "Task List",
-              icon: CheckSquare,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .toggleTaskList()
-                  .run();
-              },
-            },
-            {
-              title: "Ordered List",
-              icon: ListOrdered,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .toggleOrderedList()
-                  .run();
-              },
-            },
-            {
-              title: "Code Block",
-              icon: CodeIcon,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .toggleCodeBlock()
-                  .run();
-              },
-            },
-            {
-              title: "Details",
-              icon: FoldVertical,
-              command: ({ editor, range }) => {
-                editor
-                  .chain()
-                  .focus()
-                  .deleteRange(range)
-                  .insertContent({
-                    type: "details",
-                    content: [
-                      {
-                        type: "detailsSummary",
-                        content: [{ type: "text", text: "\u200B" }],
-                      },
-                      {
-                        type: "detailsContent",
-                        content: [
-                          {
-                            type: "paragraph",
-                            content: [{ type: "text", text: "\u200B" }],
-                          },
-                        ],
-                        HTMLAttributes: {
-                          open: true,
-                        },
-                      },
-                    ],
-                  })
-                  .run();
-              },
-            },
-          ]
-            .filter((item) =>
-              item.title.toLowerCase().startsWith(query.toLowerCase())
-            )
-            // .slice(0, 5);
-        },
+       items: ({query}) => {
+        return commands.filter((command) => {
+          return command.title.toLowerCase().includes(query.toLowerCase());
+        });
+       },
         render: () => {
           // Your existing render function with VueRenderer and tippy
           // ...
@@ -579,86 +349,284 @@ let editor = new Editor({
 
 <template>
   <div class="flex w-full h-full flex-col">
-    <div
-      class="flex justify-center mx-auto bg-primary-foreground p-3 shadow-lg rounded-lg mt-4 space-x-2 max-w-max"
-    >
-      <Button
-        @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
-        :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }"
-      >
-        H1
-      </Button>
-      <Button
-        @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"
-        :class="{ 'is-active': editor.isActive('heading', { level: 2 }) }"
-      >
-        H2
-      </Button>
-      <Button
-        @click="editor.chain().focus().toggleHeading({ level: 3 }).run()"
-        :class="{ 'is-active': editor.isActive('heading', { level: 3 }) }"
-      >
-        H3
-      </Button>
-      <Button
-        @click="editor.chain().focus().setParagraph().run()"
-        :class="{ 'is-active': editor.isActive('paragraph') }"
-      >
-        Paragraph
-      </Button>
-      <Button
-        @click="editor.chain().focus().toggleBold().run()"
-        :class="{ 'is-active': editor.isActive('bold') }"
-      >
-        Bold
-      </Button>
-      <Button
-        @click="editor.chain().focus().toggleItalic().run()"
-        :class="{ 'is-active': editor.isActive('italic') }"
-      >
-        Italic
-      </Button>
-      <Button
-        @click="editor.chain().focus().toggleStrike().run()"
-        :class="{ 'is-active': editor.isActive('strike') }"
-      >
-        Strike
-      </Button>
-      <Button
-        @click="editor.chain().focus().toggleHighlight().run()"
-        :class="{ 'is-active': editor.isActive('highlight') }"
-      >
-        Highlight
-      </Button>
-      <Button
-        @click="editor.chain().focus().setTextAlign('left').run()"
-        :class="{ 'is-active': editor.isActive({ textAlign: 'left' }) }"
-      >
-        Left
-      </Button>
-      <Button
-        @click="editor.chain().focus().setTextAlign('center').run()"
-        :class="{ 'is-active': editor.isActive({ textAlign: 'center' }) }"
-      >
-        Center
-      </Button>
-      <Button
-        @click="editor.chain().focus().setTextAlign('right').run()"
-        :class="{ 'is-active': editor.isActive({ textAlign: 'right' }) }"
-      >
-        Right
-      </Button>
-      <Button
-        @click="editor.chain().focus().setTextAlign('justify').run()"
-        :class="{ 'is-active': editor.isActive({ textAlign: 'justify' }) }"
-      >
-        Justify
-      </Button>
-    </div>
+    <!-- Floating Toolbar -->
+    <div class="h-24 w-full mb-0 relative">
+      <div class="absolute top-6 w-full z-50 px-4 flex justify-center">
+        <div class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%]  mx-auto">
+          <div class="flex items-center gap-1"> 
+            <!-- above flex wrap -->
+          <!-- Basic Text Formatting -->
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  @click="editor.chain().focus().toggleBold().run()"
+                  :class="{ 'bg-primary/20': editor.isActive('bold') }"
+                >
+                  <BoldIcon class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Bold</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-    <div class="flex justify-center">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  @click="editor.chain().focus().toggleItalic().run()"
+                  :class="{ 'bg-primary/20': editor.isActive('italic') }"
+                >
+                  <ItalicIcon class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Italic</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  @click="editor.chain().focus().toggleUnderline().run()"
+                  :class="{ 'bg-primary/20': editor.isActive('underline') }"
+                >
+                  <UnderlineIcon class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Underline</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  @click="editor.chain().focus().toggleStrike().run()"
+                  :class="{ 'bg-primary/20': editor.isActive('strike') }"
+                >
+                  <StrikethroughIcon class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Strikethrough</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  @click="editor.chain().focus().toggleCode().run()"
+                  :class="{ 'bg-primary/20': editor.isActive('code') }"
+                >
+                  <CodeIcon class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Emphasis</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <Separator orientation="vertical" class="h-6 mx-1" />
+          
+          <!-- Heading Dropdown -->
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" class="flex gap-1 items-center">
+                <TextIcon class="h-4 w-4" />
+                <span>Headings</span>
+                <ChevronDownIcon class="h-3 w-3 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem @click="editor.chain().focus().setParagraph().run()">
+                <span :class="{ 'font-bold': editor.isActive('paragraph') }">Paragraph</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem @click="editor.chain().focus().toggleHeading({ level: 1 }).run()">
+                <span :class="{ 'font-bold': editor.isActive('heading', { level: 1 }) }">Heading 1</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="editor.chain().focus().toggleHeading({ level: 2 }).run()">
+                <span :class="{ 'font-bold': editor.isActive('heading', { level: 2 }) }">Heading 2</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="editor.chain().focus().toggleHeading({ level: 3 }).run()">
+                <span :class="{ 'font-bold': editor.isActive('heading', { level: 3 }) }">Heading 3</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Separator orientation="vertical" class="h-6 mx-1" />
+
+          <!-- Alignment Options -->
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  @click="editor.chain().focus().setTextAlign('left').run()"
+                  :class="{ 'bg-primary/20': editor.isActive({ textAlign: 'left' }) }"
+                >
+                  <AlignLeftIcon class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Align left</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  @click="editor.chain().focus().setTextAlign('center').run()"
+                  :class="{ 'bg-primary/20': editor.isActive({ textAlign: 'center' }) }"
+                >
+                  <AlignCenterIcon class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Align center</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  @click="editor.chain().focus().setTextAlign('right').run()"
+                  :class="{ 'bg-primary/20': editor.isActive({ textAlign: 'right' }) }"
+                >
+                  <AlignRightIcon class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Align right</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  @click="editor.chain().focus().setTextAlign('justify').run()"
+                  :class="{ 'bg-primary/20': editor.isActive({ textAlign: 'justify' }) }"
+                >
+                  <AlignJustifyIcon class="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Justify</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <Separator orientation="vertical" class="h-6 mx-1" />
+          
+          <!-- Highlight Colors Dropdown -->
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" class="flex gap-1 items-center">
+                <PaintbrushIcon class="h-4 w-4" />
+                <span>Highlight</span>
+                <ChevronDownIcon class="h-3 w-3 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <div class="flex flex-wrap gap-1 p-2 w-48">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-7 w-7 bg-yellow-200 hover:bg-yellow-300 border-yellow-400"
+                  @click="editor.chain().focus().toggleHighlight({ color: '#fef08a' }).run()"
+                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#fef08a' }) }"
+                />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-7 w-7 bg-green-200 hover:bg-green-300 border-green-400"
+                  @click="editor.chain().focus().toggleHighlight({ color: '#bbf7d0' }).run()"
+                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#bbf7d0' }) }"
+                />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-7 w-7 bg-blue-200 hover:bg-blue-300 border-blue-400"
+                  @click="editor.chain().focus().toggleHighlight({ color: '#bfdbfe' }).run()"
+                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#bfdbfe' }) }"
+                />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-7 w-7 bg-pink-200 hover:bg-pink-300 border-pink-400"
+                  @click="editor.chain().focus().toggleHighlight({ color: '#fbcfe8' }).run()"
+                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#fbcfe8' }) }"
+                />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-7 w-7 bg-purple-200 hover:bg-purple-300 border-purple-400"
+                  @click="editor.chain().focus().toggleHighlight({ color: '#e9d5ff' }).run()"
+                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#e9d5ff' }) }"
+                />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-7 w-7 bg-orange-200 hover:bg-orange-300 border-orange-400"
+                  @click="editor.chain().focus().toggleHighlight({ color: '#fed7aa' }).run()"
+                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#fed7aa' }) }"
+                />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-7 w-7 bg-red-200 hover:bg-red-300 border-red-400"
+                  @click="editor.chain().focus().toggleHighlight({ color: '#fecaca' }).run()"
+                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#fecaca' }) }"
+                />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-7 w-7 bg-gray-200 hover:bg-gray-300 border-gray-400"
+                  @click="editor.chain().focus().toggleHighlight({ color: '#e5e7eb' }).run()"
+                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#e5e7eb' }) }"
+                />
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-7 w-7 flex items-center justify-center"
+                  @click="editor.chain().focus().unsetHighlight().run()"
+                >
+                  <XIcon class="h-4 w-4" />
+                </Button>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <div class="flex justify-center flex-1">
       <ScrollArea
-        class="editor w-full max-w-[2000px] h-[80vh] overflow-y-auto bg-primary-foreground rounded-lg border-4 border-gray-800 m-4"
+        class="editor w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-y-auto bg-primary-foreground rounded-lg border border-input m-4"
         @click="focusEditor"
       >
         <editor-content class="p-4" :editor="editor" />

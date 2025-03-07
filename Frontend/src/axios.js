@@ -49,7 +49,7 @@ api.interceptors.response.use(
       console.error('Session expired, please log in again.');
 
       // Remove expired token
-      useUserStore().logout();
+      useUserStore().Logout();
 
       // Save the original route in the query parameters
       const currentRoute = window.location.pathname;

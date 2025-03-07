@@ -1,19 +1,30 @@
 import { VueRenderer } from '@tiptap/vue-3'
 import tippy from 'tippy.js'
 import TagsList from './TagsList.vue'
-
+import { computed } from "vue";
+import { useGraphStore } from '@/stores/useGraphStore'
 export default {
 
   char: '@',
   items: ({ query }) => {
-    return [
-      'Lea Thompson', 'Cyndi Lauper', 'Tom Cruise', 'Madonna', 'Jerry Hall', 
-      'Joan Collins', 'Winona Ryder', 'Christina Applegate', 'Alyssa Milano', 
-      'Molly Ringwald', 'Ally Sheedy', 'Debbie Harry', 'Olivia Newton-John', 
-      'Elton John', 'Michael J. Fox', 'Axl Rose', 'Emilio Estevez', 
-      'Ralph Macchio', 'Rob Lowe', 'Jennifer Grey', 'Mickey Rourke', 
-      'John Cusack', 'Matthew Broderick', 'Justine Bateman', 'Lisa Bonet'
-    ].filter(item => item.toLowerCase().startsWith(query.toLowerCase())).slice(0, 5)
+    // Get the graph store
+    const graphStore = useGraphStore()
+    
+    const tagElements = computed(() => 
+      graphStore.elements.filter((el) => el.type === "tag")
+    );
+
+    // Filter elements to only include tag nodes
+    console.log('Graph store:', tagElements.value)
+    
+    // Return filtered tags based on query
+    return tagElements.value
+      .filter(tag => tag.name.toLowerCase().includes(query.toLowerCase()))
+      .slice(0, 5)
+      .map(tag => ({
+        id: tag.data.id,        // Store the tag ID
+        title: tag.name   // Store the tag title for display
+      }))
   },
 
   render: () => {
