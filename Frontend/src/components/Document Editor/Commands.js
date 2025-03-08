@@ -1,6 +1,9 @@
 // src/components/Document Editor/commands.js
 import { Extension } from '@tiptap/core'
 import Suggestion from '@tiptap/suggestion'
+import { PluginKey } from 'prosemirror-state'
+
+export const commandSuggestionKey = new PluginKey('commandSuggestion')
 
 export const Commands = Extension.create({
   name: 'commands',
@@ -21,6 +24,7 @@ export const Commands = Extension.create({
       Suggestion({
         editor: this.editor,
         ...this.options.suggestion,
+        pluginKey: commandSuggestionKey,
       }),
     ]
   },

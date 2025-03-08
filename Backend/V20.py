@@ -710,6 +710,30 @@ def update():
         # viewport = data.get('viewport')
         content = (data.get('content'))
         # background = data.get('background')
+        tags = data.get('tags', [])
+        name = data.get('name')
+        # Clear all existing tag-note relationships
+        note = dbsession.query(Note).join(Entity).filter(
+            Entity.user_id == int(user),  # Ensure it belongs to the logged-in user
+            Entity.user_specific_id == note_id  # Find using per-user unique ID
+        ).first()
+        
+        note.tags = []
+        print("------- note", note_id, "has had all tag relationships cleared")
+        print("recieved tags:", tags)
+        
+        
+        # Add new tag relationships
+        if tags:
+            for tag_id in tags:
+                tag = dbsession.query(Tag).join(Entity).filter(
+                    Entity.user_id == int(user),
+                    Entity.id == tag_id
+                ).first()
+                if tag:
+                    note.tags.append(tag)
+                    
+                    
         name = data.get('name')
         
         print("------- note", note_id, "has made a save request")
@@ -908,7 +932,7 @@ def load():
         
       
 
-        return jsonify({'status': 'success', 'content': note.content, 'viewport': note.viewport, 'background': note.background, 'name': note.name})
+        return jsonify({'status': 'success', 'content': note.content, 'viewport': note.viewport, 'background': note.background, 'name': note.name, 'tags': [tag.id for tag in note.tags]})
     
     elif operation == "user":
         user = dbsession.query(User).filter_by(id=current_user).first()

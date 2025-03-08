@@ -1,29 +1,60 @@
+<!-- filepath: /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/TagsList.vue -->
 <template>
   <div class="dropdown-menu">
-    <template v-if="items.length">
-      <button
-        :class="{ 'is-selected': index === selectedIndex }"
-        v-for="(item, index) in items"
-        :key="index"
-        @click="selectItem(index)"
-      >
-        {{ item }}
-      </button>
-    </template>
-    <div class="item" v-else>
-      No result
-    </div>
+    <ScrollArea class="tags-scroll-area flex flex-col overflow-y-auto">
+      <div class="py-1">
+        <template v-if="items.length">
+          <button
+            :class="{ 'is-selected': index === selectedIndex }"
+            v-for="(item, index) in items"
+            :key="index"
+            @click="selectItem(index)"
+            class="tag-item"
+            :id="`tag-item-${index}`"
+          >
+            <div class="tag-icon">
+              <component :is="tagIcon" size="18" />
+            </div>
+            <span>{{ item.title }}</span>
+          </button>
+        </template>
+        <div class="item" v-else>No tags found</div>
+      </div>
+    </ScrollArea>
   </div>
 </template>
 
 <script>
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Hash } from "lucide-vue-next";
+import { computed } from "vue";
+import { useGraphStore } from '@/stores/useGraphStore';
+
+// Export the tags data retrieval function
+export function getTags(query = "") {
+  const graphStore = useGraphStore();
+  
+  const tagElements = graphStore.elements.filter((el) => el.type === "tag");
+
+  return tagElements
+    .filter(tag => tag.name.toLowerCase().includes(query.toLowerCase()))
+    // .slice(0, 100)
+    .map(tag => ({
+      id: tag.id,
+      title: tag.name
+    }));
+}
+
 export default {
+  components: {
+    ScrollArea,
+  },
+  
   props: {
     items: {
       type: Array,
       required: true,
     },
-
     command: {
       type: Function,
       required: true,
@@ -33,6 +64,7 @@ export default {
   data() {
     return {
       selectedIndex: 0,
+      tagIcon: Hash
     }
   },
 
@@ -65,10 +97,24 @@ export default {
 
     upHandler() {
       this.selectedIndex = ((this.selectedIndex + this.items.length) - 1) % this.items.length
+      this.$nextTick(() => this.scrollToSelected())
     },
 
     downHandler() {
       this.selectedIndex = (this.selectedIndex + 1) % this.items.length
+      this.$nextTick(() => this.scrollToSelected())
+    },
+
+    scrollToSelected() {
+      this.$nextTick(() => {
+        const selectedElement = document.getElementById(`tag-item-${this.selectedIndex}`);
+        if (selectedElement) {
+          selectedElement.scrollIntoView({
+            block: "nearest",
+            behavior: "smooth"
+          });
+        }
+      });
     },
 
     enterHandler() {
@@ -76,10 +122,12 @@ export default {
     },
 
     selectItem(index) {
+      
       const item = this.items[index]
+      
 
       if (item) {
-        this.command({ id: item })
+        this.command(item)
       }
     },
   },
@@ -90,35 +138,48 @@ export default {
 /* Dropdown menu */
 .dropdown-menu {
   background: var(--white);
-
-  border-radius: 0.7rem;
-  box-shadow: var(--shadow);
+  border: 1px solid var(--gray-1);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
-  overflow: auto;
-  padding: 0.4rem;
+  padding: 0.25rem;
   position: relative;
-  @apply bg-slate-800  border border-slate-600 text-white;
+  @apply bg-slate-700 border border-slate-600 text-white;
 
-  button {
+  .tags-scroll-area {
+    @apply max-h-52;
+  }
+
+  button.tag-item {
     align-items: center;
     background-color: transparent;
     display: flex;
-    gap: 0.25rem;
+    gap: 0.5rem;
     text-align: left;
     width: 100%;
+    @apply py-2 px-3 rounded-md my-0.5 transition-colors duration-150;
+
+    .tag-icon {
+      @apply flex items-center justify-center text-slate-300 min-w-[24px];
+    }
+
+    span {
+      @apply font-medium;
+    }
 
     &:hover,
     &:hover.is-selected {
-      background-color: var(--gray-3);
-      @apply bg-slate-600 rounded;
+      @apply bg-slate-600;
     }
 
     &.is-selected {
-      background-color: var(--gray-2);
-      @apply bg-slate-600 rounded;
+      @apply bg-slate-500;
     }
+  }
+
+  .item {
+    @apply py-3 text-center text-sm text-slate-400;
   }
 }
 </style>

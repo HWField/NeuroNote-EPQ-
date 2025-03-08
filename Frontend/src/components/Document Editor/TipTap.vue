@@ -3,11 +3,18 @@ import Gapcursor from "@tiptap/extension-gapcursor";
 import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
 import Mention from "@tiptap/extension-mention";
-import { Commands } from "@/components/Document Editor/commands.js";
-import suggestion from "@/components/Document Editor/TagSuggestion.js";
+// import suggestion from "@/components/Document Editor/TagSuggestion.js";
 import Heading from "@tiptap/extension-heading";
-import TagsList from "@/components/Document Editor/TagsList.vue";
-import CommandsList, {commands} from "@/components/Document Editor/CommandsList.vue";
+// import TagsList from "@/components/Document Editor/TagsList.vue";
+
+import { Commands } from "@/components/Document Editor/commands.js";
+import CommandsList, {
+  commands,
+} from "@/components/Document Editor/CommandsList.vue";
+
+import { Tags } from "@/components/Document Editor/Tags.js";
+import TagsList, { getTags } from "@/components/Document Editor/TagsList.vue";
+
 import { VueRenderer } from "@tiptap/vue-3";
 import tippy from "tippy.js";
 import Underline from "@tiptap/extension-underline";
@@ -46,31 +53,26 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Extension } from "@tiptap/core";
 import { Node } from "@tiptap/core";
 import { Button } from "@/components/ui/Button";
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "@/components/ui/tabs";
-import { 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { 
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
-  TooltipTrigger
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Bold as BoldIcon, 
-  Italic as ItalicIcon, 
-  Underline as UnderlineIcon, 
-  Strikethrough as StrikethroughIcon, 
+import {
+  Bold as BoldIcon,
+  Italic as ItalicIcon,
+  Underline as UnderlineIcon,
+  Strikethrough as StrikethroughIcon,
   Code as CodeIcon,
   AlignLeft as AlignLeftIcon,
   AlignCenter as AlignCenterIcon,
@@ -82,12 +84,12 @@ import {
   Paintbrush as PaintbrushIcon,
 } from "lucide-vue-next";
 
+import { useGraphStore } from "@/stores/useGraphStore";
 import axios from "../../axios.js";
 
-import { ref, onBeforeUnmount } from "vue";
+import { ref, onBeforeUnmount, watch } from "vue";
 import { onMounted } from "vue";
-
-
+const externalTags = ref([]);
 const lowlight = createLowlight();
 
 // lowlight languages editor can use
@@ -106,13 +108,77 @@ const focusEditor = (event) => {
   }
 };
 
+function extractTagsFromDocument(document) {
+  // Debug the document structure
+  console.log(
+    "Document structure:",
+    JSON.stringify(document).slice(0, 200) + "..."
+  );
+
+  const uniqueTagIds = new Set();
+
+  // Improved traversal function
+  const traverse = (node) => {
+    // Check if this is a mention node
+    if (node.type === "mention" && node.attrs && node.attrs.id) {
+      console.log("Found mention node:", node);
+      uniqueTagIds.add(node.attrs.id); // Push only the ID
+    }
+
+    // Process content array if it exists
+    if (node.content && Array.isArray(node.content)) {
+      node.content.forEach((childNode) => traverse(childNode));
+    }
+
+    // Also check marks for mentions (sometimes they're nested in marks)
+    if (node.marks && Array.isArray(node.marks)) {
+      node.marks.forEach((mark) => {
+        if (mark.type === "mention" && mark.attrs && mark.attrs.id) {
+          uniqueTagIds.add(mark.attrs.id); // Push only the ID
+        }
+      });
+    }
+  };
+
+  // Start traversal with the document
+  if (document && document.content) {
+    document.content.forEach((node) => traverse(node));
+  }
+
+  const tagIds = Array.from(uniqueTagIds);
+
+  console.log("Tag IDs extracted:", tagIds);
+  return tagIds; // Return array of IDs directly
+}
+
 function SaveToBackend() {
   let noteContent = editor.getJSON();
+  let noteName = "Untitled Note";
+  const tags = extractTagsFromDocument(noteContent);
+  if (noteContent && noteContent.content && noteContent.content.length > 0) {
+    const titleNode = noteContent.content[0];
+
+    // Extract text content from title node without mentions
+    if (titleNode.content) {
+      noteName = titleNode.content
+        .filter((item) => item.type !== "mention")
+        .map((item) => item.text || "")
+        .join("")
+        .trim();
+
+      // Use default if title is empty after removing mentions
+      if (!noteName) {
+        noteName = "Untitled Note";
+      }
+    }
+  }
+  console.error("Note name:", noteName);
   axios
     .post("/update", {
       operation: "content",
-      name: "note 1(updateasjson)",
+      name: noteName,
       content: noteContent,
+      tags: tags, // Send the extracted tags
       id: "31",
     })
     .catch((error) => {
@@ -127,11 +193,33 @@ function LoadFromBackend() {
       operation: "content",
     })
     .then((response) => {
-      console.log("Type of content:", typeof response.data.content);
-      editor.commands.setContent(response.data.content);
-    })
-    .catch((error) => {
-      console.error("Error fetching data on load:", error);
+   
+      
+      
+      // Clone the content to avoid direct mutation
+      const content = JSON.parse(JSON.stringify(response.data.content));
+
+      editor.commands.setContent(content);
+
+      if (response.data.name) {
+        // Find the title node (first node)
+        const titlePos = 1; // Position of the first node
+
+        // Update only the title node with the name from backend
+        editor
+          .chain()
+          .focus()
+          .setNodeSelection(titlePos)
+          .deleteSelection()
+          .insertContent({
+            type: "title",
+            content: [{ type: "text", text: response.data.name }, { type: "text", text: " " }],
+          })
+          .run();
+      }
+
+     
+      editor.commands.focus("end");
     });
 }
 
@@ -171,6 +259,7 @@ const Title = Heading.extend({
     ];
   },
 }).configure({ levels: [1] });
+
 
 
 let editor = new Editor({
@@ -220,43 +309,43 @@ let editor = new Editor({
       HTMLAttributes: {
         class: "mention",
       },
-      suggestion,
+      // suggestion,
     }),
     Extension.create({
-  name: 'customSelectAll',
-  
-  addKeyboardShortcuts() {
-    return {
-      'Mod-a': ({ editor }) => {
-        const { state } = editor;
-        const { doc } = state;
-        
-        // Skip the title node (first node) and find the position right after it
-        if (doc.firstChild && doc.childCount > 1) {
-          // Get the position after the first node (title)
-          const startPos = doc.firstChild.nodeSize;
-          
-          // Set selection from start of content to end of document
-          editor.commands.setTextSelection({
-            from: startPos,
-            to: doc.content.size
-          });
-          
-          return true;
-        }
-        
-        return false;
-      }
-    }
-  }
-}),
+      name: "customSelectAll",
+
+      addKeyboardShortcuts() {
+        return {
+          "Mod-a": ({ editor }) => {
+            const { state } = editor;
+            const { doc } = state;
+
+            // Skip the title node (first node) and find the position right after it
+            if (doc.firstChild && doc.childCount > 1) {
+              // Get the position after the first node (title)
+              const startPos = doc.firstChild.nodeSize;
+
+              // Set selection from start of content to end of document
+              editor.commands.setTextSelection({
+                from: startPos,
+                to: doc.content.size,
+              });
+
+              return true;
+            }
+
+            return false;
+          },
+        };
+      },
+    }),
     Commands.configure({
       suggestion: {
-       items: ({query}) => {
-        return commands.filter((command) => {
-          return command.title.toLowerCase().includes(query.toLowerCase());
-        });
-       },
+        items: ({ query }) => {
+          return commands.filter((command) => {
+            return command.title.toLowerCase().includes(query.toLowerCase());
+          });
+        },
         render: () => {
           // Your existing render function with VueRenderer and tippy
           // ...
@@ -319,6 +408,66 @@ let editor = new Editor({
         },
       },
     }),
+    Tags.configure({
+      suggestion: {
+        items: ({ query }) => {
+          return getTags(query);
+        },
+        render: () => {
+          let component;
+          let popup;
+
+          return {
+            onStart: (props) => {
+              component = new VueRenderer(TagsList, {
+                props,
+                editor: props.editor,
+              });
+
+              if (!props.clientRect) {
+                return;
+              }
+
+              popup = tippy("body", {
+                getReferenceClientRect: props.clientRect,
+                appendTo: () => document.body,
+                content: component.element,
+                showOnCreate: true,
+                interactive: true,
+                trigger: "manual",
+                placement: "bottom-start",
+              });
+            },
+
+            onUpdate(props) {
+              component.updateProps(props);
+
+              if (!props.clientRect) {
+                return;
+              }
+
+              popup[0].setProps({
+                getReferenceClientRect: props.clientRect,
+              });
+            },
+
+            onKeyDown(props) {
+              if (props.event.key === "Escape") {
+                popup[0].hide();
+                return true;
+              }
+
+              return component.ref?.onKeyDown(props);
+            },
+
+            onExit() {
+              popup[0].destroy();
+              component.destroy();
+            },
+          };
+        },
+      },
+    }),
     Image,
     Gapcursor,
     Placeholder.configure({
@@ -339,10 +488,11 @@ let editor = new Editor({
     },
   },
   content: `
-    <div class="note-title-container">
-      <h1>Untitled Note</h1>
-    </div>
-    <p></p>
+     <div class="note-title-container">
+    <h1>Untitled Note</h1>
+  </div>
+  <div class="tags-container"></div>
+  <p></p>
   `,
 });
 </script>
@@ -352,277 +502,410 @@ let editor = new Editor({
     <!-- Floating Toolbar -->
     <div class="h-24 w-full mb-0 relative">
       <div class="absolute top-6 w-full z-50 px-4 flex justify-center">
-        <div class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%]  mx-auto">
-          <div class="flex items-center gap-1"> 
+        <div
+          class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
+        >
+          <div class="flex items-center gap-1">
             <!-- above flex wrap -->
-          <!-- Basic Text Formatting -->
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
+            <!-- Basic Text Formatting -->
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="editor.chain().focus().toggleBold().run()"
+                    :class="{ 'bg-primary/20': editor.isActive('bold') }"
+                  >
+                    <BoldIcon class="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Bold</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="editor.chain().focus().toggleItalic().run()"
+                    :class="{ 'bg-primary/20': editor.isActive('italic') }"
+                  >
+                    <ItalicIcon class="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Italic</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="editor.chain().focus().toggleUnderline().run()"
+                    :class="{ 'bg-primary/20': editor.isActive('underline') }"
+                  >
+                    <UnderlineIcon class="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Underline</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="editor.chain().focus().toggleStrike().run()"
+                    :class="{ 'bg-primary/20': editor.isActive('strike') }"
+                  >
+                    <StrikethroughIcon class="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Strikethrough</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="editor.chain().focus().toggleCode().run()"
+                    :class="{ 'bg-primary/20': editor.isActive('code') }"
+                  >
+                    <CodeIcon class="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Emphasis</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <Separator orientation="vertical" class="h-6 mx-1" />
+
+            <!-- Heading Dropdown -->
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  @click="editor.chain().focus().toggleBold().run()"
-                  :class="{ 'bg-primary/20': editor.isActive('bold') }"
+                  size="sm"
+                  class="flex gap-1 items-center"
                 >
-                  <BoldIcon class="h-4 w-4" />
+                  <TextIcon class="h-4 w-4" />
+                  <span>Headings</span>
+                  <ChevronDownIcon class="h-3 w-3 opacity-50" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent>Bold</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem
+                  @click="editor.chain().focus().setParagraph().run()"
+                >
+                  <span :class="{ 'font-bold': editor.isActive('paragraph') }"
+                    >Paragraph</span
+                  >
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  @click="
+                    editor.chain().focus().toggleHeading({ level: 1 }).run()
+                  "
+                >
+                  <span
+                    :class="{
+                      'font-bold': editor.isActive('heading', { level: 1 }),
+                    }"
+                    >Heading 1</span
+                  >
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  @click="
+                    editor.chain().focus().toggleHeading({ level: 2 }).run()
+                  "
+                >
+                  <span
+                    :class="{
+                      'font-bold': editor.isActive('heading', { level: 2 }),
+                    }"
+                    >Heading 2</span
+                  >
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  @click="
+                    editor.chain().focus().toggleHeading({ level: 3 }).run()
+                  "
+                >
+                  <span
+                    :class="{
+                      'font-bold': editor.isActive('heading', { level: 3 }),
+                    }"
+                    >Heading 3</span
+                  >
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
+            <Separator orientation="vertical" class="h-6 mx-1" />
+
+            <!-- Alignment Options -->
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="editor.chain().focus().setTextAlign('left').run()"
+                    :class="{
+                      'bg-primary/20': editor.isActive({ textAlign: 'left' }),
+                    }"
+                  >
+                    <AlignLeftIcon class="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Align left</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="editor.chain().focus().setTextAlign('center').run()"
+                    :class="{
+                      'bg-primary/20': editor.isActive({ textAlign: 'center' }),
+                    }"
+                  >
+                    <AlignCenterIcon class="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Align center</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="editor.chain().focus().setTextAlign('right').run()"
+                    :class="{
+                      'bg-primary/20': editor.isActive({ textAlign: 'right' }),
+                    }"
+                  >
+                    <AlignRightIcon class="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Align right</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="
+                      editor.chain().focus().setTextAlign('justify').run()
+                    "
+                    :class="{
+                      'bg-primary/20': editor.isActive({
+                        textAlign: 'justify',
+                      }),
+                    }"
+                  >
+                    <AlignJustifyIcon class="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Justify</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <Separator orientation="vertical" class="h-6 mx-1" />
+
+            <!-- Highlight Colors Dropdown -->
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  @click="editor.chain().focus().toggleItalic().run()"
-                  :class="{ 'bg-primary/20': editor.isActive('italic') }"
-                >
-                  <ItalicIcon class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Italic</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  @click="editor.chain().focus().toggleUnderline().run()"
-                  :class="{ 'bg-primary/20': editor.isActive('underline') }"
-                >
-                  <UnderlineIcon class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Underline</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  @click="editor.chain().focus().toggleStrike().run()"
-                  :class="{ 'bg-primary/20': editor.isActive('strike') }"
-                >
-                  <StrikethroughIcon class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Strikethrough</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  @click="editor.chain().focus().toggleCode().run()"
-                  :class="{ 'bg-primary/20': editor.isActive('code') }"
-                >
-                  <CodeIcon class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Emphasis</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <Separator orientation="vertical" class="h-6 mx-1" />
-          
-          <!-- Heading Dropdown -->
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" class="flex gap-1 items-center">
-                <TextIcon class="h-4 w-4" />
-                <span>Headings</span>
-                <ChevronDownIcon class="h-3 w-3 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem @click="editor.chain().focus().setParagraph().run()">
-                <span :class="{ 'font-bold': editor.isActive('paragraph') }">Paragraph</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem @click="editor.chain().focus().toggleHeading({ level: 1 }).run()">
-                <span :class="{ 'font-bold': editor.isActive('heading', { level: 1 }) }">Heading 1</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem @click="editor.chain().focus().toggleHeading({ level: 2 }).run()">
-                <span :class="{ 'font-bold': editor.isActive('heading', { level: 2 }) }">Heading 2</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem @click="editor.chain().focus().toggleHeading({ level: 3 }).run()">
-                <span :class="{ 'font-bold': editor.isActive('heading', { level: 3 }) }">Heading 3</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Separator orientation="vertical" class="h-6 mx-1" />
-
-          <!-- Alignment Options -->
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  @click="editor.chain().focus().setTextAlign('left').run()"
-                  :class="{ 'bg-primary/20': editor.isActive({ textAlign: 'left' }) }"
-                >
-                  <AlignLeftIcon class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Align left</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  @click="editor.chain().focus().setTextAlign('center').run()"
-                  :class="{ 'bg-primary/20': editor.isActive({ textAlign: 'center' }) }"
-                >
-                  <AlignCenterIcon class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Align center</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  @click="editor.chain().focus().setTextAlign('right').run()"
-                  :class="{ 'bg-primary/20': editor.isActive({ textAlign: 'right' }) }"
-                >
-                  <AlignRightIcon class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Align right</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  @click="editor.chain().focus().setTextAlign('justify').run()"
-                  :class="{ 'bg-primary/20': editor.isActive({ textAlign: 'justify' }) }"
-                >
-                  <AlignJustifyIcon class="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Justify</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-
-          <Separator orientation="vertical" class="h-6 mx-1" />
-          
-          <!-- Highlight Colors Dropdown -->
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" class="flex gap-1 items-center">
-                <PaintbrushIcon class="h-4 w-4" />
-                <span>Highlight</span>
-                <ChevronDownIcon class="h-3 w-3 opacity-50" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <div class="flex flex-wrap gap-1 p-2 w-48">
-                <Button
-                  variant="outline"
                   size="sm"
-                  class="h-7 w-7 bg-yellow-200 hover:bg-yellow-300 border-yellow-400"
-                  @click="editor.chain().focus().toggleHighlight({ color: '#fef08a' }).run()"
-                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#fef08a' }) }"
-                />
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="h-7 w-7 bg-green-200 hover:bg-green-300 border-green-400"
-                  @click="editor.chain().focus().toggleHighlight({ color: '#bbf7d0' }).run()"
-                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#bbf7d0' }) }"
-                />
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="h-7 w-7 bg-blue-200 hover:bg-blue-300 border-blue-400"
-                  @click="editor.chain().focus().toggleHighlight({ color: '#bfdbfe' }).run()"
-                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#bfdbfe' }) }"
-                />
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="h-7 w-7 bg-pink-200 hover:bg-pink-300 border-pink-400"
-                  @click="editor.chain().focus().toggleHighlight({ color: '#fbcfe8' }).run()"
-                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#fbcfe8' }) }"
-                />
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="h-7 w-7 bg-purple-200 hover:bg-purple-300 border-purple-400"
-                  @click="editor.chain().focus().toggleHighlight({ color: '#e9d5ff' }).run()"
-                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#e9d5ff' }) }"
-                />
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="h-7 w-7 bg-orange-200 hover:bg-orange-300 border-orange-400"
-                  @click="editor.chain().focus().toggleHighlight({ color: '#fed7aa' }).run()"
-                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#fed7aa' }) }"
-                />
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="h-7 w-7 bg-red-200 hover:bg-red-300 border-red-400"
-                  @click="editor.chain().focus().toggleHighlight({ color: '#fecaca' }).run()"
-                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#fecaca' }) }"
-                />
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="h-7 w-7 bg-gray-200 hover:bg-gray-300 border-gray-400"
-                  @click="editor.chain().focus().toggleHighlight({ color: '#e5e7eb' }).run()"
-                  :class="{ 'ring-2 ring-offset-1': editor.isActive('highlight', { color: '#e5e7eb' }) }"
-                />
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  class="h-7 w-7 flex items-center justify-center"
-                  @click="editor.chain().focus().unsetHighlight().run()"
+                  class="flex gap-1 items-center"
                 >
-                  <XIcon class="h-4 w-4" />
+                  <PaintbrushIcon class="h-4 w-4" />
+                  <span>Highlight</span>
+                  <ChevronDownIcon class="h-3 w-3 opacity-50" />
                 </Button>
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <div class="flex flex-wrap gap-1 p-2 w-48">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 w-7 bg-yellow-200 hover:bg-yellow-300 border-yellow-400"
+                    @click="
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleHighlight({ color: '#fef08a' })
+                        .run()
+                    "
+                    :class="{
+                      'ring-2 ring-offset-1': editor.isActive('highlight', {
+                        color: '#fef08a',
+                      }),
+                    }"
+                  />
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 w-7 bg-green-200 hover:bg-green-300 border-green-400"
+                    @click="
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleHighlight({ color: '#bbf7d0' })
+                        .run()
+                    "
+                    :class="{
+                      'ring-2 ring-offset-1': editor.isActive('highlight', {
+                        color: '#bbf7d0',
+                      }),
+                    }"
+                  />
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 w-7 bg-blue-200 hover:bg-blue-300 border-blue-400"
+                    @click="
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleHighlight({ color: '#bfdbfe' })
+                        .run()
+                    "
+                    :class="{
+                      'ring-2 ring-offset-1': editor.isActive('highlight', {
+                        color: '#bfdbfe',
+                      }),
+                    }"
+                  />
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 w-7 bg-pink-200 hover:bg-pink-300 border-pink-400"
+                    @click="
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleHighlight({ color: '#fbcfe8' })
+                        .run()
+                    "
+                    :class="{
+                      'ring-2 ring-offset-1': editor.isActive('highlight', {
+                        color: '#fbcfe8',
+                      }),
+                    }"
+                  />
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 w-7 bg-purple-200 hover:bg-purple-300 border-purple-400"
+                    @click="
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleHighlight({ color: '#e9d5ff' })
+                        .run()
+                    "
+                    :class="{
+                      'ring-2 ring-offset-1': editor.isActive('highlight', {
+                        color: '#e9d5ff',
+                      }),
+                    }"
+                  />
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 w-7 bg-orange-200 hover:bg-orange-300 border-orange-400"
+                    @click="
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleHighlight({ color: '#fed7aa' })
+                        .run()
+                    "
+                    :class="{
+                      'ring-2 ring-offset-1': editor.isActive('highlight', {
+                        color: '#fed7aa',
+                      }),
+                    }"
+                  />
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 w-7 bg-red-200 hover:bg-red-300 border-red-400"
+                    @click="
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleHighlight({ color: '#fecaca' })
+                        .run()
+                    "
+                    :class="{
+                      'ring-2 ring-offset-1': editor.isActive('highlight', {
+                        color: '#fecaca',
+                      }),
+                    }"
+                  />
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 w-7 bg-gray-200 hover:bg-gray-300 border-gray-400"
+                    @click="
+                      editor
+                        .chain()
+                        .focus()
+                        .toggleHighlight({ color: '#e5e7eb' })
+                        .run()
+                    "
+                    :class="{
+                      'ring-2 ring-offset-1': editor.isActive('highlight', {
+                        color: '#e5e7eb',
+                      }),
+                    }"
+                  />
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    class="h-7 w-7 flex items-center justify-center"
+                    @click="editor.chain().focus().unsetHighlight().run()"
+                  >
+                    <XIcon class="h-4 w-4" />
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </div>
     </div>
-  </div>
 
     <div class="flex justify-center flex-1">
       <ScrollArea
@@ -731,7 +1014,7 @@ math-display.ProseMirror-selectednode {
   // Note title container styling
   .note-title-container {
     position: relative;
-    margin: 0 0 2rem;
+    margin: 0 0 1rem;
     padding: 1rem 0;
     border-bottom: 2px solid #6a00f5;
 
@@ -757,14 +1040,29 @@ math-display.ProseMirror-selectednode {
     // Add a subtle background for visual emphasis
     @apply bg-purple-100/30 dark:bg-purple-900/10 rounded-md px-4;
   }
-
   .mention {
-    // background-color: var(--purple-light);
     border-radius: 0.4rem;
     box-decoration-break: clone;
-    // color: var(--purple);
-    padding: 0.1rem 0.3rem;
-    @apply bg-purple-800  text-purple-200;
+    padding: 0.1rem 0.3rem 0.1rem 0.2rem; /* Adjust padding to account for the @ */
+    @apply bg-purple-800 text-purple-200;
+    position: relative;
+
+    &::first-letter {
+      /* Style for the @ symbol */
+      @apply text-purple-300; /* Lighter color for better contrast */
+      font-weight: 300; /* Lighter weight */
+      opacity: 0.2;
+      /* Optional: add a subtle spacing after @ */
+      margin-right: 10px;
+    }
+    // /* Add a subtle tag symbol */
+    // &::before {
+    //   content: "@";
+    //   opacity: 0.7;
+    //   margin-right: 2px;
+    //   position: relative;
+    //   display: inline;
+    // }
   }
 
   .note-title-container .mention {
@@ -773,6 +1071,13 @@ math-display.ProseMirror-selectednode {
     vertical-align: middle; // Better alignment with title text
     @apply bg-purple-700 text-purple-100; // Slightly different color if desired
   }
+
+  .note-title-container .mention::first-letter {
+    @apply text-purple-200;
+    opacity: 0.1;
+  }
+
+
 
   /* Task list specific styles */
   ul[data-type="taskList"] {
