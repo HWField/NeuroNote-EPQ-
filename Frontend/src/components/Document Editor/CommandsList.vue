@@ -163,7 +163,7 @@ export const commands = [
     },
   },
   {
-    title: "Details",
+    title: "Collapsible",
     icon: FoldVertical,
     command: ({ editor, range }) => {
       editor

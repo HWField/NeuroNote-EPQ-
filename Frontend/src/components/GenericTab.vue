@@ -1,46 +1,75 @@
-
-
 <script setup>
-// import { ref, computed } from 'vue'
-// import { useGraphStore } from "@/stores/useGraphStore";
-// import { useTabStore } from "@/stores/useTabStore";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { useTabStore } from "@/stores/useTabStore";
+import Cytoscape from "@/components/Cytoscape.vue";
+import Whiteboard from "@/components/Whiteboard.vue";
+import TipTap from "@/components/Document Editor/TipTap.vue";
 
-// import TipTap from "@/components/Document editor/TipTap.vue";
-import TipTap from '@/components/Document Editor/TipTap.vue'
-// import NoteEditor from '@/components/NoteEditor.vue'
+// Define props, using current tab ID as default
 
+const tabStore = useTabStore();
+const tabId = computed(() => tabStore.activeTab);
+console.error(tabId);
 
-// const tabStore = useTabStore()
-// const tabData = computed(() => tabStore.getTabById(props.tabId))
+// Get tab data from store with fallback default state
+const tabData = computed(() => {
+  const tab = tabStore.getTab(tabId);
+  if (!tab) return { view: "graph", noteId: null };
+  return tab;
+});
 
-// const isEditingNote = ref(false)
-// const selectedNoteId = ref(null)
+// Local reactive state
+const currentView = ref(tabData.value.view || "graph");
+console.error("current view", tabData.value.view);
+const currentNoteId = ref(tabData.value.noteId) || null;
 
-// const openNoteEditor = (noteId) => {
-//   selectedNoteId.value = noteId
-//   isEditingNote.value = true
-// }
+const showGraph = () => {
+  console.error("showGraph");
+  currentNoteId.value = null;
+  currentView.value = "graph";
+};
 
-// const closeNoteEditor = () => {
-//   isEditingNote.value = false
-//   selectedNoteId.value = null
-// }
+const showNote = (noteId) => {
+  currentNoteId.value = noteId;
+  currentView.value = "note";
+};
+
+const handleNoteSelected = (nodeData) => {
+  const noteId = nodeData.split("_")[1];
+  showNote(noteId);
+};
+
+onMounted(() => {
+  currentView.value = tabData.value.view || "graph";
+  console.error("current view", tabData.value.view);
+  currentNoteId.value = tabData.value.noteId;
+  if (!tabData.value.view) {
+    showGraph();
+  }
+});
+
+onBeforeUnmount(() => {
+  tabStore.updateTabState(tabId, {
+    view: currentView.value,
+    noteId: currentNoteId.value,
+  });
+});
 </script>
 
-
 <template>
-  <!-- <div class="tab-container">
-    <GraphView 
-      v-if="!isEditingNote"
-      :filters="tabData.filters"
-      @select-note="openNoteEditor"
+  <div class="h-full w-full">
+    <!-- Graph View -->
+    <Cytoscape
+      v-if="currentView === 'graph'"
+      :tabId="tabId"
+      :hasControls="true"
+      @note-selected="handleNoteSelected"
     />
-    
-    <NoteEditor v-if="isEditingNote" 
-      :note-id="selectedNoteId" 
-      @close="closeNoteEditor"
-    />
-  </div> -->
-  <TipTap></TipTap>
 
+    <!-- Note Editor View -->
+    <div v-else-if="currentView === 'note'" class="h-full w-full">
+      <TipTap :noteId="currentNoteId" @note-closed="showGraph" />
+       <!-- <Whiteboard/> -->
+    </div>
+  </div>
 </template>

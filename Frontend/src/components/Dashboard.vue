@@ -8,10 +8,20 @@ import { Button } from "@/components/ui/button";
 import ScrollArea from "./ui/scroll-area/ScrollArea.vue";
 // import { DateValue, getLocalTimeZone, today } from '@internationalized/date';
 
+import { useTabStore } from "@/stores/useTabStore";
+const tabStore = useTabStore();
+
 const userStore = useUserStore();
 
 const screenSize = ref("small");
 
+
+
+
+const OpenNote = (noteId) => {
+
+  tabStore.addTab("Note View", "generic", { view: "note", noteId });
+};
 const updateScreenSize = () => {
   const width = window.innerWidth;
   if (width >= 1024) {
@@ -141,7 +151,7 @@ const mockNotes = ref([
 
     <div class="w-full border-4 border-gray-800 bg-primary-foreground rounded-lg h-full overflow-hidden">
       <KeepAlive>
-        <Cytoscape />
+        <Cytoscape @note-selected = OpenNote></Cytoscape>
       </KeepAlive>
     </div>
    

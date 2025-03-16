@@ -50,8 +50,15 @@ let cy = null; // Reference for Cytoscape instance
 
 const props = defineProps({
   tabId: Number,
+  hasControls: {
+    type: Boolean,
+    default: true
+  }
   // tabType: String, // New property to identify the component type (e.g., 'cytoscape')
 });
+
+const emit = defineEmits(['note-selected']);
+
 
 const loadState = () => {
   const tab = tabStore.getTab(props.tabId);
@@ -265,6 +272,7 @@ function initializeCytoscape() {
     const node = event.target.data();
     if (node.type === "note") {
       console.log("Note node selected:", node.id);
+      emit('note-selected', node.id);
       // tabStore.openTab(node.id);
       // additional note-specific logic here, e.g., open a modal or display details
     }
@@ -301,19 +309,19 @@ function initializeCytoscape() {
       }
     });
   });
-  cy.layout({
-    name: "cola",
-    infinite: true, // Infinite animation
-    animate: true,
-    randomize: false, // Preserve fcose positions
-    fit: false, // Do not fit the graph after layout
-    refresh: 0, // number of ticks per frame; higher is faster but more jerky
-    centerGraph: false,
-    eles: null,
-  }).run();
+  // cy.layout({
+  //   name: "cola",
+  //   infinite: true, // Infinite animation
+  //   animate: true,
+  //   randomize: false, // Preserve fcose positions
+  //   fit: false, // Do not fit the graph after layout
+  //   refresh: 0, // number of ticks per frame; higher is faster but more jerky
+  //   centerGraph: false,
+  //   eles: null,
+  // }).run();
 
-  cy.zoom(state.zoom);
-  cy.pan(state.pan);
+  // cy.zoom(state.zoom);
+  // cy.pan(state.pan);
 
   document.addEventListener("keydown", HandlecyClick);
   // Step 2: Start cola layout with infinite animation after fcose completes
@@ -538,7 +546,7 @@ function RunLayout(effectors) {
   cy.layout({
     name: "fcose",
     animate: true,
-    randomize: true,
+    randomize: false,
     nodeDimensionsIncludeLabels: true,
     fixedNodeConstraint: fixedNodeConstraints, // Cluster orphan nodes
     fit: true,
@@ -947,8 +955,10 @@ onMounted(() => {
 
   initializeCytoscape();
   let state = loadState();
+  //log to track changes in state that should be applied after loading data
+
   loadData();
-  // some apply state logic
+
 });
 
 onUnmounted(() => {
@@ -999,7 +1009,7 @@ onBeforeUnmount(() => {
     <!-- Large toolbar -->
 
     <div
-      v-if="isLargeNavbarVisible"
+      v-if="hasControls && isLargeNavbarVisible"
       class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
     >
       <Button class="flex items-center">
@@ -1059,7 +1069,7 @@ onBeforeUnmount(() => {
 
     <!-- Small toolbar -->
     <div
-      v-else
+      v-else v-if="hasControls"
       class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
     >
       <DropdownMenu>

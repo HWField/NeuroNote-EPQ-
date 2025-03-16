@@ -34,7 +34,7 @@ export const useTabStore = defineStore("tabStore", () => {
       id: 3,
       title: "DemoTab",
       component: markRaw(GenericTab),
-      type: "normal", // Regular tab type
+      type: "generic", // Regular tab type
       state: {},
     },
   ];

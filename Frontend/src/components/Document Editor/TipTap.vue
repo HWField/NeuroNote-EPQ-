@@ -3,6 +3,7 @@ import Gapcursor from "@tiptap/extension-gapcursor";
 import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
 import Mention from "@tiptap/extension-mention";
+import { Hyperlink } from '@docs.plus/extension-hyperlink'
 // import suggestion from "@/components/Document Editor/TagSuggestion.js";
 import Heading from "@tiptap/extension-heading";
 // import TagsList from "@/components/Document Editor/TagsList.vue";
@@ -89,6 +90,7 @@ import axios from "../../axios.js";
 
 import { ref, onBeforeUnmount, watch } from "vue";
 import { onMounted } from "vue";
+const emit = defineEmits(["note-closed"]);
 const externalTags = ref([]);
 const lowlight = createLowlight();
 
@@ -101,6 +103,10 @@ lowlight.register("py", py);
 lowlight.register("csharp", csharp);
 lowlight.register("json", json);
 lowlight.register("sql", sql);
+
+const props = defineProps({
+  noteId: Number || 31,
+});
 
 const focusEditor = (event) => {
   if (editor) {
@@ -179,7 +185,7 @@ function SaveToBackend() {
       name: noteName,
       content: noteContent,
       tags: tags, // Send the extracted tags
-      id: "31",
+      id: props.noteId,
     })
     .catch((error) => {
       console.error("Error fetching data:", error);
@@ -189,37 +195,46 @@ function SaveToBackend() {
 function LoadFromBackend() {
   axios
     .post("/load", {
-      id: "31",
+      id: props.noteId,
       operation: "content",
     })
     .then((response) => {
-   
-      
-      
       // Clone the content to avoid direct mutation
       const content = JSON.parse(JSON.stringify(response.data.content));
 
+      // Set content first
       editor.commands.setContent(content);
 
-      if (response.data.name) {
-        // Find the title node (first node)
-        const titlePos = 1; // Position of the first node
+      // Wait for content to be properly set
+      setTimeout(() => {
+        try {
+          if (response.data.name) {
+            // Make sure we can find the title node
+            const titleNode = editor.state.doc.content.firstChild;
 
-        // Update only the title node with the name from backend
-        editor
-          .chain()
-          .focus()
-          .setNodeSelection(titlePos)
-          .deleteSelection()
-          .insertContent({
-            type: "title",
-            content: [{ type: "text", text: response.data.name }, { type: "text", text: " " }],
-          })
-          .run();
-      }
+            if (titleNode && titleNode.type.name === "title") {
+              // Now safely select and modify the title
+              editor
+                .chain()
+                .focus()
+                .setNodeSelection(1)
+                .deleteSelection()
+                .insertContent({
+                  type: "title",
+                  content: [
+                    { type: "text", text: response.data.name },
+                    { type: "text", text: " " },
+                  ],
+                })
+                .run();
+            }
+          }
 
-     
-      editor.commands.focus("end");
+          editor.commands.focus("end");
+        } catch (e) {
+          console.error("Error updating title:", e);
+        }
+      }, 10); // Small delay to ensure content is set
     });
 }
 
@@ -229,6 +244,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  console.error("Saving to backend...");
   SaveToBackend();
   if (editor) {
     editor.destroy();
@@ -259,8 +275,6 @@ const Title = Heading.extend({
     ];
   },
 }).configure({ levels: [1] });
-
-
 
 let editor = new Editor({
   extensions: [
@@ -296,6 +310,9 @@ let editor = new Editor({
     ListItem,
     Typography,
     ColorHighlighter,
+    Hyperlink.configure({
+  protocols: ['ftp', 'mailto'],
+}),
     SmilieReplacer,
     CustomDocument,
     StarterKit.configure({
@@ -507,6 +524,23 @@ let editor = new Editor({
         >
           <div class="flex items-center gap-1">
             <!-- above flex wrap -->
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    @click="emit('note-closed')"
+                    class="mr-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-800/30"
+                  >
+                    <XIcon class="h-4 w-4 text-red-500 dark:text-red-400" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Close Note</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            <Separator orientation="vertical" class="h-6 mx-1" />
             <!-- Basic Text Formatting -->
             <TooltipProvider>
               <Tooltip>
@@ -1077,8 +1111,6 @@ math-display.ProseMirror-selectednode {
     opacity: 0.1;
   }
 
-
-
   /* Task list specific styles */
   ul[data-type="taskList"] {
     list-style: none;
@@ -1327,7 +1359,29 @@ math-display.ProseMirror-selectednode {
       @apply border-t  border-t-purple-600;
     }
   }
+  div[data-youtube-video] {
+    cursor: move;
+    // // padding-right: 1.5rem;
+    height: auto;
+    overflow:hidden;
+    margin: 2.5rem 0;
+    // max-width: 40%;
+    border-radius: 0.25rem;
 
+    iframe {
+      // border: 0.5rem solid var(--black-contrast);
+      display: block;
+      // min-height: 200px;
+      // min-width: 200px;
+      outline: 0px solid transparent;
+    }
+
+    &.ProseMirror-selectednode {
+      outline: 3px solid #6a00f5;
+      border-radius: 0.25rem;
+      display: inline-block; /* Prevent selection from extending - might break later so watch */
+    }
+  }
   img {
     display: block;
     height: auto;
