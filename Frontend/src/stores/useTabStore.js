@@ -5,7 +5,10 @@ import Dashboard from "@/components/Dashboard.vue";
 // import TipTap from "@/components/Document editor/TipTap.vue";
 import Chat from "@/components/Chat.vue";
 // import Note from "@/components/Note.vue";
+import { cloneDeep } from "lodash"; // Install lodash first
 import GenericTab from "@/components/GenericTab.vue";
+import axios from "../axios"; // Import the Axios instance
+import { useUserStore } from "@/stores/useUserStore";
 
 export const useTabStore = defineStore("tabStore", () => {
   const activeTab = ref(1); // Set first tab as active by default
@@ -35,22 +38,29 @@ export const useTabStore = defineStore("tabStore", () => {
       title: "DemoTab",
       component: markRaw(GenericTab),
       type: "generic", // Regular tab type
-      state: {},
+      state: {view: "graph", noteId: null},
     },
   ];
 
-  const tabs = ref([...defaultTabs]); // Initialize tabs with default tabs
+  const tabs = ref(cloneDeep(defaultTabs)); // Initialize tabs with default tabs
 
   // Add a new tab
   function addTab(title, type, state = null) {
+
     const id = Date.now();
     // const component = type === "cytoscape" ? markRaw(Cytoscape) : null; // Add other components as needed
     let component;
     switch (type) {
       case "generic":
-        component = markRaw(GenericTab);
+      case "note": 
+        tabs.value.push({
+          id,
+          title,
+          component: markRaw(GenericTab),
+          type: "generic",
+          state: state || { view: "graph", noteId: null }
+        });
         break;
-
       // case "settings":
       // component = markRaw(Settings);
       // break;
@@ -60,16 +70,9 @@ export const useTabStore = defineStore("tabStore", () => {
       // break;
 
       //add other tab types here
-      default:
-        component = markRaw(GenericTab);
+     
     }
-    tabs.value.push({
-      id,
-      title,
-      component,
-      type: "generic",
-      state: state || {},
-    });
+  
     setActiveTab(id);
   }
   // 🚀 Get a tab by id and type (to handle different component types)
@@ -78,18 +81,17 @@ export const useTabStore = defineStore("tabStore", () => {
   }
 
   function updateTabState(id, newState) {
+    console.error("backend Updating tab:", id ); // Debugging
     const tab = tabs.value.find((tab) => tab.id === id);
     if (tab) {
-      tab.state = { ...newState };
+      // Merge with existing state instead of replacing
+      // tab.state = { ...tab.state, ...newState };
+      // tab.state = { ...newState };]
+      Object.assign(tab.state, newState);
+      
+
     }
   }
-
-  // function navigate(id, breadcrumb) {
-  //   const tab = tabs.value.find((tab) => tab.id === id);
-  //   if (tab) {
-  //     tab.breadcrumb = breadcrumb
-  // }
-  // }
 
   // Remove a tab
   function removeTab(id) {
@@ -104,9 +106,57 @@ export const useTabStore = defineStore("tabStore", () => {
     activeTab.value = id;
   }
 
+  // function FetchTabs(){
+  //   tabs.value = newTabs;
+  // }
+
+  async function FetchTabs() {
+    if (useUserStore().isAuthenticated) {
+      try {
+        const response = await axios.post("/load", {
+          operation: "tabs",
+        });
+        console.log("tab data:", response.data);
+
+        if (response.data.length > 0) {
+          tabs.value = response.data;
+        }
+        else 
+        {
+          tabs.value = cloneDeep(defaultTabs);
+        }
+ 
+      } catch (error) {
+        console.error("Error fetching graph data:", error);
+      }
+    }
+  }
+
+  async function SendTabs() {
+    try {
+      console.error("📤 SENDING TABS! tabs:");
+      console.error(...tabs.value);
+      const response = await axios.post("/update", {
+        operation: "tabs",
+        data: tabs.value,
+      });
+      console.error("Response:", response.data);
+    } catch (error) {
+      console.error("Error sending tabs:", error);
+    }
+    
+  }
+
+  function GetActiveTabID() {
+    return activeTab.value;
+  }
+
   function clearStore() {
+  
     console.error("🧹 CLEARING TAB STORE!");
-    tabs.value = [...defaultTabs]; // Reset tabs to default state
+    console.error(...defaultTabs);
+    // tabs.value = [...defaultTabs]; // Reset tabs to default state
+    tabs.value = cloneDeep(defaultTabs);
     activeTab.value = 1;
   }
 
@@ -119,5 +169,8 @@ export const useTabStore = defineStore("tabStore", () => {
     getTab,
     removeTab,
     clearStore,
+    GetActiveTabID,
+    FetchTabs,
+    SendTabs,
   };
 });

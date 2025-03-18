@@ -109,6 +109,24 @@ const { toast } = useToast();
 const tabStore = useTabStore();
 const userStore = useUserStore();
 
+
+watch(
+  () => userStore.authenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated === false) {
+       // Save the original route in the query parameters
+       const currentRoute = window.location.pathname;
+      // window.location.replace(`login?redirect=${encodeURIComponent(currentRoute)}`);
+      router.push({ 
+        path: '/login', 
+        query: { redirect: currentRoute }
+      });
+    }
+  },
+  { immediate: true } // Check immediately when component mounts
+);
+
+
 const tabs = computed(() => tabStore.tabs);
 const activeTab = computed(() => tabStore.activeTab);
 const filteredTabs = computed(() =>

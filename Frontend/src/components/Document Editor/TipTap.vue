@@ -3,7 +3,11 @@ import Gapcursor from "@tiptap/extension-gapcursor";
 import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
 import Mention from "@tiptap/extension-mention";
-import { Hyperlink } from '@docs.plus/extension-hyperlink'
+import { Hyperlink } from "@docs.plus/extension-hyperlink";
+import previewHyperlinkModal from "@/components/Document Editor/modals/previewHyperlink.ts";
+import setHyperlinks from "@/components/Document Editor/modals/setHyperlink.ts";
+import "tippy.js/dist/svg-arrow.css";
+
 // import suggestion from "@/components/Document Editor/TagSuggestion.js";
 import Heading from "@tiptap/extension-heading";
 // import TagsList from "@/components/Document Editor/TagsList.vue";
@@ -83,6 +87,7 @@ import {
   Text as TextIcon,
   X as XIcon,
   Paintbrush as PaintbrushIcon,
+  Link,
 } from "lucide-vue-next";
 
 import { useGraphStore } from "@/stores/useGraphStore";
@@ -90,6 +95,7 @@ import axios from "../../axios.js";
 
 import { ref, onBeforeUnmount, watch } from "vue";
 import { onMounted } from "vue";
+import { set } from "@vueuse/core";
 const emit = defineEmits(["note-closed"]);
 const externalTags = ref([]);
 const lowlight = createLowlight();
@@ -158,6 +164,7 @@ function extractTagsFromDocument(document) {
 }
 
 function SaveToBackend() {
+  console.error("Saving to backend...", props.noteId);
   let noteContent = editor.getJSON();
   let noteName = "Untitled Note";
   const tags = extractTagsFromDocument(noteContent);
@@ -178,7 +185,11 @@ function SaveToBackend() {
       }
     }
   }
+
   console.error("Note name:", noteName);
+
+  const graphStore = useGraphStore();
+  graphStore.updateNoteName(props.noteId, noteName);
   axios
     .post("/update", {
       operation: "content",
@@ -203,17 +214,19 @@ function LoadFromBackend() {
       const content = JSON.parse(JSON.stringify(response.data.content));
 
       // Set content first
+      if (content != []){
       editor.commands.setContent(content);
-
+      }
       // Wait for content to be properly set
       setTimeout(() => {
         try {
           if (response.data.name) {
             // Make sure we can find the title node
+            console.error("NOTE NAME", response.data.name)
             const titleNode = editor.state.doc.content.firstChild;
 
             if (titleNode && titleNode.type.name === "title") {
-              // Now safely select and modify the title
+              // Now safely select and modify the titles
               editor
                 .chain()
                 .focus()
@@ -311,8 +324,19 @@ let editor = new Editor({
     Typography,
     ColorHighlighter,
     Hyperlink.configure({
-  protocols: ['ftp', 'mailto'],
-}),
+      openOnClick: true,
+      modals: {
+        previewHyperlink: (data) => {
+          return previewHyperlinkModal(data);
+        },
+        setHyperlink: (data) => {
+          return setHyperlinks(data);
+        },
+      },
+      HTMLAttributes: {
+        class: "link",
+      },
+    }),
     SmilieReplacer,
     CustomDocument,
     StarterKit.configure({
@@ -1363,7 +1387,7 @@ math-display.ProseMirror-selectednode {
     cursor: move;
     // // padding-right: 1.5rem;
     height: auto;
-    overflow:hidden;
+    overflow: hidden;
     margin: 2.5rem 0;
     // max-width: 40%;
     border-radius: 0.25rem;
@@ -1408,4 +1432,115 @@ math-display.ProseMirror-selectednode {
     @apply text-purple-800 dark:text-purple-300;
   }
 }
+
+.tippy-svg-arrow {
+  svg {
+    bottom: 6px;
+    background: #fff;
+    fill: #aaa;
+  }
+}
+
+.hyperlinkLinkModal {
+  // background-color: #fff;
+  border-radius: 10px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 6px;
+  box-shadow: 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  @apply bg-secondary rounded-md px-4 border-secondary;
+
+  .metadata {
+    width: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-direction: row-reverse;
+    a {
+      font-size: 0.9rem;
+      margin-right: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    img {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+  }
+
+  .copy {
+    margin-left: auto;
+  }
+
+  form {
+    display: flex;
+    align-items: flex-end;
+    width: 100%;
+    input {
+      border: 1px solid;
+      border-radius: 6px;
+      padding: 0.4rem 0.8rem;
+      margin-bottom: 0.2rem;
+      width: 100%;
+      @apply border border-gray-600 bg-slate-100 dark:bg-slate-700;
+      &:last-of-type {
+        margin-bottom: 0;
+      }
+    }
+    .buttonsWrapper {
+      margin-left: 8px;
+      button {
+        border-radius: 6px;
+        padding: 4px 14px;
+        width: 70px;
+        margin-bottom: 0.2rem;
+        // color: #1a73e8;
+        @apply bg-primary-foreground;
+        &:hover {
+          background: rgba(26, 115, 232, 0.04);
+          // color: #174ea6;
+        }
+      }
+    }
+  }
+
+  button {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin: 0 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.1s ease-in-out;
+    &:hover {
+      background-color: #eee;
+    }
+
+    > svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+.link {
+
+  @apply text-blue-700 dark:text-blue-400;
+  cursor: pointer;
+}
+.link:hover {
+  cursor: pointer;
+  @apply text-blue-500 dark:text-blue-200;
+}
+
+.ProseMirror .mention {
+  cursor: pointer;
+}
+
+
 </style>

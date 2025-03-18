@@ -8,23 +8,21 @@ import TipTap from "@/components/Document Editor/TipTap.vue";
 // Define props, using current tab ID as default
 
 const tabStore = useTabStore();
-const tabId = computed(() => tabStore.activeTab);
-console.error(tabId);
+const tabId = tabStore.GetActiveTabID();
 
 // Get tab data from store with fallback default state
 const tabData = computed(() => {
   const tab = tabStore.getTab(tabId);
   if (!tab) return { view: "graph", noteId: null };
-  return tab;
+  // Return tab.state instead of the whole tab object
+  return tab.state || { view: "graph", noteId: null };
 });
 
 // Local reactive state
 const currentView = ref(tabData.value.view || "graph");
-console.error("current view", tabData.value.view);
-const currentNoteId = ref(tabData.value.noteId) || null;
+const currentNoteId = ref(tabData.value.noteId || null);
 
 const showGraph = () => {
-  console.error("showGraph");
   currentNoteId.value = null;
   currentView.value = "graph";
 };
@@ -41,7 +39,7 @@ const handleNoteSelected = (nodeData) => {
 
 onMounted(() => {
   currentView.value = tabData.value.view || "graph";
-  console.error("current view", tabData.value.view);
+
   currentNoteId.value = tabData.value.noteId;
   if (!tabData.value.view) {
     showGraph();
@@ -69,7 +67,7 @@ onBeforeUnmount(() => {
     <!-- Note Editor View -->
     <div v-else-if="currentView === 'note'" class="h-full w-full">
       <TipTap :noteId="currentNoteId" @note-closed="showGraph" />
-       <!-- <Whiteboard/> -->
+      <!-- <Whiteboard/> -->
     </div>
   </div>
 </template>

@@ -4,7 +4,7 @@ import { useUserStore } from "@/stores/useUserStore";
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000',
+  baseURL: 'http://127.0.0.1:8000', 
   // baseURL: 'http://192.168.1.232:8000',  // Replace with your Flask API base URL
   headers: {
     'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ api.interceptors.response.use(
       console.error('Session expired, please log in again.');
 
       // Remove expired token
-      useUserStore().Logout();
+      await useUserStore().InstantLogout(); //logout without saving as cant save
 
       // Save the original route in the query parameters
       const currentRoute = window.location.pathname;

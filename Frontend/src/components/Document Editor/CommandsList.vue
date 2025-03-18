@@ -44,6 +44,7 @@ import {
   AlignRight,
   AlignJustify,
   FoldVertical,
+  Link,
 } from "lucide-vue-next";
 
 export const commands = [
@@ -161,6 +162,18 @@ export const commands = [
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).toggleCodeBlock().run();
     },
+  },
+  {
+    title: 'Link',
+    description: 'Add a hyperlink',
+    icon: Link, // Use appropriate icon
+    command: ({ editor, range }) => {
+      editor.chain()
+        .focus()
+        .deleteRange(range)
+        .setHyperlink({ href: '' })
+        .run();
+    }
   },
   {
     title: "Collapsible",

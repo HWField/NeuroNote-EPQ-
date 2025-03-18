@@ -19,9 +19,11 @@ const screenSize = ref("small");
 
 
 const OpenNote = (noteId) => {
-
-  tabStore.addTab("Note View", "generic", { view: "note", noteId });
+  const Id = noteId.split("_")[1];
+  console.error("Note selected", Id);
+  tabStore.addTab("Note View", "generic", { view: "note", noteId: Id });
 };
+
 const updateScreenSize = () => {
   const width = window.innerWidth;
   if (width >= 1024) {
@@ -63,7 +65,7 @@ const mockNotes = ref([
     <div class="flex flex-row w-full h-full">
       <!-- Left Column (Tall) -->
       <div class="w-full h-full bg-primary-foreground rounded-lg 2 border-4 border-gray-800 mb-4 mr-2 overflow-hidden">
-        <Cytoscape />
+        <Cytoscape @note-selected="OpenNote" />
       </div>
 
       <!-- Right Column (Two Short Divs) -->
@@ -109,7 +111,7 @@ const mockNotes = ref([
 
     <div class="w-full  bg-primary-foreground rounded-lg 2 border-4 border-gray-800 mb-4 h-1/2 overflow-hidden">
       <KeepAlive>
-        <Cytoscape />
+        <Cytoscape @note-selected="OpenNote"/>
       </KeepAlive>
     </div>
     <div class="flex w-full h-1/2 flex-grow">
@@ -150,9 +152,9 @@ const mockNotes = ref([
     </div>
 
     <div class="w-full border-4 border-gray-800 bg-primary-foreground rounded-lg h-full overflow-hidden">
-      <KeepAlive>
-        <Cytoscape @note-selected = OpenNote></Cytoscape>
-      </KeepAlive>
+      <!-- <KeepAlive> -->
+        <Cytoscape  @note-selected="OpenNote"></Cytoscape>
+      <!-- </KeepAlive> -->
     </div>
    
   </div>

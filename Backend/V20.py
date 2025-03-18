@@ -92,15 +92,7 @@ class Tag(Base):
     __tablename__ = 'tags'
     id = Column(Integer, ForeignKey('entities.id'), primary_key=True)  # Inherits ID from Entity
     name = Column(String, nullable=False)
-    # x = Column(Integer, nullable=True)
-    # y = Column(Integer, nullable=True)
     colour = Column(String, default="")
-    
-    # Foreign key to associate with a user
-    # user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-
-    # Relationships
-    # user = relationship('User', back_populates='tags')  # Back-reference to User
     parents = relationship(
         'Tag', 
         secondary=tag_parent_association,
@@ -108,14 +100,8 @@ class Tag(Base):
         secondaryjoin=id == tag_parent_association.c.parent_id,
         backref=backref('children', lazy='dynamic')
     )
-    # user_specific_id = Column(Integer, nullable=False, index=True)  # ID specific to the user
-    # __table_args__ = (
-    #     UniqueConstraint('user_specific_id', 'user_id', name='_tag_user_specific_id_uc'),
-    # )
-    # def set_user_specific_id(self, session):
-    #     # Query to find the current max user_specific_id for this user
-    #     max_id = session.query(func.max(Tag.user_specific_id)).filter(Tag.user_id == self.user_id).scalar()
-    #     self.user_specific_id = (max_id or 0) + 1
+    entity = relationship('Entity', backref='tag', uselist=False)
+    
     def __init__(self, user_id, name, parents=None):
         entity = Entity(user_id, "tag")
         dbsession.add(entity)
@@ -136,13 +122,12 @@ class Note(Base):
     format = Column(String, default="document")
     name = Column(String, nullable=False)
     colour = Column(String, default="")
-    # x = Column(Integer, nullable=True)
-    # y = Column(Integer, nullable=True)
     content = Column(JSONB, default="")
     viewport = Column(String, default="")
     background = Column(String, default="")
     tags = relationship('Tag', secondary=note_tag_association, backref=backref('notes', lazy='dynamic'))
-    
+    entity = relationship('Entity', backref='note', uselist=False)
+     
     def __init__(self, user_id, name, format=None, tags=None):
         entity = Entity(user_id, "note")
         dbsession.add(entity)
@@ -153,26 +138,6 @@ class Note(Base):
         if tags is not None:
             self.tags = tags  # Assign the passed tags list to the note
 
-    # Foreign key to associate with a user
-    # user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-
-    # Relationships
-    # user = relationship('User', back_populates='notes')  # Back-reference to User
-    
-    
-    
-    
-    # user_specific_id = Column(Integer, nullable=False)  # ID specific to the user
-    
-    # __table_args__ = (
-    #     UniqueConstraint('user_specific_id', 'user_id', name='_user_specific_id_uc'),
-    # )
-    # def set_user_specific_id(self, session):
-    #     # Query to find the current max user_specific_id for this user
-    #     max_id = session.query(func.max(Note.user_specific_id)).filter(Note.user_id == self.user_id).scalar()
-    #     self.user_specific_id = (max_id or 0) + 1
-        
-       
 class User(Base, UserMixin):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)  # Primary key
@@ -181,10 +146,7 @@ class User(Base, UserMixin):
     username = Column(String)
     user_status = Column(String, default="User")  # User, admin, staff
     preferences = Column(JSONB, default={})  # JSONB column for storing user preferences
-
-    # Relationship to Notes and Tags (optional for easier query access)
-    # notes = relationship('Note', back_populates='user', cascade="all, delete-orphan")
-    # tags = relationship('Tag', back_populates='user', cascade="all, delete-orphan") 
+    tabs = Column(JSONB, default={})  # JSONB column for storing user tabs
 
 # Create the tables if they don't exist
 Base.metadata.create_all(engine)
@@ -195,74 +157,6 @@ def populate_sample_data():
     dbsession.add(user)
     dbsession.commit()  # Save the user to generate an ID
 
-
-    # EPQ_tag = Tag(name="EPQ", user_id = user.id,)
-
-    # dbsession.add(EPQ_tag)
-    
-    # planning_tag = Tag(name="Planning A01", parents=[EPQ_tag], user_id = user.id)
-
-    # dbsession.add(planning_tag)
-
-    # research_tag = Tag(name="Research A02", parents=[EPQ_tag], user_id = user.id)
-
-    # dbsession.add(research_tag)
-    
-    # ui_tag = Tag(name="UI", parents=[research_tag], user_id = user.id)
-
-    # technical_tag = Tag(name="Technical", parents=[research_tag], user_id = user.id)
-    
-    # ai_tag = Tag(name="AI", parents=[research_tag], user_id = user.id)
-    
-    # visualisation_tag = Tag(name="Visualisation", parents=[research_tag], user_id = user.id)
-    
-    # dbsession.add(ui_tag)
-    # dbsession.add(technical_tag)
-    # dbsession.add(ai_tag)
-    # dbsession.add(visualisation_tag)
-
-    # evaluation_tag = Tag(name="Evaluation A04", parents=[EPQ_tag], user_id = user.id)
-    
-    # dbsession.add(evaluation_tag)
-
-    # skilldevelopment_tag = Tag(name="Skill Development A03", parents=[EPQ_tag] ,user_id = user.id)
-    
-    # dbsession.add(skilldevelopment_tag)
-
-
-
-    # project_tag = Tag(name="Project Choice", parents=[EPQ_tag], user_id = user.id)
-    
-    # dbsession.add(project_tag)
-
-    # homework_tag = Tag(name="Homework", parents=[EPQ_tag], user_id = user.id)
-    
-    # dbsession.add(homework_tag)
-
-    # diary_tag = Tag(name="Diary", parents=[EPQ_tag], user_id = user.id)
-    
-    # dbsession.add(diary_tag)
-
-    # airefereencing_tag = Tag(name="AI Referencing", parents=[EPQ_tag], user_id = user.id)
-    
-    # dbsession.add(airefereencing_tag)
-
-    # completed_tag = Tag(name="Completed", parents=[], user_id = user.id)
-    
-    # dbsession.add(completed_tag)
-
-    # research1_note = Note(name="Note 1", tags=[diary_tag, homework_tag, technical_tag], user_id = user.id)
-  
-    # research2_note = Note(name="Note 2", tags=[diary_tag, homework_tag, ai_tag], user_id = user.id)
-  
-    # airefrence1_note = Note(name="Note 3", tags=[airefereencing_tag], user_id = user.id)
-  
-    # airefrence2_note = Note(name="Note 4", tags=[airefereencing_tag, completed_tag], user_id = user.id)
-  
-    # dbsession.add(research1_note)
-    # dbsession.add(research2_note)
-    # dbsession.add(airefrence1_note)
-    # dbsession.add(airefrence2_note)
     tags = {}
     tag_names = [
         "Physics", "Homework", "Classwork", "Mechanics", "Electricity", "Waves", "Thermodynamics",
@@ -475,22 +369,22 @@ def create():
     elif type == 'tag':
         name = data.get('name')
         tag = Tag(name=name, user_id = userId)
-        tag.set_user_specific_id(dbsession)
+        # tag.set_user_specific_id(dbsession)
         dbsession.add(tag)
         try:
             dbsession.commit()
-            print(f"Created note {tag.id}")
+            print(f"Created tag {tag.entity.user_specific_id}")
             elements = []
             element = {
-                'id': tag.user_specific_id,
+                'id': tag.entity.user_specific_id,
                 'name': tag.name,
-                'children': [child.user_specific_id for child in tag.children], #was child.id
-                'notes': [note.user_specific_id for note in tag.notes], #was child.id
+                'children': [child.entity.user_specific_id for child in tag.children],
+                'notes': [note.entity.user_specific_id for note in tag.notes],
                 'type': "tag",  # Add type property
                 'data': 
             {
-                'x': tag.x,
-                'y': tag.y,
+                # 'x': tag.x,
+                # 'y': tag.y,
                 'colour': tag.colour,
             }
             }
@@ -505,27 +399,30 @@ def create():
     elif type == 'note':
         name = data.get('name')
         format = data.get('format')
-     
-        note = Note(name=name, format=format, user_id=int(userId))
-        note.set_user_specific_id(dbsession)
+        
+       
+        note = Note(name=name, tags=[], format=format, user_id=int(userId))
+        
+        
+        # note.set_user_specific_id(dbsession)
         dbsession.add(note)
         try:
             dbsession.commit()
-            print(f"Created note {note.id}")
+            print(f"#####################Created note {note.entity.user_specific_id}#####################")
             elements = []
             element = {
-                'id': note.user_specific_id,
-                'name': note.name,
-                'tags': [tag.user_specific_id for tag in note.tags],
-                'format': note.format,  # Add format property
-                'type': "note",  # Add type property
-                'data': 
-            {
-                'x': note.x,
-                'y': note.y,
-                'colour': note.colour,
-            }
-            }
+                    'id': note.entity.user_specific_id,
+                    'name': note.name,
+                    'tags': [tag.entity.user_specific_id for tag in note.tags],
+                    'type': "note",  # Add type property
+                    'format': note.format,
+                    'data': 
+                    {
+                        # 'x': note.x,
+                        # 'y': note.y,
+                        'colour': note.colour,
+                    }
+                }
             elements.append(element)
             return jsonify(elements = elements)
         except Exception as e:
@@ -579,6 +476,8 @@ def  delete():
             
                 source_tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=source_tag_id).first()
                 target_note = dbsession.query(Note).filter_by(user_id = 1, user_specific_id=target_note_id).first()
+                
+                
 
                 if source_tag and target_note:
                     # Remove the tag-note relationship
@@ -706,6 +605,7 @@ def update():
     elif operation == "content":
         data = request.json
         note_id = data.get('id')
+        print("########################## saving", note_id)
         # note_id = int(note_id.split('_')[1])
         # viewport = data.get('viewport')
         content = (data.get('content'))
@@ -784,12 +684,37 @@ def update():
             tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=id).first()
             tag.name = name
         elif type == "note":
-            note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=id).first()
+            # note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=id).first()
+            
+            note = dbsession.query(Note).join(Entity).filter(
+            Entity.user_id == int(user),  # Ensure it belongs to the logged-in user
+            Entity.user_specific_id == note_id  # Find using per-user unique ID
+        ).first()
             note.name = name
         dbsession.commit()
         return jsonify({'status': 'success', 'message': '{type}: {id} name updated successfully.'})
         
-  
+    elif operation == "user":
+        data = request.json
+        username = data.get('username')
+        email = data.get('email')
+        preferences = data.get('preferences')
+
+        user = dbsession.query(User).filter_by(id=current_user).first()
+        user.preferences = preferences
+        user.username = username
+        user.email = email
+ 
+        dbsession.commit()
+        return jsonify({'status': 'success', 'message': 'User preferences updated successfully.'})
+    
+    elif operation == "tabs":
+        data = request.json
+        tabs = data.get('tabs')
+        user = dbsession.query(User).filter_by(id=current_user).first()
+        user.tabs = tabs
+        dbsession.commit()
+        return jsonify({'status': 'success', 'message': 'User tabs updated successfully.'})
       
 @app.route('/load', methods=['POST'])
 # @login_required
@@ -805,7 +730,7 @@ def load():
         elements = []
         for tag in dbsession.query(Tag).join(Entity).filter(Entity.user_id == current_user).all():    
             element = {
-                'id': tag.id,
+                'id': tag.entity.user_specific_id,
                 'name': tag.name,
                 'children': [child.id for child in tag.children],
                 'notes': [note.id for note in tag.notes],
@@ -821,7 +746,7 @@ def load():
             
         for note in dbsession.query(Note).join(Entity).filter(Entity.user_id == current_user).all():
             element = {
-                'id': note.id,
+                'id': note.entity.user_specific_id,
                 'name': note.name,
                 'tags': [tag.id for tag in note.tags],
                 'type': "note",  # Add type property
@@ -916,7 +841,7 @@ def load():
     elif operation == "content":
         note_id = data.get('id')
         # note_id = int(note_id.split('_')[1])    
-        print(note_id, "is being sent")
+        print("#######################################",note_id, "is being sent")
 
         # Validate input
         if note_id is None:
@@ -938,5 +863,12 @@ def load():
         user = dbsession.query(User).filter_by(id=current_user).first()
         return jsonify({'status': 'success', 'username': user.username, 'email': user.email, 'userStatus': user.user_status, 'preferences': user.preferences})
 
+    elif operation == "tabs":
+        user = dbsession.query(User).filter_by(id=current_user).first()
+        tabs = user.preferences.get('tabs', []) if user and user.preferences else []
+        print("sent tabs", tabs)
+        return jsonify(tabs)
+    
+    
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=8000)

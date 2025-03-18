@@ -52,13 +52,12 @@ const props = defineProps({
   tabId: Number,
   hasControls: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
   // tabType: String, // New property to identify the component type (e.g., 'cytoscape')
 });
 
-const emit = defineEmits(['note-selected']);
-
+const emit = defineEmits(["note-selected"]);
 
 const loadState = () => {
   const tab = tabStore.getTab(props.tabId);
@@ -157,7 +156,7 @@ function initializeCytoscape() {
           "target-arrow-shape": "triangle",
           "target-arrow-color": "#aaa",
           "arrow-scale": 1,
-"z-index": 0,
+          "z-index": 0,
           "transition-property":
             "line-color target-arrow-color opacity arrow-scale", // Enable smooth transition for multiple properties
           "transition-duration": "0.3s", // Different transition durations for each property
@@ -272,16 +271,16 @@ function initializeCytoscape() {
     const node = event.target.data();
     if (node.type === "note") {
       console.log("Note node selected:", node.id);
-      emit('note-selected', node.id);
+      emit("note-selected", node.id);
       // tabStore.openTab(node.id);
       // additional note-specific logic here, e.g., open a modal or display details
     }
   });
 
-  cy.on("unselect", 'node', function (event) {
-        cy.nodes().removeClass("highlighted");
-        cy.edges().removeClass("highlighted");
-      });
+  cy.on("unselect", "node", function (event) {
+    cy.nodes().removeClass("highlighted");
+    cy.edges().removeClass("highlighted");
+  });
 
   cy.on("select", 'node[type="tag"]', function (event) {
     const selectedNodes = cy.$("node:selected").map((node) => node);
@@ -559,7 +558,9 @@ function RunLayout(effectors) {
     const colaLayout = cy.layout({
       name: "cola",
       infinite: true, // Infinite animation
-      nodeSpacing: function( node ){ return 5; }, // extra spacing around nodes
+      nodeSpacing: function (node) {
+        return 5;
+      }, // extra spacing around nodes
       animate: true,
 
       randomize: false, // Preserve fcose positions
@@ -733,7 +734,6 @@ function HandlecyClick(event) {
     cy.elements().forEach((ele) => {
       ele.removeClass("greyed-out");
     });
-
   } else if (event.key === "r") {
     const selectedNode = cy.$("node:selected");
     if (selectedNode.length === 1) {
@@ -844,7 +844,6 @@ function ShuffleGraph() {
 }
 
 function CreateNote(format) {
-  // if (type == "child") {
   //   const selectedTag = cy.$('node[type="tag"]:selected');
   //   let newNoteId = "";
   //   if (selectedTag.length > 0) {
@@ -908,22 +907,40 @@ function CreateNote(format) {
   // } else {
   // const noteName = prompt("Enter the name for the new note:");
 
+  const noteName = prompt("Enter the name for the new Note:");
   axios
     .post("/create", {
       type: "note",
-      name: "Untitled Note",
+      name: noteName,
       format: format,
     })
     .then((response) => {
       AddNodes(response.data); // Call the updateGraph function with the new data
+      useGraphStore().addNode(response.data);
       UpdateNodes();
       RunLayout("note_" + response.data.elements[0].id); // Pass the id property of the single node
     })
     .catch((error) => {
       console.error("Error fetching data:", error);
     });
+}
 
-  // }
+function CreateTag() {
+  const tagName = prompt("Enter the name for the new Tag:");
+  axios
+    .post("/create", {
+      type: "tag",
+      name: tagName,
+    })
+    .then((response) => {
+      AddNodes(response.data); // Call the updateGraph function with the new data
+      useGraphStore().addNode(response.data);
+      UpdateNodes();
+      RunLayout("tag_" + response.data.elements[0].id); // Pass the id property of the single node
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+    });
 }
 
 function drillDown(ele) {
@@ -958,14 +975,13 @@ onMounted(() => {
   //log to track changes in state that should be applied after loading data
 
   loadData();
-
 });
 
 onUnmounted(() => {
   console.log("Cytoscape unmounted");
-  if (cy && cy.elements().length > 0) {
-    saveState();
-  }
+  // if (cy && cy.elements().length > 0) {
+  //   saveState();
+  // }
   if (cy) {
     console.log("Destroying Cytoscape instance...");
     cy.stop(); // Stop any ongoing layouts
@@ -1033,6 +1049,7 @@ onBeforeUnmount(() => {
         <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
           <DropdownMenuItem
             class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            @click="CreateTag()"
           >
             <Tag class="w-5 h-5 text-gray-600" />
             <span>Tag</span>
@@ -1069,7 +1086,8 @@ onBeforeUnmount(() => {
 
     <!-- Small toolbar -->
     <div
-      v-else v-if="hasControls"
+      v-else
+      v-if="hasControls"
       class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
     >
       <DropdownMenu>

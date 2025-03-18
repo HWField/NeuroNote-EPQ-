@@ -32,24 +32,7 @@ export const useUserStore = defineStore("userStore", () => {
     }
   }
 
-  async function sendUser() {
-    if (isAuthenticated) {
-      try {
-        const response = await axios.post("/update", {
-          operation: "user",
-          data: {
-            username: username.value,
-            email: email.value,
-            preferences: preferences.value,
-          },
-        });
-        console.log("user data:", response.data);
-        setUser(response.data);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    }
-  }
+
 
   function UpdateUser(data) {
     username.value = data.username;
@@ -68,9 +51,13 @@ export const useUserStore = defineStore("userStore", () => {
     token.value = userData.token;
     preferences.value = userData.preferences;
     isAuthenticated.value = true;
+
+    const tabStore = useTabStore();
+    await tabStore.FetchTabs();
+    
     const graphStore = useGraphStore();
     await graphStore.fetchGraph();
-    
+   
     if (redirect) {
       router.replace(decodeURIComponent(redirect));
     }
@@ -79,17 +66,49 @@ export const useUserStore = defineStore("userStore", () => {
     }
   }
 
-  function Logout() {
+  async function InstantLogout() {
+    isAuthenticated.value = false;
     username.value = "";
     email.value = "";
     role.value = "";
     token.value = "";
-    isAuthenticated.value = false;
+    preferences.value = {};
+    theme.value = 'auto';
+    router.replace("/login"); 
+  }
+
+   async function Logout() {
 
     const graphStore = useGraphStore();
     graphStore.resetGraph();
 
     const tabStore = useTabStore();
+    tabStore.setActiveTab(1); //saves current state of tab
+    // await tabStore.SendTabs();
+    
+    // try {
+    //   console.error("📤 SENDING USER DATA!");
+    //   const response = await axios.post("/update", {
+    //     operation: "user",
+    //     data: {
+    //       username: username.value,
+    //       email: email.value,
+    //       preferences: preferences.value,
+    //     },
+    //   });
+    //   console.log("user data:", response.data);
+    //   setUser(response.data);
+    // } catch (error) {
+    //   console.error("Error sending user data:");
+    // }
+
+    tabStore.clearStore();
+    graphStore.resetGraph();
+    username.value = "";
+    email.value = "";
+    role.value = "";
+    token.value = "";
+    isAuthenticated.value = false;
     // Router instance for programmatic navigation
 
     // const router = useRouter(); // Router instance for programmatic navigation
@@ -104,6 +123,7 @@ export const useUserStore = defineStore("userStore", () => {
     token,
     Login,
     Logout,
+    InstantLogout,
     UpdateUser,
     FetchUser,
   };
