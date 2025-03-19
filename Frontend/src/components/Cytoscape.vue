@@ -728,7 +728,7 @@ function RunLayout(effectors) {
   cy.layout({
     name: "fcose",
     animate: true,
-    randomize: false,
+    randomize: true,
     nodeDimensionsIncludeLabels: true,
     fixedNodeConstraint: fixedNodeConstraints, // Cluster orphan nodes
     fit: true,

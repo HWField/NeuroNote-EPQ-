@@ -7,10 +7,23 @@ import { Hyperlink } from "@docs.plus/extension-hyperlink";
 import previewHyperlinkModal from "@/components/Document Editor/modals/previewHyperlink.ts";
 import setHyperlinks from "@/components/Document Editor/modals/setHyperlink.ts";
 import "tippy.js/dist/svg-arrow.css";
-
+import FileHandler from "@tiptap-pro/extension-file-handler";
 // import suggestion from "@/components/Document Editor/TagSuggestion.js";
 import Heading from "@tiptap/extension-heading";
+import { eventBus } from '@/components/Document Editor/EventBus.js';
 // import TagsList from "@/components/Document Editor/TagsList.vue";
+import {
+  Upload as UploadIcon,
+  ImageIcon,
+  Link2 as LinkIcon,
+} from "lucide-vue-next";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 import { Commands } from "@/components/Document Editor/commands.js";
 import CommandsList, {
@@ -91,7 +104,7 @@ import {
 } from "lucide-vue-next";
 
 import { useGraphStore } from "@/stores/useGraphStore";
-import axios from "../../axios.js";
+import axios, { getBaseUrl } from "../../axios.js";
 
 import { ref, onBeforeUnmount, watch } from "vue";
 import { onMounted } from "vue";
@@ -119,6 +132,117 @@ const focusEditor = (event) => {
     editor.chain().focus().run();
   }
 };
+
+// Add to your imports at the top
+import { Camera } from "lucide-vue-next"; // You already have UploadIcon
+
+// Add these refs
+const cameraInputRef = ref(null);
+
+// Simple function to trigger the camera
+const triggerCamera = () => {
+  cameraInputRef.value.click();
+};
+
+// Handle the photo capture
+const handleCameraCapture = () => {
+  if (cameraInputRef.value && cameraInputRef.value.files?.length) {
+    const file = cameraInputRef.value.files[0];
+    uploadImageFile(file)
+      .then(() => {
+        closeImageModal();
+        // Reset input so the same file can be selected again
+        cameraInputRef.value.value = '';
+      })
+      .catch(error => console.error("Error uploading camera image:", error));
+  }
+};
+const imageUrlInput = ref('');
+const showImageModal = ref(false);
+const fileInputRef = ref(null);
+const uploadImageFile = (file) => {
+
+  const selection = editor.state.selection;
+  const pos = selection.$head.pos;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  // Use your existing endpoint
+  return axios
+    .post("/upload-file", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then((response) => {
+      if (response.data && response.data.url) {
+        // Insert the image at the current cursor position
+        editor.chain().focus().setImage({ src: getBaseUrl()+response.data.url }).run();
+        return response.data.url; // Return something for chaining
+      } else {
+        console.error("Invalid response format:", response.data);
+        throw new Error("Invalid response format");
+      }
+    })
+    .catch((error) => {
+      console.error("Error uploading image:", error);
+      throw error; // Re-throw to propagate the error
+    });
+};
+
+const openImageModal = () => {
+  imageUrlInput.value = '';
+  showImageModal.value = true;
+};
+
+const closeImageModal = () => {
+  showImageModal.value = false;
+  imageUrlInput.value = '';
+};
+
+const handleFileSelected = () => {
+  if (fileInputRef.value && fileInputRef.value.files?.length) {
+    const file = fileInputRef.value.files[0];
+    uploadImageFile(file)
+      .then(() => {
+        closeImageModal();
+      })
+      .catch((error) => {
+        console.error("Error in file upload:", error);
+        // You might want to show an error message to the user here
+      });
+  }
+};
+
+const handleUrlSubmit = () => {
+  if (imageUrlInput.value) {
+    editor.commands.setImage({ src: imageUrlInput.value });
+    closeImageModal();
+  }
+};
+
+// Update your insertImageUrl method to use the modal
+const insertImageUrl = () => {
+  openImageModal();
+};
+
+
+// Simplify your ImageUpload extension - just delegate to our utility function
+const ImageUpload = Extension.create({
+  name: "imageUpload",
+
+  addCommands() {
+    return {
+      uploadImage:
+        ({ file }) =>
+        ({ editor }) => {
+          uploadImageFile(file);
+          return true;
+        },
+    };
+  },
+});
 
 function extractTagsFromDocument(document) {
   // Debug the document structure
@@ -214,15 +338,15 @@ function LoadFromBackend() {
       const content = JSON.parse(JSON.stringify(response.data.content));
 
       // Set content first
-      if (content != []){
-      editor.commands.setContent(content);
+      if (content != []) {
+        editor.commands.setContent(content);
       }
       // Wait for content to be properly set
       setTimeout(() => {
         try {
           if (response.data.name) {
             // Make sure we can find the title node
-            console.error("NOTE NAME", response.data.name)
+            console.error("NOTE NAME", response.data.name);
             const titleNode = editor.state.doc.content.firstChild;
 
             if (titleNode && titleNode.type.name === "title") {
@@ -254,9 +378,12 @@ function LoadFromBackend() {
 onMounted(() => {
   LoadFromBackend();
   editor.chain().focus().run();
+    // event listener for the image modal
+    eventBus.on('open-image-modal', openImageModal);
 });
 
 onBeforeUnmount(() => {
+  eventBus.off('open-image-modal', openImageModal);
   console.error("Saving to backend...");
   SaveToBackend();
   if (editor) {
@@ -509,7 +636,54 @@ let editor = new Editor({
         },
       },
     }),
-    Image,
+    Image.configure({
+      HTMLAttributes: {
+        class: "editor-image",
+      },
+    }),
+    FileHandler.configure({
+      allowedMimeTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+
+      onDrop: (currentEditor, files) => {
+        files.forEach((file) => {
+          uploadImageFile(file);
+        });
+        return true;
+      },
+
+      onPaste: (currentEditor, files) => {
+        if (files.length) {
+          files.forEach((file) => {
+            uploadImageFile(file);
+          });
+          return true;
+        }
+        return false;
+      },
+
+      // This is optional but might be used by the extension internally
+      // uploadFunction: async (file) => {
+      //   try {
+      //     const formData = new FormData();
+      //     formData.append("file", file);
+
+      //     const response = await axios.post("/upload-file", formData, {
+      //       headers: {
+      //         "Content-Type": "multipart/form-data",
+      //       },
+      //     });
+
+      //     if (response.data.url) {
+      //       return response.data.url;
+      //     }
+      //     throw new Error("Upload failed");
+      //   } catch (error) {
+      //     console.error("Error uploading image:", error);
+      //     return null;
+      //   }
+      // },
+    }),
+    ImageUpload,
     Gapcursor,
     Placeholder.configure({
       // emptyEditorClass: 'h1',
@@ -647,6 +821,8 @@ let editor = new Editor({
             </TooltipProvider>
 
             <Separator orientation="vertical" class="h-6 mx-1" />
+            <Separator orientation="vertical" class="h-6 mx-1" />
+  
 
             <!-- Heading Dropdown -->
             <DropdownMenu>
@@ -974,9 +1150,105 @@ let editor = new Editor({
       </ScrollArea>
     </div>
   </div>
+
+  <!-- Image Modal -->
+  <!-- Image Modal -->
+<Dialog :open="showImageModal" @update:open="closeImageModal">
+  <DialogContent class="sm:max-w-[425px]">
+    <DialogHeader>
+      <DialogTitle>Insert Image</DialogTitle>
+    </DialogHeader>
+    <div class="grid gap-4 py-4">
+      <!-- File Upload Section -->
+      <div class="grid grid-cols-4 items-center gap-4">
+        <label class="col-span-4 font-medium">Upload Image</label>
+        <div class="col-span-4">
+          <input 
+            ref="fileInputRef"
+            type="file" 
+            accept="image/*"
+            class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary hover:file:bg-primary-100"
+          />
+          <Button class="mt-2 w-full bg-green-600 hover:bg-green-700 text-white" @click="handleFileSelected">
+            <UploadIcon class="h-4 w-4 mr-2" />Upload
+          </Button>
+        </div>
+      </div>
+      
+      <!-- Simple Camera Button -->
+      <div class="grid grid-cols-4 items-center gap-4">
+        <label class="col-span-4 font-medium">Take a Photo</label>
+        <div class="col-span-4">
+          <input 
+            ref="cameraInputRef"
+            type="file" 
+            accept="image/*" 
+            capture="user"
+            class="hidden"
+            @change="handleCameraCapture"
+          />
+          <Button class="w-full bg-blue-600 hover:bg-blue-700 text-white" @click="triggerCamera">
+            <Camera class="h-4 w-4 mr-2" />Take Photo
+          </Button>
+        </div>
+      </div>
+      
+      <!-- Image URL Section -->
+      <div class="flex flex-col gap-2 mt-4">
+        <label class="font-medium">Or insert image URL</label>
+        <input 
+          v-model="imageUrlInput"
+          type="text" 
+          placeholder="https://example.com/image.jpg"
+          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        />
+        <Button class="mt-2" @click="handleUrlSubmit">Insert Image URL</Button>
+      </div>
+    </div>
+  </DialogContent>
+</Dialog>
 </template>
 
 <style lang="scss">
+.editor-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &.ProseMirror-selectednode {
+    outline: 3px solid #6a00f5;
+  }
+}
+
+/* Style for uploading state */
+.uploading-image {
+  position: relative;
+  display: inline-block;
+  background-color: #f0f0f0;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  min-height: 100px;
+  min-width: 200px;
+
+  &::after {
+    content: "Uploading...";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.9rem;
+    color: #666;
+  }
+}
+
 math-inline {
   font-family: "KaTeX_Main", serif;
   min-width: 1em;
@@ -1529,7 +1801,6 @@ math-display.ProseMirror-selectednode {
   }
 }
 .link {
-
   @apply text-blue-700 dark:text-blue-400;
   cursor: pointer;
 }
@@ -1541,6 +1812,4 @@ math-display.ProseMirror-selectednode {
 .ProseMirror .mention {
   cursor: pointer;
 }
-
-
 </style>

@@ -17,14 +17,26 @@ from flask_socketio import SocketIO
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from datetime import timedelta
+
+import os
+import uuid
+from werkzeug.utils import secure_filename
+from flask import send_from_directory
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['SECRET_KEY'] = 'Sjd($&^(£^$(*Whfoshfjnk)))'  # Change this to a secret key of your choice
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://Henry:Naseby2411@localhost:5432/BackendDb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # To disable modification tracking
+
+# Add after other app configurations
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+    
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Configure a secret key for JWT
@@ -890,6 +902,48 @@ def load():
         print("sent tabs", tabs)
         return jsonify(tabs)
     
+    
+ # Add image upload endpoint
+
+
+
+
+
+
+@app.route('/upload-file', methods=['POST'])
+@jwt_required()
+def upload_file():
+    user_id = get_jwt_identity()
+    
+    if 'file' not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
+    if file:
+        # Generate safe filename with UUID to prevent conflicts
+        ext = os.path.splitext(secure_filename(file.filename))[1]
+        filename = f"{uuid.uuid4()}{ext}"
+        
+        # Create user-specific folder if it doesn't exist
+        user_folder = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+        
+        file_path = os.path.join(user_folder, filename)
+        file.save(file_path)
+        
+        # Return URL to access the file
+        return jsonify({
+            "url": f"/files/{user_id}/{filename}"
+        }), 200
+  
+@app.route('/files/<user_id>/<filename>')
+def serve_image(user_id, filename):
+    user_folder = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
+    return send_from_directory(user_folder, filename)
     
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=8000)

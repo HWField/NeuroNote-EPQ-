@@ -23,6 +23,7 @@
   </div>
 </template>
 <script>
+import { eventBus } from '@/components/Document Editor/EventBus.js'; // Import the event
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Heading1,
@@ -135,11 +136,9 @@ export const commands = [
     title: "Image",
     icon: ImageIcon,
     command: ({ editor, range }) => {
-      const url = window.prompt("Enter the image URL");
-
-      if (url) {
-        editor.chain().focus().deleteRange(range).setImage({ src: url }).run();
-      }
+      editor.chain().focus().deleteRange(range).run();
+      // Emit an event instead of calling the function directly
+      eventBus.emit('open-image-modal');
     },
   },
   {

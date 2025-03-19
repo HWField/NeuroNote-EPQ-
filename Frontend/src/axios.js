@@ -3,13 +3,18 @@ import router from "@/router"; // Adjust the path based on your project structur
 import { useUserStore } from "@/stores/useUserStore";
 
 // Create an Axios instance
+const BASE_URL = 'http://127.0.0.1:8000';
+// const BASE_URL = 'http://192.168.1.232:8000';  // Alternate URL
+
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000', 
-  // baseURL: 'http://192.168.1.232:8000',  // Replace with your Flask API base URL
+  baseURL: BASE_URL,  
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Function to get the base URL
+export const getBaseUrl = () => BASE_URL; 
 
 // Interceptor to add JWT token to request headers
 api.interceptors.request.use(
