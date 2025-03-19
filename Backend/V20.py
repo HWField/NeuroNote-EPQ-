@@ -315,6 +315,7 @@ def create():
     data = request.json
     type = data.get('type')
     userId = get_jwt_identity()
+    
     if type == 'edge':
         source_id = data.get('source')
         target_id = data.get('target')
@@ -330,10 +331,19 @@ def create():
             target_tag_id = int(target_id.split('_')[1])
 
             # Query the tags
-            source_tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=source_tag_id).first()
-            target_tag = dbsession.query(Tag).filter_by(user_id = 1, user_specific_id=target_tag_id).first()
-
-            if source_tag and target_tag:
+            
+            
+            source_tag = dbsession.query(Tag).join(Entity).filter(
+            Entity.user_id == userId,  # Ensure it belongs to the logged-in user
+            Entity.user_specific_id == source_tag_id  # Find using per-user unique ID
+            ).first()
+            
+            target_tag = dbsession.query(Tag).join(Entity).filter(
+            Entity.user_id == userId,  # Ensure it belongs to the logged-in user
+            Entity.user_specific_id == target_tag_id  # Find using per-user unique ID
+            ).first()
+            
+            if source_tag and target_tag:   
                 # Add the parent-child relationship
                 if target_tag not in source_tag.children:
                     source_tag.children.append(target_tag)
@@ -345,13 +355,24 @@ def create():
                 return jsonify({'status': 'error', 'message': 'Tag(s) not found.'}), 404
 
         elif source_id.startswith('tag_') and target_id.startswith('note_'):
+            print("########################tag-note source", source_id, "target", target_id)
             source_tag_id = int(source_id.split('_')[1])
             target_note_id = int(target_id.split('_')[1])
 
             # Query the tag and note
-            source_tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=source_tag_id).first()
-            target_note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=target_note_id).first()
-
+        
+            source_tag = dbsession.query(Tag).join(Entity).filter(
+            Entity.user_id == userId,  # Ensure it belongs to the logged-in user
+            Entity.user_specific_id == source_tag_id  # Find using per-user unique ID
+            ).first()
+            
+            
+            # target_note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=target_note_id).first()
+            target_note = dbsession.query(Tag).join(Entity).filter(
+            Entity.user_id == userId,  # Ensure it belongs to the logged-in user
+            Entity.user_specific_id == target_note_id  # Find using per-user unique ID
+            ).first()
+            
             if source_tag and target_note:
                 # Add the tag-note relationship
                 if source_tag not in target_note.tags:

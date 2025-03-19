@@ -46,6 +46,49 @@ export const useGraphStore = defineStore("graphStore", () => {
       console.error("Invalid node format:", response);
     }
   }
+  function CreateEdge(source, target) {
+    console.error("Creating edge between:", source, target);
+    // const newEdge = {
+    //   id: `e${elements.value.length + 1}`,
+    //   source: source,
+    //   target: target,
+    // };
+    // elements.value.push(newEdge);
+  
+    // Update the relationships in the frontend data model
+    if (source.startsWith('tag_') && target.startsWith('tag_')) {
+      // For tag-to-tag relationships (parent-child)
+      const sourceNode = elements.value.find(el => el.id === parseInt(source.split('_')[1]));
+      if (sourceNode) {
+        // Ensure children array exists
+        if (!sourceNode.children) sourceNode.children = [];
+        // Add target to children if not already there
+        const targetId = parseInt(target.split('_')[1]);
+        if (!sourceNode.children.includes(targetId)) {
+          sourceNode.children.push(targetId);
+        }
+      }
+    } else if (source.startsWith('tag_') && target.startsWith('note_')) {
+      // For tag-to-note relationships
+      const targetNode = elements.value.find(el => el.id === parseInt(target.split('_')[1]));
+      if (targetNode) {
+        // Ensure tags array exists
+        if (!targetNode.tags) targetNode.tags = [];
+        // Add source to tags if not already there
+        const sourceId = parseInt(source.split('_')[1]);
+        if (!targetNode.tags.includes(sourceId)) {
+          targetNode.tags.push(sourceId);
+        }
+      }
+    }
+  
+    // Send to backend
+    axios.post("/create", {
+      type: "edge",
+      source: source,
+      target: target,
+    });
+  }
 
   function updateNoteName(noteId, newName) {
     const note = this.elements.find((el) => el.id === parseInt(noteId));
@@ -71,5 +114,6 @@ export const useGraphStore = defineStore("graphStore", () => {
     updateNoteName,
     updateNoteTags,
     addNode,
+    CreateEdge,
   };
 });

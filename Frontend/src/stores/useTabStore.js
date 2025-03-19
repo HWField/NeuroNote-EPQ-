@@ -93,6 +93,12 @@ export const useTabStore = defineStore("tabStore", () => {
     }
   }
 
+  function RenameTab(id, newTitle) {
+    const tab = tabs.value.find((tab) => tab.id === id);
+    if (tab) {
+      tab.title = newTitle;
+    }
+  }
   // Remove a tab
   function removeTab(id) {
     tabs.value = tabs.value.filter((tab) => tab.id !== id);
@@ -172,5 +178,6 @@ export const useTabStore = defineStore("tabStore", () => {
     GetActiveTabID,
     FetchTabs,
     SendTabs,
+    RenameTab
   };
 });

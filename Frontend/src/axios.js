@@ -4,8 +4,8 @@ import { useUserStore } from "@/stores/useUserStore";
 
 // Create an Axios instance
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000', 
-  // baseURL: 'http://192.168.1.232:8000',  // Replace with your Flask API base URL
+  // baseURL: 'http://127.0.0.1:8000', 
+  baseURL: 'http://192.168.1.232:8000',  // Replace with your Flask API base URL
   headers: {
     'Content-Type': 'application/json',
   },

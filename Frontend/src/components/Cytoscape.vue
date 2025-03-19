@@ -73,9 +73,11 @@ const saveState = () => {
 
 function initializeCytoscape() {
   // Initialize Cytoscape
+
   console.log("Initializing Cytoscape...");
   let state = loadState();
   console.log(state);
+
   if (cy) {
     console.log(
       "Destroying previous Cytoscape instance before reinitializing..."
@@ -205,6 +207,7 @@ function initializeCytoscape() {
         selector: ".eh-handle",
         style: {
           "background-color": "red",
+          opacity: 1.0,
           width: 12,
           height: 12,
           shape: "ellipse",
@@ -244,6 +247,7 @@ function initializeCytoscape() {
           "line-color": "red",
           "target-arrow-color": "red",
           "source-arrow-color": "red",
+          opacity: 1.0,
         },
       },
 
@@ -267,10 +271,189 @@ function initializeCytoscape() {
     },
   });
 
+  let popperEnabled = true;
+
+  // example code for making your own handles -- customise events and presentation where fitting
+  // var popper;
+  var popperNode;
+  var popper;
+  var popperDiv;
+  var started = false;
+
+  function start() {
+    eh.start(popperNode);
+  }
+
+  function stop() {
+    eh.stop();
+  }
+
+  function setHandleOn(node) {
+    if (started) {
+      return;
+    }
+
+    removeHandle(); // rm old handle
+
+    popperNode = node;
+
+    popperDiv = document.createElement("div");
+    popperDiv.classList.add("popper-handle");
+
+    // Better event handling for both mouse and touch
+    popperDiv.addEventListener("mousedown", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      start(e);
+    });
+
+    // Improved touch handling
+    popperDiv.addEventListener(
+      "touchstart",
+      function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        document.body.classList.add("eh-operation-in-progress");
+        eh.start(popperNode);
+      },
+      { passive: false }
+    );
+
+    document.body.appendChild(popperDiv);
+
+    popper = node.popper({
+      content: popperDiv,
+      popper: {
+        placement: "top",
+        modifiers: [
+          {
+            name: "offset",
+            options: {
+              offset: [0, -10],
+            },
+          },
+        ],
+      },
+    });
+    // Update the popper position on each frame
+    const updatePopperPosition = () => {
+      if (popper && !started) {
+        popper.update();
+        requestAnimationFrame(updatePopperPosition);
+      }
+    };
+
+    requestAnimationFrame(updatePopperPosition);
+  }
+
+  function removeHandle() {
+    if (popper) {
+      popper.destroy();
+      popper = null;
+    }
+
+    if (popperDiv) {
+      document.body.removeChild(popperDiv);
+      popperDiv = null;
+    }
+
+    popperNode = null;
+  }
+  window.removeHandle = removeHandle;
+
+  cy.on("mouseover", "node[type='tag']", function (e) {
+    setHandleOn(e.target);
+  });
+  cy.on("mouseout", "node", function (e) {
+    removeHandle();
+  });
+
+  cy.on("grab", "node", function () {
+    removeHandle();
+  });
+
+  cy.on("tap", function (e) {
+    if (e.target === cy) {
+      removeHandle();
+      cy.elements().removeClass("greyed-out");
+    } else if (e.target.isNode()) {
+      setHandleOn(e.target);
+    }
+  });
+
+  cy.on("zoom pan", function () {
+    removeHandle();
+  });
+
+  window.addEventListener("mouseup", function (e) {
+    stop();
+  });
+
+  cy.on("ehstart", function () {
+    started = true;
+  });
+
+  cy.on("ehstop", function () {
+    started = false;
+  });
+
+  // Prevent default behavior for touch events on the popper handle
+  function start(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    eh.start(popperNode);
+  }
+  // function to control links between nodes if possible when trying to create edges
+  function canConnectNodes(sourceNode, targetNode) {
+    // Disallow loops
+    if (sourceNode.same(targetNode)) {
+      return false;
+    }
+    // Disallow edges if an edge already exists between the nodes in any direction
+    if (sourceNode.edgesWith(targetNode).length > 0) {
+      return false;
+    }
+    // If source is type 'note', target must be type 'note'
+    if (sourceNode.data("type") === "note") {
+      return false;
+    }
+    return true;
+  }
+
+  var eh = cy.edgehandles({
+    canConnect: canConnectNodes,
+    snap: true,
+    snapThreshold: 5,
+    snapFrequency: 15,
+  });
+
+  // Event listener for when edge handle is activated
+  cy.on("ehstart", function (event, sourceNode) {
+    cy.nodes().forEach(function (node) {
+      // Exclude the source node itself
+      if (!node.same(sourceNode) && !canConnectNodes(sourceNode, node)) {
+        node.addClass("greyed-out");
+      }
+    });
+  });
+
+  // Event listener for when edge handle is completed
+  cy.on("ehstop", function () {
+    cy.nodes().removeClass("greyed-out");
+  });
+
+  cy.on("ehcomplete", function (event, sourceNode, targetNode, addedEdge) {
+    useGraphStore().CreateEdge(sourceNode.id(), targetNode.id());
+    UpdateNodes();
+    // Remove the edge handle
+    removeHandle();
+  });
+
   cy.on("tap", "node", (event) => {
     const node = event.target.data();
     if (node.type === "note") {
       console.log("Note node selected:", node.id);
+      removeHandle();
       emit("note-selected", node.id);
       // tabStore.openTab(node.id);
       // additional note-specific logic here, e.g., open a modal or display details
@@ -559,7 +742,7 @@ function RunLayout(effectors) {
       name: "cola",
       infinite: true, // Infinite animation
       nodeSpacing: function (node) {
-        return 5;
+        return 10;
       }, // extra spacing around nodes
       animate: true,
 
@@ -764,21 +947,7 @@ function HandlecyClick(event) {
       }
     }
   } else if (event.key === "f") {
-    const searchTerm = prompt("Enter a search term:");
-    const lowerCaseSearchTerm = searchTerm.toLowerCase();
-    cy.elements().forEach((ele) => {
-      if (
-        ele.isNode() &&
-        !ele.data("label").toLowerCase().includes(lowerCaseSearchTerm)
-      ) {
-        ele.addClass("greyed-out");
-      } else {
-        ele.removeClass("greyed-out");
-        if (ele.isNode()) {
-          ele.select();
-        }
-      }
-    });
+    Spotlight();
   } else if (event.key === "d") {
     const selectedNodes = cy.$("node:selected");
     if (selectedNodes.length > 0) {
@@ -960,6 +1129,80 @@ function drillDown(ele) {
     });
 }
 
+function Spotlight() {
+  const searchTerm = prompt("Enter a search term:");
+  if (!searchTerm || searchTerm.trim() === "") return;
+
+  const lowerCaseSearchTerm = searchTerm.toLowerCase();
+
+  // Reset any previous search state
+  cy.elements().removeClass("greyed-out");
+  cy.elements().unselect();
+
+  // Track if we found any matches
+  let foundMatches = false;
+
+  // Search through nodes in the graph
+  cy.nodes().forEach((node) => {
+    if (
+      node.data("label") &&
+      node.data("label").toLowerCase().includes(lowerCaseSearchTerm)
+    ) {
+      node.select();
+      foundMatches = true;
+    } else {
+      node.addClass("greyed-out");
+    }
+  });
+
+  if (!foundMatches) {
+    // If no matches in visible graph, search the entire store
+    const storeElements = graphStore.elements;
+    const storeMatches = storeElements.filter(
+      (element) =>
+        element.name && element.name.toLowerCase().includes(lowerCaseSearchTerm)
+    );
+
+    if (storeMatches.length > 0) {
+      // Found matches in store but not in current view, offer to load them
+      if (
+        confirm(
+          `Found ${storeMatches.length} matches in other parts of the graph. Load them?`
+        )
+      ) {
+        // Clear current graph and load matches
+        cy.elements().remove();
+
+        // Create a data structure similar to what AddNodes expects
+        const matchData = {
+          elements: storeMatches,
+        };
+
+        AddNodes(matchData);
+        UpdateNodes();
+        RunLayout("all");
+        return;
+      }
+    } else {
+      alert("No matches found for: " + searchTerm);
+      cy.elements().removeClass("greyed-out");
+      return;
+    }
+  }
+
+  // Center the view on the selected nodes
+  const selectedNodes = cy.$("node:selected");
+  if (selectedNodes.length > 0) {
+    cy.animate({
+      fit: {
+        eles: selectedNodes,
+        padding: 50,
+      },
+      duration: 500,
+    });
+  }
+}
+
 function loadData() {
   let elements = graphStore.elements;
   AddNodes({ elements });
@@ -978,6 +1221,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  removeHandle();
   console.log("Cytoscape unmounted");
   // if (cy && cy.elements().length > 0) {
   //   saveState();
@@ -1020,6 +1264,26 @@ onBeforeUnmount(() => {
 });
 </script>
 
+<style>
+.popper-handle {
+  background-color: red;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  text-align: center;
+  color: white;
+  cursor: pointer;
+  position: absolute;
+  z-index: 9999;
+}
+
+.eh-operation-in-progress {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+  cursor: grabbing !important;
+}
+</style>
 <template>
   <div ref="navbarContainer" class="h-full w-full relative">
     <!-- Large toolbar -->
@@ -1028,7 +1292,7 @@ onBeforeUnmount(() => {
       v-if="hasControls && isLargeNavbarVisible"
       class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
     >
-      <Button class="flex items-center">
+      <Button class="flex items-center" @click="Spotlight()">
         <Search class="" />
         <span>Search</span>
       </Button>

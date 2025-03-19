@@ -4,7 +4,7 @@ import { useTabStore } from "@/stores/useTabStore";
 import Cytoscape from "@/components/Cytoscape.vue";
 import Whiteboard from "@/components/Whiteboard.vue";
 import TipTap from "@/components/Document Editor/TipTap.vue";
-
+import { useGraphStore } from "@/stores/useGraphStore";
 // Define props, using current tab ID as default
 
 const tabStore = useTabStore();
@@ -25,11 +25,21 @@ const currentNoteId = ref(tabData.value.noteId || null);
 const showGraph = () => {
   currentNoteId.value = null;
   currentView.value = "graph";
+  useTabStore().RenameTab(tabId, "New Tab:");
 };
 
 const showNote = (noteId) => {
   currentNoteId.value = noteId;
   currentView.value = "note";
+  
+  
+    // Get the note name from the graph store
+    const graphStore = useGraphStore();
+  const note = graphStore.elements.find(el => el.id === parseInt(noteId));
+  const noteName = note ? note.name : `Note: ${noteId}`;
+  
+  // Use the actual note name in the tab title
+  useTabStore().RenameTab(tabId, noteName);
 };
 
 const handleNoteSelected = (nodeData) => {
