@@ -355,7 +355,7 @@ def create():
                 return jsonify({'status': 'error', 'message': 'Tag(s) not found.'}), 404
 
         elif source_id.startswith('tag_') and target_id.startswith('note_'):
-            print("########################tag-note source", source_id, "target", target_id)
+            print("########################tag-note tag source", source_id, "note target", target_id)
             source_tag_id = int(source_id.split('_')[1])
             target_note_id = int(target_id.split('_')[1])
 
@@ -368,7 +368,7 @@ def create():
             
             
             # target_note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=target_note_id).first()
-            target_note = dbsession.query(Tag).join(Entity).filter(
+            target_note = dbsession.query(Note).join(Entity).filter(
             Entity.user_id == userId,  # Ensure it belongs to the logged-in user
             Entity.user_specific_id == target_note_id  # Find using per-user unique ID
             ).first()

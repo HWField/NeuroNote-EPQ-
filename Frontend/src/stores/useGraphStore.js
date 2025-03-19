@@ -48,40 +48,50 @@ export const useGraphStore = defineStore("graphStore", () => {
   }
   function CreateEdge(source, target) {
     console.error("Creating edge between:", source, target);
-    // const newEdge = {
-    //   id: `e${elements.value.length + 1}`,
-    //   source: source,
-    //   target: target,
-    // };
-    // elements.value.push(newEdge);
-  
+
     // Update the relationships in the frontend data model
-    if (source.startsWith('tag_') && target.startsWith('tag_')) {
+    if (source.startsWith("tag_") && target.startsWith("tag_")) {
       // For tag-to-tag relationships (parent-child)
-      const sourceNode = elements.value.find(el => el.id === parseInt(source.split('_')[1]));
+      const sourceNode = elements.value.find(
+        (el) => el.id === parseInt(source.split("_")[1])
+      );
       if (sourceNode) {
         // Ensure children array exists
         if (!sourceNode.children) sourceNode.children = [];
         // Add target to children if not already there
-        const targetId = parseInt(target.split('_')[1]);
+        const targetId = parseInt(target.split("_")[1]);
         if (!sourceNode.children.includes(targetId)) {
           sourceNode.children.push(targetId);
         }
       }
-    } else if (source.startsWith('tag_') && target.startsWith('note_')) {
+    } else if (source.startsWith("tag_") && target.startsWith("note_")) {
       // For tag-to-note relationships
-      const targetNode = elements.value.find(el => el.id === parseInt(target.split('_')[1]));
+      const sourceTag = elements.value.find(
+        (el) => el.id === parseInt(source.split("_")[1]));
+      const targetNode = elements.value.find(
+        (el) => el.id === parseInt(target.split("_")[1])
+      );
       if (targetNode) {
         // Ensure tags array exists
         if (!targetNode.tags) targetNode.tags = [];
         // Add source to tags if not already there
-        const sourceId = parseInt(source.split('_')[1]);
+        const sourceId = parseInt(source.split("_")[1]);
         if (!targetNode.tags.includes(sourceId)) {
           targetNode.tags.push(sourceId);
+          console.error("Adding tag to note:", sourceId, targetNode);
+        }
+      }
+      // Update the tag with its note
+      if (sourceTag) {
+        if (!sourceTag.notes) sourceTag.notes = [];
+        const targetId = parseInt(target.split("_")[1]);
+        if (!sourceTag.notes.includes(targetId)) {
+          sourceTag.notes.push(targetId);
+          console.log("Adding note to tag:", targetId, sourceTag);
         }
       }
     }
-  
+
     // Send to backend
     axios.post("/create", {
       type: "edge",
