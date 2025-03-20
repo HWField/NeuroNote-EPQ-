@@ -4,13 +4,14 @@ import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
 import Mention from "@tiptap/extension-mention";
 import { Hyperlink } from "@docs.plus/extension-hyperlink";
+import { HyperMultimediaKit } from "@docs.plus/extension-hypermultimedia";
 import previewHyperlinkModal from "@/components/Document Editor/modals/previewHyperlink.ts";
 import setHyperlinks from "@/components/Document Editor/modals/setHyperlink.ts";
 import "tippy.js/dist/svg-arrow.css";
 import FileHandler from "@tiptap-pro/extension-file-handler";
 // import suggestion from "@/components/Document Editor/TagSuggestion.js";
 import Heading from "@tiptap/extension-heading";
-import { eventBus } from '@/components/Document Editor/EventBus.js';
+import { eventBus } from "@/components/Document Editor/EventBus.js";
 // import TagsList from "@/components/Document Editor/TagsList.vue";
 import {
   Upload as UploadIcon,
@@ -152,16 +153,15 @@ const handleCameraCapture = () => {
       .then(() => {
         closeImageModal();
         // Reset input so the same file can be selected again
-        cameraInputRef.value.value = '';
+        cameraInputRef.value.value = "";
       })
-      .catch(error => console.error("Error uploading camera image:", error));
+      .catch((error) => console.error("Error uploading camera image:", error));
   }
 };
-const imageUrlInput = ref('');
+const imageUrlInput = ref("");
 const showImageModal = ref(false);
 const fileInputRef = ref(null);
 const uploadImageFile = (file) => {
-
   const selection = editor.state.selection;
   const pos = selection.$head.pos;
 
@@ -178,7 +178,11 @@ const uploadImageFile = (file) => {
     .then((response) => {
       if (response.data && response.data.url) {
         // Insert the image at the current cursor position
-        editor.chain().focus().setImage({ src: getBaseUrl()+response.data.url }).run();
+        editor
+          .chain()
+          .focus()
+          .setImage({ src: getBaseUrl() + response.data.url })
+          .run();
         return response.data.url; // Return something for chaining
       } else {
         console.error("Invalid response format:", response.data);
@@ -192,13 +196,13 @@ const uploadImageFile = (file) => {
 };
 
 const openImageModal = () => {
-  imageUrlInput.value = '';
+  imageUrlInput.value = "";
   showImageModal.value = true;
 };
 
 const closeImageModal = () => {
   showImageModal.value = false;
-  imageUrlInput.value = '';
+  imageUrlInput.value = "";
 };
 
 const handleFileSelected = () => {
@@ -226,7 +230,6 @@ const handleUrlSubmit = () => {
 const insertImageUrl = () => {
   openImageModal();
 };
-
 
 // Simplify your ImageUpload extension - just delegate to our utility function
 const ImageUpload = Extension.create({
@@ -378,12 +381,12 @@ function LoadFromBackend() {
 onMounted(() => {
   LoadFromBackend();
   editor.chain().focus().run();
-    // event listener for the image modal
-    eventBus.on('open-image-modal', openImageModal);
+  // event listener for the image modal
+  eventBus.on("open-image-modal", openImageModal);
 });
 
 onBeforeUnmount(() => {
-  eventBus.off('open-image-modal', openImageModal);
+  eventBus.off("open-image-modal", openImageModal);
   console.error("Saving to backend...");
   SaveToBackend();
   if (editor) {
@@ -450,6 +453,16 @@ let editor = new Editor({
     ListItem,
     Typography,
     ColorHighlighter,
+    HyperMultimediaKit.configure({
+      Image,
+      Youtube,
+      Vimeo: {
+        modal: vimeoModal, // default modal
+        inline: true, // default false
+      },
+      SoundCloud: false,
+      Twitter: false,
+    }),
     Hyperlink.configure({
       openOnClick: true,
       modals: {
@@ -822,7 +835,6 @@ let editor = new Editor({
 
             <Separator orientation="vertical" class="h-6 mx-1" />
             <Separator orientation="vertical" class="h-6 mx-1" />
-  
 
             <!-- Heading Dropdown -->
             <DropdownMenu>
@@ -1153,63 +1165,241 @@ let editor = new Editor({
 
   <!-- Image Modal -->
   <!-- Image Modal -->
-<Dialog :open="showImageModal" @update:open="closeImageModal">
-  <DialogContent class="sm:max-w-[425px]">
-    <DialogHeader>
-      <DialogTitle>Insert Image</DialogTitle>
-    </DialogHeader>
-    <div class="grid gap-4 py-4">
-      <!-- File Upload Section -->
-      <div class="grid grid-cols-4 items-center gap-4">
-        <label class="col-span-4 font-medium">Upload Image</label>
-        <div class="col-span-4">
-          <input 
-            ref="fileInputRef"
-            type="file" 
-            accept="image/*"
-            class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary hover:file:bg-primary-100"
+  <Dialog :open="showImageModal" @update:open="closeImageModal">
+    <DialogContent class="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle>Insert Image</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <!-- File Upload Section -->
+        <div class="grid grid-cols-4 items-center gap-4">
+          <label class="col-span-4 font-medium">Upload Image</label>
+          <div class="col-span-4">
+            <input
+              ref="fileInputRef"
+              type="file"
+              accept="image/*"
+              class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary hover:file:bg-primary-100"
+            />
+            <Button
+              class="mt-2 w-full bg-green-600 hover:bg-green-700 text-white"
+              @click="handleFileSelected"
+            >
+              <UploadIcon class="h-4 w-4 mr-2" />Upload
+            </Button>
+          </div>
+        </div>
+
+        <!-- Simple Camera Button -->
+        <div class="grid grid-cols-4 items-center gap-4">
+          <label class="col-span-4 font-medium">Take a Photo</label>
+          <div class="col-span-4">
+            <input
+              ref="cameraInputRef"
+              type="file"
+              accept="image/*"
+              capture="user"
+              class="hidden"
+              @change="handleCameraCapture"
+            />
+            <Button
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              @click="triggerCamera"
+            >
+              <Camera class="h-4 w-4 mr-2" />Take Photo
+            </Button>
+          </div>
+        </div>
+
+        <!-- Image URL Section -->
+        <div class="flex flex-col gap-2 mt-4">
+          <label class="font-medium">Or insert image URL</label>
+          <input
+            v-model="imageUrlInput"
+            type="text"
+            placeholder="https://example.com/image.jpg"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           />
-          <Button class="mt-2 w-full bg-green-600 hover:bg-green-700 text-white" @click="handleFileSelected">
-            <UploadIcon class="h-4 w-4 mr-2" />Upload
-          </Button>
+          <Button class="mt-2" @click="handleUrlSubmit"
+            >Insert Image URL</Button
+          >
         </div>
       </div>
-      
-      <!-- Simple Camera Button -->
-      <div class="grid grid-cols-4 items-center gap-4">
-        <label class="col-span-4 font-medium">Take a Photo</label>
-        <div class="col-span-4">
-          <input 
-            ref="cameraInputRef"
-            type="file" 
-            accept="image/*" 
-            capture="user"
-            class="hidden"
-            @change="handleCameraCapture"
-          />
-          <Button class="w-full bg-blue-600 hover:bg-blue-700 text-white" @click="triggerCamera">
-            <Camera class="h-4 w-4 mr-2" />Take Photo
-          </Button>
-        </div>
-      </div>
-      
-      <!-- Image URL Section -->
-      <div class="flex flex-col gap-2 mt-4">
-        <label class="font-medium">Or insert image URL</label>
-        <input 
-          v-model="imageUrlInput"
-          type="text" 
-          placeholder="https://example.com/image.jpg"
-          class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-        />
-        <Button class="mt-2" @click="handleUrlSubmit">Insert Image URL</Button>
-      </div>
-    </div>
-  </DialogContent>
-</Dialog>
+    </DialogContent>
+  </Dialog>
 </template>
 
 <style lang="scss">
+.hypermultimedia {
+  iframe,
+  audio,
+  video {
+    background-color: #cfcfcf;
+  }
+
+  &__resize-gripper {
+    position: absolute;
+    margin: 0;
+    display: none;
+    z-index: 1;
+
+    .media-resize-clamp {
+      width: 10px;
+      height: 10px;
+      background-color: #1a73e8;
+      border: 1px solid #fff;
+      display: none;
+      z-index: 4;
+
+      &--rotate {
+        border-radius: 50%;
+        position: absolute;
+        top: -28px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: crosshair;
+
+        &::after {
+          content: "";
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 1.5px;
+          height: 30px;
+          background-color: #1a73e8;
+        }
+      }
+
+      &--left {
+        position: absolute;
+        top: 50%;
+        left: -5px;
+        transform: translateY(-50%);
+        cursor: ew-resize;
+        z-index: 2;
+      }
+
+      &--right {
+        position: absolute;
+        top: 50%;
+        right: -5px;
+        transform: translateY(-50%);
+        cursor: ew-resize;
+        z-index: 2;
+      }
+
+      &--top {
+        position: absolute;
+        top: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: ns-resize;
+        z-index: 2;
+      }
+
+      &--bottom {
+        position: absolute;
+        bottom: -5px;
+        left: 50%;
+        transform: translateX(-50%);
+        cursor: ns-resize;
+        z-index: 2;
+      }
+
+      &--top-left {
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        cursor: nwse-resize;
+      }
+
+      &--top-right {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        cursor: nesw-resize;
+      }
+
+      &--bottom-left {
+        position: absolute;
+        bottom: -5px;
+        left: -5px;
+        cursor: nesw-resize;
+      }
+
+      &--bottom-right {
+        position: absolute;
+        bottom: -5px;
+        right: -5px;
+        cursor: nwse-resize;
+      }
+    }
+
+    &--active {
+      border: 1.5px solid #1a73e8;
+      display: block;
+      .media-resize-clamp {
+        display: block;
+      }
+    }
+  }
+
+  &__modal {
+    padding: 8px 8px;
+    background-color: #fff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+
+    &__divider {
+      border-left: 2px solid #e5e7eb;
+      height: 5px;
+      margin: 6px 10px;
+    }
+
+    select {
+      @apply border-gray-300 py-2 px-2 rounded-md;
+      &:hover {
+        background-color: #eee;
+      }
+    }
+
+    button {
+      border-color: #d1d5db;
+      padding: 8px;
+      border-radius: 0.375rem;
+      &:hover {
+        background-color: #eee;
+      }
+    }
+
+    &__btn--resize {
+      svg {
+      }
+    }
+
+    &--active {
+      background-color: #1a73e8;
+      fill: #fff;
+      &:hover {
+        svg {
+          fill: black;
+        }
+      }
+      svg {
+        fill: #fff;
+      }
+    }
+  }
+}
+
 .editor-image {
   display: block;
   max-width: 100%;

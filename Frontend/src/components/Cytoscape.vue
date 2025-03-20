@@ -95,6 +95,13 @@ function initializeCytoscape() {
       {
         selector: "node",
         style: {
+
+          "overlay-shape": "auto", // Makes the overlay follow the node shape
+          "overlay-opacity": 0,    // Makes the overlay transparent 
+          // "overlay-padding": 0.1,    // Adds slight padding to the overlay
+          "ghost": "yes",           // Disables ghost effect during drag
+
+
           "text-valign": "center",
           "text-halign": "center",
           // color: "#f44336",
@@ -109,6 +116,12 @@ function initializeCytoscape() {
           "transition-duration": "0.3s", // Different transition durations for each property
           "transition-timing-function": "ease", // Different easing functions for each property
         },
+      },
+      {
+        selector: "node:active",
+        style: {
+          "border-width": "8px",
+        }
       },
       {
         selector: 'node[type="tag"]',
@@ -449,6 +462,107 @@ function initializeCytoscape() {
     removeHandle();
   });
 
+  const sharedMenuConfig = {
+        fillColor: "rgba(0, 0, 0, 0.75)", // the background colour of the menu
+        activeFillColor: "rgba(1, 105, 217, 0.75)", // the colour used to indicate the selected command
+        activePadding: 0, // additional size in pixels for the active command
+        indicatorSize: 24, // the size in pixels of the pointer to the active command, will default to the node size if the node size is smaller than the indicator size,
+        separatorWidth: 3, // the empty spacing in pixels between successive commands
+        spotlightPadding: 4, // extra spacing in pixels between the element and the spotlight
+        adaptativeNodeSpotlightRadius: true, // specify whether the spotlight radius should adapt to the node size
+        minSpotlightRadius: 24, // the minimum radius in pixels of the spotlight (ignored for the node if adaptativeNodeSpotlightRadius is enabled but still used for the edge & background)
+        maxSpotlightRadius: 38, // the maximum radius in pixels of the spotlight (ignored for the node if adaptativeNodeSpotlightRadius is enabled but still used for the edge & background)
+        openMenuEvents: "cxttapstart taphold", // space-separated cytoscape events that will open the menu; only `cxttapstart` and/or `taphold` work here
+        itemColor: "white", // the colour of text in the command's content
+        itemTextShadowColor: "transparent", // the text shadow colour of the command's content
+        zIndex: 9999, // the z-index of the ui div
+        atMouse: false, // draw menu at mouse position
+        outsideMenuCancel: 50, // if set to a number, this will cancel the command if the pointer is released outside of the spotlight, padded by the number given
+      };
+
+
+      cy.cxtmenu({
+        ...sharedMenuConfig,
+        selector: "node", // Apply to all nodes
+        commands: [
+          {
+            content: "Edit",
+            select: function (ele) {
+              const noteNode = ele;
+              const noteId = noteNode.id();
+              const noteContent = noteNode.data("label");
+            },
+          },
+          {
+            content: "Drill Down",
+            select: function (ele) {
+              fetch("/load", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  operation: "search",
+                  query: ele.data("label"),
+                }),
+              })
+                .then((response) => response.json())
+                .then((data) => {
+                  cy.elements().remove(); // Remove existing nodes
+                  AddNodes(data); // Call the updateGraph function with the new data
+                  UpdateNodes();
+                  RunLayout("all");
+                })
+                .catch((error) => {
+                  console.error("Error fetching data:", error);
+                });
+            },
+          },
+          {
+            content: "Delete",
+            select: function (ele) {
+
+              if (confirm("Are you sure you want to delete this node?")) {
+      // Show loading indicator
+      const loadingNode = ele;
+      loadingNode.data('originalColor', loadingNode.style('background-color'));
+      loadingNode.style('background-color', '#ff8080'); // Light red to indicate deletion in progress
+      
+      graphStore.DeleteNode(ele.id())
+        .then(() => {
+          ele.remove();
+          UpdateNodes();
+        })
+        .catch(error => {
+          console.error("Failed to delete node:", error);
+          // Reset color on error
+          loadingNode.style('background-color', loadingNode.data('originalColor'));
+          alert("Error deleting node. Please try again.");
+        });
+    }
+            },
+          },
+        ],
+      });
+
+      // Add context menu for edges
+      cy.cxtmenu({
+        ...sharedMenuConfig,
+        selector: "edge", // Apply to all edges
+        commands: [
+          {
+            content: "Delete",
+            select: function (ele) {
+              useGraphStore().DeleteEdge(ele.data("source"), ele.data("target"));
+              ele.remove();
+              UpdateNodes();
+            },
+          },
+        ],
+        activeFillColor: "rgba(255, 0, 0, 0.75)", // Nice red color
+        outsideMenuCancel: 0,
+      });
+
   cy.on("tap", "node", (event) => {
     const node = event.target.data();
     if (node.type === "note") {
@@ -742,10 +856,12 @@ function RunLayout(effectors) {
       name: "cola",
       infinite: true, // Infinite animation
       nodeSpacing: function (node) {
-        return 10;
+        return 5;
       }, // extra spacing around nodes
       animate: true,
-
+      // Add these properties to handle label dimensions in physics
+      nodeDimensionsIncludeLabels: true, // Important: include label dimensions
+      avoidOverlap: true, // Force nodes not to overlap
       randomize: false, // Preserve fcose positions
       fit: false, // Do not fit the graph after layout
       refresh: 0, // number of ticks per frame; higher is faster but more jerky
@@ -947,7 +1063,7 @@ function HandlecyClick(event) {
       }
     }
   } else if (event.key === "f") {
-    Spotlight();
+    advancedSearch();
   } else if (event.key === "d") {
     const selectedNodes = cy.$("node:selected");
     if (selectedNodes.length > 0) {
@@ -1129,6 +1245,121 @@ function drillDown(ele) {
     });
 }
 
+// function Search() {
+
+// }
+function advancedSearch() {
+  const searchQuery = prompt("Enter search term:");
+  if (!searchQuery || searchQuery.trim() === "") return;
+
+  const lowerCaseQuery = searchQuery.toLowerCase();
+  
+  // Get all elements from the graph store
+  const storeElements = graphStore.elements;
+  
+  // Sets to track processed elements
+  const processedTags = new Set();
+  const processedNotes = new Set();
+  const resultElements = [];
+  const highlightedNodeIds = new Set(); // Track nodes that directly match the search query
+  
+  // Helper function to get all descendants of a tag
+  function getDescendants(tag) {
+    const descendants = [];
+    if (tag.children && tag.children.length > 0) {
+      tag.children.forEach(childId => {
+        const childTag = storeElements.find(el => el.type === "tag" && el.id === childId);
+        if (childTag) {
+          descendants.push(childTag);
+          descendants.push(...getDescendants(childTag));
+        }
+      });
+    }
+    return descendants;
+  }
+  
+  // Find tags matching the query
+  const matchedTags = storeElements.filter(element => 
+    element.type === "tag" && 
+    element.name && 
+    element.name.toLowerCase().includes(lowerCaseQuery)
+  );
+  
+  // Process each matched tag and its descendants
+  matchedTags.forEach(tag => {
+    // Mark this tag as directly matching the search query
+    highlightedNodeIds.add(`tag_${tag.id}`);
+    
+    // Get all descendants of this tag
+    const allRelatedTags = [tag, ...getDescendants(tag)];
+    
+    // Add each tag to the result set
+    allRelatedTags.forEach(currentTag => {
+      if (!processedTags.has(currentTag.id)) {
+        resultElements.push(currentTag);
+        processedTags.add(currentTag.id);
+        
+        // Find and add all notes associated with this tag
+        if (currentTag.notes && currentTag.notes.length > 0) {
+          currentTag.notes.forEach(noteId => {
+            const note = storeElements.find(el => el.type === "note" && el.id === noteId);
+            if (note && !processedNotes.has(note.id)) {
+              resultElements.push(note);
+              processedNotes.add(note.id);
+            }
+          });
+        }
+      }
+    });
+  });
+  
+  // Find notes matching the query
+  const matchedNotes = storeElements.filter(element => 
+    element.type === "note" && 
+    element.name && 
+    element.name.toLowerCase().includes(lowerCaseQuery)
+  );
+  
+  // Add matching notes to the result set and highlight them
+  matchedNotes.forEach(note => {
+    if (!processedNotes.has(note.id)) {
+      resultElements.push(note);
+      processedNotes.add(note.id);
+      highlightedNodeIds.add(`note_${note.id}`);
+    }
+  });
+  
+  // If there are results, display them
+  if (resultElements.length > 0) {
+    cy.elements().remove(); // Clear the current graph
+    AddNodes({ elements: resultElements }); // Add the filtered elements
+    UpdateNodes();
+    RunLayout("all");
+    
+    // Highlight the nodes that directly matched the search query
+    cy.ready(() => {
+      highlightedNodeIds.forEach(nodeId => {
+        const node = cy.getElementById(nodeId);
+        if (node) {
+          node.addClass("highlighted");
+        }
+      });
+      
+      // Center the view on the highlighted nodes
+      // const highlightedNodes = cy.$(".highlighted");
+      // if (highlightedNodes.length > 0) {
+      //   cy.animate({
+      //     fit: { eles: highlightedNodes, padding: 500 },
+      //     duration: 500
+      //   });
+      // }
+    });
+  } else {
+    alert("No matches found for: " + searchQuery);
+  }
+}
+
+
 function Spotlight() {
   const searchTerm = prompt("Enter a search term:");
   if (!searchTerm || searchTerm.trim() === "") return;
@@ -1195,8 +1426,8 @@ function Spotlight() {
   if (selectedNodes.length > 0) {
     cy.animate({
       fit: {
-        eles: selectedNodes,
-        padding: 50,
+        // eles: selectedNodes,
+        padding: 500,
       },
       duration: 500,
     });
@@ -1439,6 +1670,33 @@ onBeforeUnmount(() => {
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
+
+    <!-- tagbar -->
+    <div 
+  v-if="activeFilters.length > 0"
+  class="flex flex-wrap gap-2 absolute top-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground/80 backdrop-blur-sm p-3 shadow-lg rounded-lg max-w-max"
+>
+  <div v-for="filter in activeFilters" :key="filter.id" 
+       class="flex items-center gap-1 px-2 py-1 rounded-md text-sm"
+       :class="filter.type === 'tag' ? 'bg-blue-100 text-blue-800' : 
+               filter.type === 'text' ? 'bg-green-100 text-green-800' : 
+               filter.type === 'nodeType' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100'"
+  >
+    <span v-if="filter.type === 'tag'">🏷️</span>
+    <span v-else-if="filter.type === 'text'">🔍</span>
+    <span v-else-if="filter.type === 'nodeType'">📌</span>
+    <span>{{ filter.label }}</span>
+    <button @click="removeFilter(filter.id)" class="ml-1 text-gray-500 hover:text-gray-700">
+      ×
+    </button>
+  </div>
+  <button 
+    @click="clearAllFilters" 
+    class="text-xs text-gray-600 hover:text-gray-800 flex items-center"
+  >
+    Clear all
+  </button>
+</div>
 
     <div id="cy" class="w-full h-full absolute"></div>
   </div>

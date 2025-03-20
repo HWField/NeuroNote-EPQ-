@@ -467,10 +467,11 @@ def create():
     
 
 @app.route('/delete', methods=['POST'])
-# @login_required
+@jwt_required()
 def  delete():
     data = request.json
     type = data.get('type')
+    userId = get_jwt_identity()
     
     if type == "edge":
         source_id = data.get('source')
@@ -487,14 +488,22 @@ def  delete():
                 target_tag_id = int(target_id.split('_')[1])
 
                 # Query the tags
-                source_tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=source_tag_id).first()
-                target_tag = dbsession.query(Tag).filter_by(user_id = 1, user_specific_id=target_tag_id).first()
-
+                source_tag = dbsession.query(Tag).join(Entity).filter(
+                Entity.user_id == userId,  # Ensure it belongs to the logged-in user
+                Entity.user_specific_id == source_tag_id  # Find using per-user unique ID
+                ).first()
+                
+                target_tag = dbsession.query(Tag).join(Entity).filter(
+                Entity.user_id == userId,  # Ensure it belongs to the logged-in user
+                Entity.user_specific_id == target_tag_id  # Find using per-user unique ID
+                ).first()
+                
                 if source_tag and target_tag:
                     # Remove the parent-child relationship
                     if target_tag in source_tag.children:
                         source_tag.children.remove(target_tag)
                         dbsession.commit()
+                        dbsession.flush()  # Ensure relationships are cleared
                         return jsonify({'status': 'success', 'message': 'Tag-Tag link deleted.'})
                     else:
                         return jsonify({'status': 'error', 'message': 'Link does not exist.'}), 400
@@ -507,8 +516,14 @@ def  delete():
 
                 # Query the tag and note
             
-                source_tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=source_tag_id).first()
-                target_note = dbsession.query(Note).filter_by(user_id = 1, user_specific_id=target_note_id).first()
+                source_tag = dbsession.query(Tag).join(Entity).filter(
+                Entity.user_id == userId,  # Ensure it belongs to the logged-in user
+                Entity.user_specific_id == source_tag_id  # Find using per-user unique ID
+                ).first()
+                target_note = dbsession.query(Note).join(Entity).filter(
+                Entity.user_id == userId,  # Ensure it belongs to the logged-in user
+                Entity.user_specific_id == target_note_id  # Find using per-user unique ID
+                ).first()
                 
                 
 
@@ -517,6 +532,7 @@ def  delete():
                     if source_tag in target_note.tags:
                         target_note.tags.remove(source_tag)
                         dbsession.commit()
+                        dbsession.flush()  # Ensure relationships are cleared
                         return jsonify({'status': 'success', 'message': 'Tag-Note link deleted.'})
                     else:
                         return jsonify({'status': 'error', 'message': 'Link does not exist.'}), 400
@@ -535,26 +551,35 @@ def  delete():
         id = data.get('id')
         
         if id.startswith('tag_'):
-            id = int(id.split('_')[1])
+            tag_id = int(id.split('_')[1])
           
-            tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=id).first()
+            tag = dbsession.query(Tag).join(Entity).filter(
+                Entity.user_id == userId,  # Ensure it belongs to the logged-in user
+                Entity.user_specific_id == tag_id  # Find using per-user unique ID
+                ).first()
 
             if tag is None:
                 return jsonify({'status': 'error', 'message': 'Tag not found'}), 404
             try:
+                
                 dbsession.delete(tag)
                 dbsession.commit()
                 return jsonify({'status': 'success', 'message': f'Tag {id} deleted.'})
+            
             except Exception as e:
                 dbsession.rollback()
                 print(f"Error deleting tag {id}: {e}")
                 return jsonify({'status': 'error', 'message': 'Failed to delete tag'}), 500
+            
         elif id.startswith('note_'):
-            id = int(id.split('_')[1])
-            note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=id).first()
+            note_id = int(id.split('_')[1])
+            note = dbsession.query(Note).join(Entity).filter(
+                Entity.user_id == userId,  # Ensure it belongs to the logged-in user
+                Entity.user_specific_id == note_id  # Find using per-user unique ID
+                ).first()
             if note is None:
                 return jsonify({'status': 'error', 'message': 'Note not found'}), 404
-            try:
+            try:     
                 dbsession.delete(note)
                 dbsession.commit()
                 return jsonify({'status': 'success', 'message': f'Note {id} deleted.'})

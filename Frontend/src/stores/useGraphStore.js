@@ -46,6 +46,69 @@ export const useGraphStore = defineStore("graphStore", () => {
       console.error("Invalid node format:", response);
     }
   }
+  async function DeleteNode(nodeId) {
+    console.error("Deleting node:", nodeId);
+    
+    const edgeDeletions = []; // Array to hold all deletion promises
+    
+    if (nodeId.startsWith("tag_")) {
+      // Find tag-to-tag relationships (as source)
+      const tagNode = elements.value.find(el => el.id === parseInt(nodeId.split("_")[1]) && el.type === "tag");
+      if (tagNode && tagNode.children) {
+        tagNode.children.forEach(childId => {
+          edgeDeletions.push(DeleteEdge(nodeId, `tag_${childId}`));
+        });
+      }
+      
+      // Find tag-to-note relationships
+      const tagNodeId = parseInt(nodeId.split("_")[1]);
+      elements.value.filter(el => el.type === "note").forEach(note => {
+        if (note.tags && note.tags.includes(tagNodeId)) {
+          edgeDeletions.push(DeleteEdge(nodeId, `note_${note.id}`));
+        }
+      });
+      
+      // Find tag-to-tag relationships (as target)
+      elements.value.filter(el => el.type === "tag").forEach(tag => {
+        if (tag.children && tag.children.includes(tagNodeId)) {
+          edgeDeletions.push(DeleteEdge(`tag_${tag.id}`, nodeId));
+        }
+      });
+    } 
+    
+    else if (nodeId.startsWith("note_")) {
+      // Find all tags connected to this note
+      const noteNode = elements.value.find(el => el.id === parseInt(nodeId.split("_")[1]) && el.type === "note");
+      if (noteNode && noteNode.tags) {
+        noteNode.tags.forEach(tagId => {
+          edgeDeletions.push(DeleteEdge(`tag_${tagId}`, nodeId));
+        });
+      }
+    }
+    
+    // Wait for ALL edge deletions to complete before deleting the node
+    try {
+      await Promise.all(edgeDeletions);
+      console.log("All edge deletions completed successfully");
+      
+      // Now that edges are deleted, delete the node
+      return axios.post("/delete", {
+        type: "node",
+        id: nodeId
+      })
+      .then(response => {
+        console.log("Node deletion response:", response.data);
+        return response.data;
+      })
+      .catch(error => {
+        console.error("Error deleting node:", error.response?.data || error.message);
+        throw error;
+      });
+    } catch (error) {
+      console.error("Error during edge deletion:", error);
+      throw error;
+    }
+  }
   function CreateEdge(source, target) {
     console.error("Creating edge between:", source, target);
 
@@ -100,6 +163,68 @@ export const useGraphStore = defineStore("graphStore", () => {
     });
   }
 
+  function DeleteEdge(source, target) {
+    console.error("Deleting edge between:", source, target);
+  
+    // Update the relationships in the frontend data model
+    if (source.startsWith("tag_") && target.startsWith("tag_")) {
+      // For tag-to-tag relationships (parent-child)
+      const sourceNode = elements.value.find(
+        (el) => el.id === parseInt(source.split("_")[1])
+      );
+      if (sourceNode && sourceNode.children) {
+        // Remove target from children if it exists
+        const targetId = parseInt(target.split("_")[1]);
+        sourceNode.children = sourceNode.children.filter(id => id !== targetId);
+        console.log("Removed child tag:", targetId, "from parent:", sourceNode);
+      }
+    } else if (source.startsWith("tag_") && target.startsWith("note_")) {
+      // For tag-to-note relationships
+      const sourceTag = elements.value.find(
+        (el) => el.id === parseInt(source.split("_")[1])
+      );
+      const targetNode = elements.value.find(
+        (el) => el.id === parseInt(target.split("_")[1])
+      );
+  
+      // Remove tag from note
+      if (targetNode && targetNode.tags) {
+        const sourceId = parseInt(source.split("_")[1]);
+        targetNode.tags = targetNode.tags.filter(id => id !== sourceId);
+        console.log("Removed tag:", sourceId, "from note:", targetNode);
+      }
+  
+      // Remove note from tag
+      if (sourceTag && sourceTag.notes) {
+        const targetId = parseInt(target.split("_")[1]);
+        sourceTag.notes = sourceTag.notes.filter(id => id !== targetId);
+        console.log("Removed note:", targetId, "from tag:", sourceTag);
+      }
+    }
+  
+    // Find and remove the actual edge element if it exists
+    const edgeId = `e_${source}_${target}`;
+    const edgeIndex = elements.value.findIndex(el => el.id === edgeId);
+    if (edgeIndex !== -1) {
+      elements.value.splice(edgeIndex, 1);
+    }
+  
+    // Send to backend
+    return axios.post("/delete", {
+      type: "edge",
+      source: source,
+      target: target,
+    })
+    .then(response => {
+      console.log("Edge deletion response:", response.data);
+      return response.data;
+    })
+    .catch(error => {
+      console.error("Error deleting edge:", error);
+      throw error; // Re-throw so it can be caught in DeleteNode
+    });
+  }
+
   function updateNoteName(noteId, newName) {
     const note = this.elements.find((el) => el.id === parseInt(noteId));
     if (note) {
@@ -124,6 +249,8 @@ export const useGraphStore = defineStore("graphStore", () => {
     updateNoteName,
     updateNoteTags,
     addNode,
+    DeleteNode,
     CreateEdge,
+    DeleteEdge,
   };
 });

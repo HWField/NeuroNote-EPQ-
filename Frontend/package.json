@@ -14,6 +14,7 @@
   "dependencies": {
     "@benrbray/prosemirror-math": "^1.0.0",
     "@docs.plus/extension-hyperlink": "^1.5.2",
+    "@docs.plus/extension-hypermultimedia": "^1.4.0",
     "@internationalized/date": "^3.7.0",
     "@tiptap-pro/extension-details": "^2.17.5",
     "@tiptap-pro/extension-details-content": "^2.17.5",
