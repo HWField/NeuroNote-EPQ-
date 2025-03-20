@@ -64,12 +64,12 @@ const emit = defineEmits(["note-selected", "filters-changed"]);
 const activeFilters = ref([]);
 
 // Add this watch to react to external filter changes
-watch(() => props.externalFilters, (newFilters) => {
-  if (newFilters && JSON.stringify(newFilters) !== JSON.stringify(activeFilters.value)) {
-    activeFilters.value = [...newFilters];
-    applyFilters();
-  }
-}, { deep: true });
+// watch(() => props.externalFilters, (newFilters) => {
+//   if (newFilters && JSON.stringify(newFilters) !== JSON.stringify(activeFilters.value)) {
+//     activeFilters.value = [...newFilters];
+//     applyFilters();
+//   }
+// }, { deep: true });
 
 const loadState = () => {
   const tab = tabStore.getTab(props.tabId);
@@ -82,7 +82,6 @@ const loadState = () => {
     // Load from props if available
     activeFilters.value = [...props.externalFilters];
   }
-  console.error("Active filters", activeFilters.value);
   return state;
 };
 
@@ -99,15 +98,9 @@ const saveState = () => {
 
 function initializeCytoscape() {
   // Initialize Cytoscape
-
-  console.log("Initializing Cytoscape...");
   let state = loadState();
-  console.log(state);
-
   if (cy) {
-    console.log(
-      "Destroying previous Cytoscape instance before reinitializing..."
-    );
+
     cy.destroy();
     cy = null;
   }
@@ -121,9 +114,7 @@ function initializeCytoscape() {
       {
         selector: "node",
         style: {
-          "overlay-shape": "auto", // Makes the overlay follow the node shape
           "overlay-opacity": 0, // Makes the overlay transparent
-          // "overlay-padding": 0.1,    // Adds slight padding to the overlay
           ghost: "yes", // Disables ghost effect during drag
 
           "text-valign": "center",
@@ -304,9 +295,7 @@ function initializeCytoscape() {
         },
       },
     ],
-    layout: {
-      name: "preset",
-    },
+    
   });
 
   let popperEnabled = true;
@@ -580,7 +569,7 @@ function initializeCytoscape() {
   cy.on("tap", "node", (event) => {
     const node = event.target.data();
     if (node.type === "note") {
-      console.log("Note node selected:", node.id);
+    
       removeHandle();
       emit("note-selected", node.id);
       // tabStore.openTab(node.id);
@@ -619,22 +608,10 @@ function initializeCytoscape() {
       }
     });
   });
-  // cy.layout({
-  //   name: "cola",
-  //   infinite: true, // Infinite animation
-  //   animate: true,
-  //   randomize: false, // Preserve fcose positions
-  //   fit: false, // Do not fit the graph after layout
-  //   refresh: 0, // number of ticks per frame; higher is faster but more jerky
-  //   centerGraph: false,
-  //   eles: null,
-  // }).run();
 
-  // cy.zoom(state.zoom);
-  // cy.pan(state.pan);
 
   document.addEventListener("keydown", HandlecyClick);
-  // Step 2: Start cola layout with infinite animation after fcose completes
+
 }
 
 function AddNodes(data) {
@@ -828,10 +805,12 @@ function UpdateNodes() {
     }
   });
 }
+
 function RunLayout(effectors) {
+
   cy.stop(); // Stop any ongoing layouts
   cy.off("layoutstop");
-  console.log("Running layout on nodes:", effectors);
+  console.log("running layout on:", effectors)
   let fixedNodeConstraints = [];
   // this function will run the layout on only the nodes specified, all others will remain statitionary
 
@@ -878,10 +857,12 @@ function RunLayout(effectors) {
   }).run();
 
   // Step 2: Start cola layout with infinite animation after fcose completes
-  cy.on("layoutstop", runCola);
+  setTimeout(() => {
+  cy.one("layoutstop", runCola);  // Use 'one' instead of 'on'
+}, 50);
 
   function runCola() {
-    const colaLayout = cy.layout({
+    const currentColaLayout = cy.layout({
       name: "cola",
       infinite: true, // Infinite animation
       nodeSpacing: function (node) {
@@ -897,7 +878,7 @@ function RunLayout(effectors) {
       centerGraph: false,
       eles: null,
     });
-    colaLayout.run();
+    currentColaLayout.run();
   }
   // startSavingNodePositions();
 }
@@ -910,7 +891,7 @@ function HandlecyClick(event) {
   ) {
     return;
   }
-  console.log("cytoscope key pressed", event.key);
+
   if (event.key === "Delete" || event.key === "Backspace") {
     const selectedElements = cy.$(":selected");
     selectedElements.forEach((ele) => {
@@ -941,28 +922,7 @@ function HandlecyClick(event) {
                 alert("Error deleting node. Please try again.");
               });
           }
-        // fetch("/delete", {
-        //   method: "POST",
-        //   headers: {
-        //     "Content-Type": "application/json",
-        //   },
-        //   body: JSON.stringify({ type: "node", id: ele.id() }),
-        // })
-        //   .then((response) => response.json())
-        //   .then((data) => {
-        //     if (data.status === "success") {
-        //       ele.unselect();
-        //       removeHandle();
-        //       ele.remove();
-        //       console.log("element deleted, updating");
-        //       UpdateNodes();
-        //     } else {
-        //       console.error("Failed to delete node:", data.message);
-        //     }
-        //   })
-        //   .catch((error) => {
-        //     console.error("Error deleting node:", error);
-        //   });
+     
       } 
     });
   } else if (event.key === "n") {
@@ -1100,50 +1060,7 @@ function HandlecyClick(event) {
     filterByNodeType();
   } else if (event.key === "d") {
     const selectedNodes = cy.$("node:selected");
-    if (selectedNodes.length > 0) {
-      const combinedLabels = selectedNodes
-        .map((node) => node.data("label"))
-        .join(", ");
-      console.log("Combined Labels:", combinedLabels);
-      fetch("http://127.0.0.1:8000/load", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          operation: "search",
-          query: combinedLabels,
-        }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          cy.elements().remove(); // Clear the graph
-          AddNodes(data); // Call the updateGraph function with the new data
-          UpdateNodes();
-          RunLayout("all");
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-        });
-    } else {
-      fetch("http://127.0.0.1:8000/load", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ operation: "all" }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          cy.elements().remove(); // Clear the graph
-          AddNodes(data); // Call the updateGraph function with the new data
-          UpdateNodes();
-          RunLayout("all");
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-        });
-    }
+    searchByTag(selectedNodes.data("label"));
   }
 }
 
@@ -1170,7 +1087,7 @@ function RenameNode(Node) {
           if (data.status === "success") {
             // Update the node name in Cytoscape
             Node.data("label", newName);
-            console.log(`Node renamed to "${newName}" in graph`);
+     
           } else {
             console.error("Failed to rename node:", data.message);
           }
@@ -1228,7 +1145,7 @@ function CreateNote(format) {
         // After all edge creation requests are complete
         Promise.all(edgePromises)
           .then(() => {
-            console.log("All tag-note connections created successfully");
+        
             UpdateNodes(); // Update the appearance of nodes
           })
           .catch((error) => {
@@ -1266,7 +1183,7 @@ function CreateTag() {
       
       // Create edges between all selected tags and the new tag (selected tags become parents)
       if (selectedTags.length > 0) {
-        console.log(`Creating parent connections from ${selectedTags.length} selected tags to new tag: ${newTagId}`);
+   
         
         // Process each selected tag
         let edgePromises = [];
@@ -1290,7 +1207,8 @@ function CreateTag() {
         // After all edge creation requests are complete
         Promise.all(edgePromises)
           .then(() => {
-            console.log("All parent-child connections created successfully");
+    
+            
             UpdateNodes(); // Update the appearance of nodes
           })
           .catch((error) => {
@@ -1306,22 +1224,6 @@ function CreateTag() {
     });
 }
 
-function drillDown(ele) {
-  axios
-    .post("/load", {
-      operation: "search",
-      query: ele.data("label"),
-    })
-    .then((response) => {
-      cy.elements().remove(); // Remove existing nodes
-      AddNodes(response.data); // Update graph with new data
-      UpdateNodes();
-      RunLayout("all");
-    })
-    .catch((error) => {
-      console.error("Error fetching data:", error);
-    });
-}
 
 function addFilter(type, value, label) {
   const newFilter = {
@@ -1346,6 +1248,7 @@ function clearAllFilters() {
   activeFilters.value = [];
   loadData(); // Reset to full graph
   saveState(); // Save to tab state
+  RunLayout("all");
 }
 
 // Enhanced search that supports stacking
@@ -1381,9 +1284,10 @@ function applyFilters() {
   // If no filters, show all data
   if (activeFilters.value.length === 0) {
     loadData();
+    RunLayout("all");
     return;
   }
-  
+
   // Get all elements from graph store
   const allElements = graphStore.elements;
   const processedNodeIds = new Set(); // Track which nodes we've already processed
@@ -1493,6 +1397,7 @@ function applyFilters() {
   cy.elements().remove();
   AddNodes(cyElements);
   UpdateNodes();
+  saveState();
   RunLayout("all");
   
   // Highlight nodes that match search queries
@@ -1514,7 +1419,7 @@ function applyFilters() {
   // });
   
   // Save the updated filter state
-  saveState();
+  
 }
 function advancedSearch() {
   const searchQuery = prompt("Enter search term:");
@@ -1711,16 +1616,13 @@ function loadData() {
   let elements = graphStore.elements;
   AddNodes({ elements });
   UpdateNodes();
-  RunLayout("all");
+  // RunLayout("all");
 }
 
 onMounted(() => {
   console.log("Cytoscape mounted");
-
   initializeCytoscape();
   let state = loadState();
-  //log to track changes in state that should be applied after loading data
-
   loadData();
   applyFilters();
 });
@@ -1728,17 +1630,13 @@ onMounted(() => {
 onUnmounted(() => {
   removeHandle();
   console.log("Cytoscape unmounted");
-  // if (cy && cy.elements().length > 0) {
-  //   saveState();
-  // }
   if (cy) {
-    console.log("Destroying Cytoscape instance...");
     cy.stop(); // Stop any ongoing layouts
+    cy.off("layoutstop"); // Clean up listeners
     cy.remove("*"); // Remove all elements from the graph
     cy.destroy(); // Completely destroy the instance
     cy = null; // Nullify reference to prevent memory leaks
   }
-
   document.removeEventListener("keydown", HandlecyClick);
 });
 
@@ -1880,9 +1778,7 @@ onBeforeUnmount(() => {
 
       <Button @click="centerGraph()"> <House></House> Center </Button>
 
-      <!-- <Button @click="searchByTag(cy.$('node:selected')[0]?.data('label'))">
-        <ChevronsDown></ChevronsDown> Drill
-      </Button> -->
+
 
       <Button variant="destructive" @click="ShuffleGraph()">
         <Shuffle></Shuffle> Shuffle

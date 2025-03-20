@@ -10,12 +10,12 @@ export const useGraphStore = defineStore("graphStore", () => {
   // **Actions**
   async function fetchGraph() {
     // if (useUserStore().isAuthenticated) {
-    console.error("Fetching graph data...");
+
     try {
       const response = await axios.post("/load", {
         operation: "graph",
       });
-      console.log("Graph data:", response.data);
+ 
       setGraph(response.data);
     } catch (error) {
       console.error("Error fetching graph data:", error);
@@ -35,7 +35,7 @@ export const useGraphStore = defineStore("graphStore", () => {
   }
 
   function addNode(response) {
-    console.error("---Adding node to db:", response);
+ 
     // Check if response has elements array
     if (response.elements && Array.isArray(response.elements)) {
       // Add each element from the response to the store
@@ -67,7 +67,7 @@ export const useGraphStore = defineStore("graphStore", () => {
         name: newName
       })
       .then(response => {
-        console.log(`Node ${nodeId} renamed to "${newName}" successfully`);
+      
         return response.data;
       })
       .catch(error => {
@@ -79,7 +79,7 @@ export const useGraphStore = defineStore("graphStore", () => {
     }
   }
   async function DeleteNode(nodeId) {
-    console.error("Deleting node:", nodeId);
+  
     
     const edgeDeletions = []; // Array to hold all deletion promises
     
@@ -121,7 +121,7 @@ export const useGraphStore = defineStore("graphStore", () => {
     // Wait for ALL edge deletions to complete before deleting the node
     try {
       await Promise.all(edgeDeletions);
-      console.log("All edge deletions completed successfully");
+   
       
       // Now that edges are deleted, delete the node
       return axios.post("/delete", {
@@ -129,7 +129,7 @@ export const useGraphStore = defineStore("graphStore", () => {
         id: nodeId
       })
       .then(response => {
-        console.log("Node deletion response:", response.data);
+
         return response.data;
       })
       .catch(error => {
@@ -142,7 +142,7 @@ export const useGraphStore = defineStore("graphStore", () => {
     }
   }
   function CreateEdge(source, target) {
-    console.error("Creating edge between:", source, target);
+    
 
     // Update the relationships in the frontend data model
     if (source.startsWith("tag_") && target.startsWith("tag_")) {
@@ -173,7 +173,7 @@ export const useGraphStore = defineStore("graphStore", () => {
         const sourceId = parseInt(source.split("_")[1]);
         if (!targetNode.tags.includes(sourceId)) {
           targetNode.tags.push(sourceId);
-          console.error("Adding tag to note:", sourceId, targetNode);
+      
         }
       }
       // Update the tag with its note
@@ -182,7 +182,7 @@ export const useGraphStore = defineStore("graphStore", () => {
         const targetId = parseInt(target.split("_")[1]);
         if (!sourceTag.notes.includes(targetId)) {
           sourceTag.notes.push(targetId);
-          console.log("Adding note to tag:", targetId, sourceTag);
+     
         }
       }
     }
@@ -196,7 +196,7 @@ export const useGraphStore = defineStore("graphStore", () => {
   }
 
   function DeleteEdge(source, target) {
-    console.error("Deleting edge between:", source, target);
+   
   
     // Update the relationships in the frontend data model
     if (source.startsWith("tag_") && target.startsWith("tag_")) {
@@ -208,7 +208,7 @@ export const useGraphStore = defineStore("graphStore", () => {
         // Remove target from children if it exists
         const targetId = parseInt(target.split("_")[1]);
         sourceNode.children = sourceNode.children.filter(id => id !== targetId);
-        console.log("Removed child tag:", targetId, "from parent:", sourceNode);
+    
       }
     } else if (source.startsWith("tag_") && target.startsWith("note_")) {
       // For tag-to-note relationships
@@ -223,14 +223,14 @@ export const useGraphStore = defineStore("graphStore", () => {
       if (targetNode && targetNode.tags) {
         const sourceId = parseInt(source.split("_")[1]);
         targetNode.tags = targetNode.tags.filter(id => id !== sourceId);
-        console.log("Removed tag:", sourceId, "from note:", targetNode);
+   
       }
   
       // Remove note from tag
       if (sourceTag && sourceTag.notes) {
         const targetId = parseInt(target.split("_")[1]);
         sourceTag.notes = sourceTag.notes.filter(id => id !== targetId);
-        console.log("Removed note:", targetId, "from tag:", sourceTag);
+      
       }
     }
   
@@ -248,7 +248,7 @@ export const useGraphStore = defineStore("graphStore", () => {
       target: target,
     })
     .then(response => {
-      console.log("Edge deletion response:", response.data);
+    
       return response.data;
     })
     .catch(error => {

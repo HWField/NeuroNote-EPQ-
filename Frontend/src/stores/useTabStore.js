@@ -79,7 +79,7 @@ export const useTabStore = defineStore("tabStore", () => {
   }
 
   function updateTabState(id, newState) {
-    console.error("backend Updating tab:", id ); // Debugging
+  
     const tab = tabs.value.find((tab) => tab.id === id);
     if (tab) {
       // Merge with existing state instead of replacing
@@ -120,7 +120,7 @@ export const useTabStore = defineStore("tabStore", () => {
         const response = await axios.post("/load", {
           operation: "tabs",
         });
-        console.log("tab data:", response.data);
+     
 
         if (response.data.length > 0) {
           tabs.value = response.data;
@@ -138,13 +138,13 @@ export const useTabStore = defineStore("tabStore", () => {
 
   async function SendTabs() {
     try {
-      console.error("📤 SENDING TABS! tabs:");
-      console.error(...tabs.value);
+   
+     
       const response = await axios.post("/update", {
         operation: "tabs",
         data: tabs.value,
       });
-      console.error("Response:", response.data);
+     
     } catch (error) {
       console.error("Error sending tabs:", error);
     }
@@ -157,8 +157,7 @@ export const useTabStore = defineStore("tabStore", () => {
 
   function clearStore() {
   
-    console.error("🧹 CLEARING TAB STORE!");
-    console.error(...defaultTabs);
+ 
     // tabs.value = [...defaultTabs]; // Reset tabs to default state
     tabs.value = cloneDeep(defaultTabs);
     activeTab.value = 1;
