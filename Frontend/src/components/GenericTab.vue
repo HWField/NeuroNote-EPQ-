@@ -9,7 +9,7 @@ import { useGraphStore } from "@/stores/useGraphStore";
 
 const tabStore = useTabStore();
 const tabId = tabStore.GetActiveTabID();
-
+const activeFilters = ref([]);
 // Get tab data from store with fallback default state
 const tabData = computed(() => {
   const tab = tabStore.getTab(tabId);
@@ -17,7 +17,13 @@ const tabData = computed(() => {
   // Return tab.state instead of the whole tab object
   return tab.state || { view: "graph", noteId: null };
 });
-
+const handleFilterChange = (newFilters) => {
+  activeFilters.value = newFilters;
+  tabStore.updateTabState(tabId, {
+    ...tabData.value,
+    filters: newFilters
+  });
+};
 // Local reactive state
 const currentView = ref(tabData.value.view || "graph");
 const currentNoteId = ref(tabData.value.noteId || null);
@@ -49,8 +55,13 @@ const handleNoteSelected = (nodeData) => {
 
 onMounted(() => {
   currentView.value = tabData.value.view || "graph";
-
   currentNoteId.value = tabData.value.noteId;
+  
+  // Load filters
+  if (tabData.value.filters) {
+    activeFilters.value = tabData.value.filters;
+  }
+  
   if (!tabData.value.view) {
     showGraph();
   }
@@ -68,11 +79,13 @@ onBeforeUnmount(() => {
   <div class="h-full w-full">
     <!-- Graph View -->
     <Cytoscape
-      v-if="currentView === 'graph'"
-      :tabId="tabId"
-      :hasControls="true"
-      @note-selected="handleNoteSelected"
-    />
+  v-if="currentView === 'graph'"
+  :tabId="tabId"
+  :hasControls="true"
+  :externalFilters="activeFilters"
+  @note-selected="handleNoteSelected"
+  @filters-changed="handleFilterChange"
+/>
 
     <!-- Note Editor View -->
     <div v-else-if="currentView === 'note'" class="h-full w-full">

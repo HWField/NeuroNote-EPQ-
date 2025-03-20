@@ -54,21 +54,47 @@ const props = defineProps({
     type: Boolean,
     default: true,
   },
-  // tabType: String, // New property to identify the component type (e.g., 'cytoscape')
+  externalFilters: {
+    type: Array,
+    default: () => [],
+  },
 });
 
-const emit = defineEmits(["note-selected"]);
+const emit = defineEmits(["note-selected", "filters-changed"]);
+const activeFilters = ref([]);
+
+// Add this watch to react to external filter changes
+watch(() => props.externalFilters, (newFilters) => {
+  if (newFilters && JSON.stringify(newFilters) !== JSON.stringify(activeFilters.value)) {
+    activeFilters.value = [...newFilters];
+    applyFilters();
+  }
+}, { deep: true });
 
 const loadState = () => {
   const tab = tabStore.getTab(props.tabId);
-  return tab?.state || {};
+  const state = tab?.state || {};
+
+  // Load filters from tab state if they exist
+  if (state.filters && state.filters.length > 0) {
+    activeFilters.value = state.filters;
+  } else if (props.externalFilters && props.externalFilters.length > 0) {
+    // Load from props if available
+    activeFilters.value = [...props.externalFilters];
+  }
+  console.error("Active filters", activeFilters.value);
+  return state;
 };
 
+// Make sure your saveState function emits the filter changes
 const saveState = () => {
-  if (cy) {
-    console.log("saving state");
-    tabStore.updateTabState(props.tabId, cy.json());
-  }
+  // Save filters to tab store
+  tabStore.updateTabState(props.tabId, {
+    filters: activeFilters.value
+  });
+  
+  // Emit to parent component
+  emit("filters-changed", activeFilters.value);
 };
 
 function initializeCytoscape() {
@@ -95,12 +121,10 @@ function initializeCytoscape() {
       {
         selector: "node",
         style: {
-
           "overlay-shape": "auto", // Makes the overlay follow the node shape
-          "overlay-opacity": 0,    // Makes the overlay transparent 
+          "overlay-opacity": 0, // Makes the overlay transparent
           // "overlay-padding": 0.1,    // Adds slight padding to the overlay
-          "ghost": "yes",           // Disables ghost effect during drag
-
+          ghost: "yes", // Disables ghost effect during drag
 
           "text-valign": "center",
           "text-halign": "center",
@@ -118,10 +142,16 @@ function initializeCytoscape() {
         },
       },
       {
+        selector: "node:selected",
+        style: {
+          "border-width": "8px",
+        },
+      },
+      {
         selector: "node:active",
         style: {
           "border-width": "8px",
-        }
+        },
       },
       {
         selector: 'node[type="tag"]',
@@ -178,12 +208,7 @@ function initializeCytoscape() {
           "transition-timing-function": "ease", // Different easing functions for each property
         },
       },
-      {
-        selector: "node:selected",
-        style: {
-          "border-color": "#f00",
-        },
-      },
+  
       {
         selector: "node.static",
         style: {
@@ -389,6 +414,8 @@ function initializeCytoscape() {
     if (e.target === cy) {
       removeHandle();
       cy.elements().removeClass("greyed-out");
+      cy.nodes().removeClass("highlighted");
+      cy.edges().removeClass("highlighted");
     } else if (e.target.isNode()) {
       setHandleOn(e.target);
     }
@@ -463,105 +490,92 @@ function initializeCytoscape() {
   });
 
   const sharedMenuConfig = {
-        fillColor: "rgba(0, 0, 0, 0.75)", // the background colour of the menu
-        activeFillColor: "rgba(1, 105, 217, 0.75)", // the colour used to indicate the selected command
-        activePadding: 0, // additional size in pixels for the active command
-        indicatorSize: 24, // the size in pixels of the pointer to the active command, will default to the node size if the node size is smaller than the indicator size,
-        separatorWidth: 3, // the empty spacing in pixels between successive commands
-        spotlightPadding: 4, // extra spacing in pixels between the element and the spotlight
-        adaptativeNodeSpotlightRadius: true, // specify whether the spotlight radius should adapt to the node size
-        minSpotlightRadius: 24, // the minimum radius in pixels of the spotlight (ignored for the node if adaptativeNodeSpotlightRadius is enabled but still used for the edge & background)
-        maxSpotlightRadius: 38, // the maximum radius in pixels of the spotlight (ignored for the node if adaptativeNodeSpotlightRadius is enabled but still used for the edge & background)
-        openMenuEvents: "cxttapstart taphold", // space-separated cytoscape events that will open the menu; only `cxttapstart` and/or `taphold` work here
-        itemColor: "white", // the colour of text in the command's content
-        itemTextShadowColor: "transparent", // the text shadow colour of the command's content
-        zIndex: 9999, // the z-index of the ui div
-        atMouse: false, // draw menu at mouse position
-        outsideMenuCancel: 50, // if set to a number, this will cancel the command if the pointer is released outside of the spotlight, padded by the number given
-      };
+    fillColor: "rgba(0, 0, 0, 0.75)", // the background colour of the menu
+    activeFillColor: "rgba(1, 105, 217, 0.75)", // the colour used to indicate the selected command
+    activePadding: 0, // additional size in pixels for the active command
+    indicatorSize: 24, // the size in pixels of the pointer to the active command, will default to the node size if the node size is smaller than the indicator size,
+    separatorWidth: 3, // the empty spacing in pixels between successive commands
+    spotlightPadding: 4, // extra spacing in pixels between the element and the spotlight
+    adaptativeNodeSpotlightRadius: true, // specify whether the spotlight radius should adapt to the node size
+    minSpotlightRadius: 24, // the minimum radius in pixels of the spotlight (ignored for the node if adaptativeNodeSpotlightRadius is enabled but still used for the edge & background)
+    maxSpotlightRadius: 38, // the maximum radius in pixels of the spotlight (ignored for the node if adaptativeNodeSpotlightRadius is enabled but still used for the edge & background)
+    openMenuEvents: "cxttapstart taphold", // space-separated cytoscape events that will open the menu; only `cxttapstart` and/or `taphold` work here
+    itemColor: "white", // the colour of text in the command's content
+    itemTextShadowColor: "transparent", // the text shadow colour of the command's content
+    zIndex: 9999, // the z-index of the ui div
+    atMouse: false, // draw menu at mouse position
+    outsideMenuCancel: 50, // if set to a number, this will cancel the command if the pointer is released outside of the spotlight, padded by the number given
+  };
 
+  cy.cxtmenu({
+    ...sharedMenuConfig,
+    selector: "node", // Apply to all nodes
+    commands: [
+      {
+        content: "Rename",
+        select: function (ele) {
+          const node = ele;
+          RenameNode(node)
+        },
+      },
+      {
+        content: "Drill Down",
+        select: function (ele) {
 
-      cy.cxtmenu({
-        ...sharedMenuConfig,
-        selector: "node", // Apply to all nodes
-        commands: [
-          {
-            content: "Edit",
-            select: function (ele) {
-              const noteNode = ele;
-              const noteId = noteNode.id();
-              const noteContent = noteNode.data("label");
-            },
-          },
-          {
-            content: "Drill Down",
-            select: function (ele) {
-              fetch("/load", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  operation: "search",
-                  query: ele.data("label"),
-                }),
+          searchByTag(ele.data("label"));
+          
+        },
+      },
+      {
+        content: "Delete",
+        select: function (ele) {
+          if (confirm("Are you sure you want to delete this node?")) {
+            // Show loading indicator
+            const loadingNode = ele;
+            loadingNode.data(
+              "originalColor",
+              loadingNode.style("background-color")
+            );
+            loadingNode.style("background-color", "#ff8080"); // Light red to indicate deletion in progress
+
+            graphStore
+              .DeleteNode(ele.id())
+              .then(() => {
+                ele.remove();
+                UpdateNodes();
               })
-                .then((response) => response.json())
-                .then((data) => {
-                  cy.elements().remove(); // Remove existing nodes
-                  AddNodes(data); // Call the updateGraph function with the new data
-                  UpdateNodes();
-                  RunLayout("all");
-                })
-                .catch((error) => {
-                  console.error("Error fetching data:", error);
-                });
-            },
-          },
-          {
-            content: "Delete",
-            select: function (ele) {
+              .catch((error) => {
+                console.error("Failed to delete node:", error);
+                // Reset color on error
+                loadingNode.style(
+                  "background-color",
+                  loadingNode.data("originalColor")
+                );
+                alert("Error deleting node. Please try again.");
+              });
+          }
+        },
+      },
+    ],
+  });
 
-              if (confirm("Are you sure you want to delete this node?")) {
-      // Show loading indicator
-      const loadingNode = ele;
-      loadingNode.data('originalColor', loadingNode.style('background-color'));
-      loadingNode.style('background-color', '#ff8080'); // Light red to indicate deletion in progress
-      
-      graphStore.DeleteNode(ele.id())
-        .then(() => {
+  // Add context menu for edges
+  cy.cxtmenu({
+    ...sharedMenuConfig,
+    selector: "edge", // Apply to all edges
+    commands: [
+      {
+        content: "Delete",
+        select: function (ele) {
+          useGraphStore().DeleteEdge(ele.data("source"), ele.data("target"));
           ele.remove();
           UpdateNodes();
-        })
-        .catch(error => {
-          console.error("Failed to delete node:", error);
-          // Reset color on error
-          loadingNode.style('background-color', loadingNode.data('originalColor'));
-          alert("Error deleting node. Please try again.");
-        });
-    }
-            },
-          },
-        ],
-      });
-
-      // Add context menu for edges
-      cy.cxtmenu({
-        ...sharedMenuConfig,
-        selector: "edge", // Apply to all edges
-        commands: [
-          {
-            content: "Delete",
-            select: function (ele) {
-              useGraphStore().DeleteEdge(ele.data("source"), ele.data("target"));
-              ele.remove();
-              UpdateNodes();
-            },
-          },
-        ],
-        activeFillColor: "rgba(255, 0, 0, 0.75)", // Nice red color
-        outsideMenuCancel: 0,
-      });
+        },
+      },
+    ],
+    activeFillColor: "rgba(255, 0, 0, 0.75)", // Nice red color
+    outsideMenuCancel: 0,
+  });
 
   cy.on("tap", "node", (event) => {
     const node = event.target.data();
@@ -627,16 +641,20 @@ function AddNodes(data) {
   const cyElements = [];
   const elements = data.elements; // Get the array from the elements property
 
+  const addedNodes = new Set(); // Track added nodes
   const addedEdges = new Set(); // Track added edges to avoid duplicates
   let staticNodes = [];
 
-  // Add nodes and edges
+  // First pass: Add all nodes
   elements.forEach((item) => {
     if (item.name && item.id) {
       const nodeId = `${item.type}_${item.id}`;
-      let style = {};
+      
+      // Skip if we've already added this node
+      if (addedNodes.has(nodeId)) return;
+      addedNodes.add(nodeId);
+      
       let position = undefined;
-
       if (item.data?.x !== null && item.data?.y !== null) {
         position = { x: item.data.x, y: item.data.y };
         staticNodes.push({ nodeId, position });
@@ -650,12 +668,12 @@ function AddNodes(data) {
             label: item.name,
             type: item.type,
             colour: "red",
-            width: 5, // Adjust size based on depth
+            width: 5,
             height: 5,
             x: position ? position.x : undefined,
             y: position ? position.y : undefined,
           },
-          classes: position ? "static" : "", // Add 'static' class if position is set
+          classes: position ? "static" : "",
         };
       } else if (item.type === "note") {
         nodeDefinition = {
@@ -665,12 +683,12 @@ function AddNodes(data) {
             type: item.type,
             format: item.format,
             colour: "#1aed2c",
-            width: 20, // Adjust size based on depth
+            width: 20,
             height: 20,
             x: position ? position.x : undefined,
             y: position ? position.y : undefined,
           },
-          classes: position ? "static" : "", // Add 'static' class if position is set
+          classes: position ? "static" : "",
         };
       } else {
         console.error("Unknown node type:", item.type);
@@ -679,16 +697,28 @@ function AddNodes(data) {
 
       cyElements.push(nodeDefinition);
     }
+  });
 
-    // Add edges for children
+  // Second pass: Add edges, but only if both source and target nodes exist
+  elements.forEach((item) => {
+    const sourceId = `${item.type}_${item.id}`;
+    
+    // Skip if the source node wasn't added
+    if (!addedNodes.has(sourceId)) return;
+    
+    // Add edges for children (tag-to-tag)
     if (item.children && Array.isArray(item.children)) {
       item.children.forEach((childId) => {
-        const edgeId = `${item.type}_${item.id}->tag_${childId}`;
-        if (!addedEdges.has(edgeId)) {
+        const targetId = `tag_${childId}`;
+        const edgeId = `${sourceId}->${targetId}`;
+        
+        // Only add the edge if the target node exists and we haven't added this edge yet
+        if (addedNodes.has(targetId) && !addedEdges.has(edgeId)) {
           cyElements.push({
             data: {
-              source: `${item.type}_${item.id}`, // Match node ID format
-              target: `tag_${childId}`, // Since children are tags, use "tag_" + childId
+              id: edgeId,
+              source: sourceId,
+              target: targetId,
             },
           });
           addedEdges.add(edgeId);
@@ -696,15 +726,19 @@ function AddNodes(data) {
       });
     }
 
-    // Add edges for notes
+    // Add edges for notes (tag-to-note)
     if (item.notes && Array.isArray(item.notes)) {
       item.notes.forEach((noteId) => {
-        const edgeId = `${item.type}_${item.id}->note_${noteId}`;
-        if (!addedEdges.has(edgeId)) {
+        const targetId = `note_${noteId}`;
+        const edgeId = `${sourceId}->${targetId}`;
+        
+        // Only add the edge if the target node exists and we haven't added this edge yet
+        if (addedNodes.has(targetId) && !addedEdges.has(edgeId)) {
           cyElements.push({
             data: {
-              source: `${item.type}_${item.id}`, // Source is the tag
-              target: `note_${noteId}`, // Target is the note
+              id: edgeId,
+              source: sourceId,
+              target: targetId,
             },
           });
           addedEdges.add(edgeId);
@@ -712,11 +746,6 @@ function AddNodes(data) {
       });
     }
   });
-
-  const fixedNodeConstraints = staticNodes.map((node) => ({
-    nodeId: node.nodeId,
-    position: node.position,
-  }));
 
   cy.add(cyElements);
 }
@@ -886,56 +915,55 @@ function HandlecyClick(event) {
     const selectedElements = cy.$(":selected");
     selectedElements.forEach((ele) => {
       if (ele.isNode()) {
-        fetch("/delete", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ type: "node", id: ele.id() }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.status === "success") {
-              ele.unselect();
-              removeHandle();
-              ele.remove();
-              console.log("element deleted, updating");
-              UpdateNodes();
-            } else {
-              console.error("Failed to delete node:", data.message);
-            }
-          })
-          .catch((error) => {
-            console.error("Error deleting node:", error);
-          });
-      } else if (ele.isEdge()) {
-        fetch("/delete", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            type: "edge",
-            source: ele.data("source"),
-            target: ele.data("target"),
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.status === "success") {
-              ele.unselect();
-              removeHandle();
-              ele.remove();
-              console.log("element deleted, updating");
-              UpdateNodes();
-            } else {
-              console.error("Failed to delete edge:", data.message);
-            }
-          })
-          .catch((error) => {
-            console.error("Error deleting edge:", error);
-          });
-      }
+
+        if (confirm("Are you sure you want to delete this node?")) {
+            // Show loading indicator
+            const loadingNode = ele;
+            loadingNode.data(
+              "originalColor",
+              loadingNode.style("background-color")
+            );
+            loadingNode.style("background-color", "#ff8080"); // Light red to indicate deletion in progress
+
+            graphStore
+              .DeleteNode(ele.id())
+              .then(() => {
+                ele.remove();
+                UpdateNodes();
+              })
+              .catch((error) => {
+                console.error("Failed to delete node:", error);
+                // Reset color on error
+                loadingNode.style(
+                  "background-color",
+                  loadingNode.data("originalColor")
+                );
+                alert("Error deleting node. Please try again.");
+              });
+          }
+        // fetch("/delete", {
+        //   method: "POST",
+        //   headers: {
+        //     "Content-Type": "application/json",
+        //   },
+        //   body: JSON.stringify({ type: "node", id: ele.id() }),
+        // })
+        //   .then((response) => response.json())
+        //   .then((data) => {
+        //     if (data.status === "success") {
+        //       ele.unselect();
+        //       removeHandle();
+        //       ele.remove();
+        //       console.log("element deleted, updating");
+        //       UpdateNodes();
+        //     } else {
+        //       console.error("Failed to delete node:", data.message);
+        //     }
+        //   })
+        //   .catch((error) => {
+        //     console.error("Error deleting node:", error);
+        //   });
+      } 
     });
   } else if (event.key === "n") {
     const selectedTag = cy.$('node[type="tag"]:selected');
@@ -1062,8 +1090,14 @@ function HandlecyClick(event) {
           });
       }
     }
+  } else if (event.key === "i") {
+    Spotlight();
   } else if (event.key === "f") {
-    advancedSearch();
+    stackableSearch();
+  } else if (event.key === "t") {
+    searchByTag();
+  } else if (event.key === "g") {
+    filterByNodeType();
   } else if (event.key === "d") {
     const selectedNodes = cy.$("node:selected");
     if (selectedNodes.length > 0) {
@@ -1127,72 +1161,33 @@ function ShuffleGraph() {
     }
   }
 }
+function RenameNode(Node) {
+  const currentName = Node.data("label");
+    const newName = prompt("Enter new name for the node:", currentName);
+    if (newName !== null && newName.trim() !== "") {
+      graphStore.RenameNode(Node.id(), newName)
+        .then(data => {
+          if (data.status === "success") {
+            // Update the node name in Cytoscape
+            Node.data("label", newName);
+            console.log(`Node renamed to "${newName}" in graph`);
+          } else {
+            console.error("Failed to rename node:", data.message);
+          }
+        })
+        .catch(error => {
+          console.error("Error renaming node:", error);
+        });
+    }
+}
 
 function CreateNote(format) {
-  //   const selectedTag = cy.$('node[type="tag"]:selected');
-  //   let newNoteId = "";
-  //   if (selectedTag.length > 0) {
-  //     const noteName = prompt("Enter the name for the new Note:");
-  //     if (noteName) {
-  //       fetch("/create", {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //         body: JSON.stringify({ type: "note", name: noteName }),
-  //       })
-  //         .then((response) => response.json())
-  //         .then((data) => {
-  //           newNoteId = data.elements[0].id;
-
-  //           console.log("new note id:", newNoteId);
-  //           AddNodes(data); // Call the updateGraph function with the new data
-  //           // UpdateNodes();
-  //           // Get the id from the single element in the array
-  //           // RunLayout("note_" + newNoteId); // Pass the id property of the single node
-  //           const tagId = selectedTag.id(); // Get the id of the selected tag
-
-  //           // Create an edge between the selected tag and the new note
-  //           fetch("/create", {
-  //             method: "POST",
-  //             headers: {
-  //               "Content-Type": "application/json",
-  //             },
-  //             body: JSON.stringify({
-  //               type: "edge",
-  //               source: tagId,
-  //               target: "note_" + newNoteId,
-  //             }),
-  //           })
-  //             .then((response) => response.json())
-  //             .then((data) => {
-  //               if (data.status === "success") {
-  //                 cy.add({
-  //                   group: "edges",
-  //                   data: {
-  //                     source: tagId,
-  //                     target: "note_" + newNoteId,
-  //                   },
-  //                 });
-  //                 UpdateNodes();
-  //                 RunLayout("note_" + newNoteId); // Run layout for the new note
-  //               } else {
-  //                 console.error("Failed to create edge:", data.message);
-  //               }
-  //             })
-  //             .catch((error) => {
-  //               console.error("Error creating edge:", error);
-  //             });
-  //         })
-  //         .catch((error) => {
-  //           console.error("Error fetching data:", error);
-  //         });
-  //     }
-  //   }
-  // } else {
-  // const noteName = prompt("Enter the name for the new note:");
-
   const noteName = prompt("Enter the name for the new Note:");
+  if (!noteName || noteName.trim() === "") return;
+
+  // Get all currently selected tags before creating the note
+  const selectedTags = cy.$('node[type="tag"]:selected');
+  
   axios
     .post("/create", {
       type: "note",
@@ -1203,15 +1198,59 @@ function CreateNote(format) {
       AddNodes(response.data); // Call the updateGraph function with the new data
       useGraphStore().addNode(response.data);
       UpdateNodes();
-      RunLayout("note_" + response.data.elements[0].id); // Pass the id property of the single node
+      
+      // Get the new note ID
+      const newNoteId = "note_" + response.data.elements[0].id;
+      
+      // Create edges between all selected tags and the new note
+      if (selectedTags.length > 0) {
+        console.log(`Creating connections from ${selectedTags.length} selected tags to new note: ${newNoteId}`);
+        
+        // Process each selected tag
+        let edgePromises = [];
+        selectedTags.forEach((tagNode) => {
+          const tagId = tagNode.id();
+          
+          // Create an edge between this tag and the new note
+          const edgePromise =  useGraphStore().CreateEdge(tagId, newNoteId);
+          edgePromises.push(edgePromise);
+          
+          // Also add the edge to the Cytoscape instance immediately for visual feedback
+          cy.add({
+            group: "edges",
+            data: {
+              source: tagId,
+              target: newNoteId,
+            },
+          });
+        });
+        
+        // After all edge creation requests are complete
+        Promise.all(edgePromises)
+          .then(() => {
+            console.log("All tag-note connections created successfully");
+            UpdateNodes(); // Update the appearance of nodes
+          })
+          .catch((error) => {
+            console.error("Error creating one or more tag-note connections:", error);
+          });
+      }
+      
+      // Run layout focusing on the new note
+      RunLayout(newNoteId);
     })
     .catch((error) => {
-      console.error("Error fetching data:", error);
+      console.error("Error creating note:", error);
     });
 }
 
 function CreateTag() {
   const tagName = prompt("Enter the name for the new Tag:");
+  if (!tagName || tagName.trim() === "") return;
+
+  // Get all currently selected tags before creating the new tag
+  const selectedTags = cy.$('node[type="tag"]:selected');
+  
   axios
     .post("/create", {
       type: "tag",
@@ -1221,10 +1260,49 @@ function CreateTag() {
       AddNodes(response.data); // Call the updateGraph function with the new data
       useGraphStore().addNode(response.data);
       UpdateNodes();
-      RunLayout("tag_" + response.data.elements[0].id); // Pass the id property of the single node
+      
+      // Get the new tag ID
+      const newTagId = "tag_" + response.data.elements[0].id;
+      
+      // Create edges between all selected tags and the new tag (selected tags become parents)
+      if (selectedTags.length > 0) {
+        console.log(`Creating parent connections from ${selectedTags.length} selected tags to new tag: ${newTagId}`);
+        
+        // Process each selected tag
+        let edgePromises = [];
+        selectedTags.forEach((parentTagNode) => {
+          const parentTagId = parentTagNode.id();
+          
+          // Create an edge from parent tag to new tag
+          const edgePromise = useGraphStore().CreateEdge(parentTagId, newTagId);
+          edgePromises.push(edgePromise);
+          
+          // Also add the edge to the Cytoscape instance immediately for visual feedback
+          cy.add({
+            group: "edges",
+            data: {
+              source: parentTagId,
+              target: newTagId,
+            },
+          });
+        });
+        
+        // After all edge creation requests are complete
+        Promise.all(edgePromises)
+          .then(() => {
+            console.log("All parent-child connections created successfully");
+            UpdateNodes(); // Update the appearance of nodes
+          })
+          .catch((error) => {
+            console.error("Error creating one or more parent-child connections:", error);
+          });
+      }
+      
+      // Run layout focusing on the new tag
+      RunLayout(newTagId);
     })
     .catch((error) => {
-      console.error("Error fetching data:", error);
+      console.error("Error creating tag:", error);
     });
 }
 
@@ -1245,30 +1323,80 @@ function drillDown(ele) {
     });
 }
 
-// function Search() {
+function addFilter(type, value, label) {
+  const newFilter = {
+    id: Date.now().toString(),
+    type,
+    value,
+    label,
+  };
 
-// }
-function advancedSearch() {
+  activeFilters.value.push(newFilter);
+  applyFilters(); // Apply all filters
+  saveState(); // Save to tab state
+}
+
+function removeFilter(filterId) {
+  activeFilters.value = activeFilters.value.filter((f) => f.id !== filterId);
+  applyFilters(); // Reapply remaining filters
+  saveState(); // Save to tab state
+}
+
+function clearAllFilters() {
+  activeFilters.value = [];
+  loadData(); // Reset to full graph
+  saveState(); // Save to tab state
+}
+
+// Enhanced search that supports stacking
+function stackableSearch() {
   const searchQuery = prompt("Enter search term:");
   if (!searchQuery || searchQuery.trim() === "") return;
 
-  const lowerCaseQuery = searchQuery.toLowerCase();
+  // Add as a text filter
+  addFilter("text", searchQuery.toLowerCase(), `Contains "${searchQuery}"`);
+}
+
+// Search by tag
+function searchByTag(tagName = null) {
+  if (tagName == null) {
+   tagName = prompt("Enter tag name to filter by:");
+  }
+  if (!tagName || tagName.trim() === "") return;
+
+  // Add as a tag filter
+  addFilter("tag", tagName.toLowerCase(), `Tag: ${tagName}`);
+}
+
+// Filter by node type
+function filterByNodeType() {
+  const nodeType = prompt("Enter node type (note/tag):");
+  if (!nodeType || !["note", "tag"].includes(nodeType.toLowerCase())) return;
+
+  // Add as a node type filter
+  addFilter("nodeType", nodeType.toLowerCase(), `Type: ${nodeType}`);
+}
+
+function applyFilters() {
+  // If no filters, show all data
+  if (activeFilters.value.length === 0) {
+    loadData();
+    return;
+  }
   
-  // Get all elements from the graph store
-  const storeElements = graphStore.elements;
-  
-  // Sets to track processed elements
-  const processedTags = new Set();
-  const processedNotes = new Set();
+  // Get all elements from graph store
+  const allElements = graphStore.elements;
+  const processedNodeIds = new Set(); // Track which nodes we've already processed
+  const processedEdgeIds = new Set(); // Track which edges we've already processed
   const resultElements = [];
-  const highlightedNodeIds = new Set(); // Track nodes that directly match the search query
+  const highlightedNodeIds = new Set();
   
-  // Helper function to get all descendants of a tag
+  // Helper function to get descendants
   function getDescendants(tag) {
     const descendants = [];
     if (tag.children && tag.children.length > 0) {
       tag.children.forEach(childId => {
-        const childTag = storeElements.find(el => el.type === "tag" && el.id === childId);
+        const childTag = allElements.find(el => el.type === "tag" && el.id === childId);
         if (childTag) {
           descendants.push(childTag);
           descendants.push(...getDescendants(childTag));
@@ -1278,31 +1406,176 @@ function advancedSearch() {
     return descendants;
   }
   
-  // Find tags matching the query
-  const matchedTags = storeElements.filter(element => 
-    element.type === "tag" && 
-    element.name && 
-    element.name.toLowerCase().includes(lowerCaseQuery)
-  );
+  // Start with all elements
+  let filteredElements = [...allElements];
   
+  // Apply each filter sequentially, narrowing down results
+  activeFilters.value.forEach(filter => {
+    if (filter.type === 'text') {
+      // Text search filter
+      filteredElements = filteredElements.filter(element => 
+        element.name && element.name.toLowerCase().includes(filter.value)
+      );
+      
+      // Highlight matches for text search
+      filteredElements.forEach(element => {
+        if (element.name && element.name.toLowerCase().includes(filter.value)) {
+          highlightedNodeIds.add(`${element.type}_${element.id}`);
+        }
+      });
+    } 
+    else if (filter.type === 'tag') {
+      // Find tags matching the filter
+      const matchingTags = filteredElements.filter(element =>
+        element.type === "tag" && 
+        element.name && 
+        element.name.toLowerCase().includes(filter.value)
+      );
+      
+      // Highlight matching tags
+      matchingTags.forEach(tag => {
+        highlightedNodeIds.add(`tag_${tag.id}`);
+      });
+      
+      // Get all tag IDs that match
+      const matchingTagIds = new Set(matchingTags.map(tag => tag.id));
+      
+      // Include notes that have these tags
+      const relatedNotes = allElements.filter(element =>
+        element.type === "note" && 
+        element.tags && 
+        element.tags.some(tagId => matchingTagIds.has(tagId))
+      );
+      
+      // Include the matching tags, their descendants, and related notes
+      const includedTags = new Set();
+      matchingTags.forEach(tag => {
+        includedTags.add(tag.id);
+        
+        // Add all descendants
+        getDescendants(tag).forEach(descendant => {
+          includedTags.add(descendant.id);
+        });
+      });
+      
+      // Create new filtered set with matching tags, their descendants, and related notes
+      filteredElements = [
+        ...matchingTags,
+        ...allElements.filter(element => 
+          element.type === "tag" && includedTags.has(element.id)
+        ),
+        ...relatedNotes
+      ];
+    }
+    else if (filter.type === 'nodeType') {
+      // Filter by node type
+      filteredElements = filteredElements.filter(element => 
+        element.type === filter.value
+      );
+    }
+  });
+  
+  // Now prepare elements for Cytoscape, ensuring all nodes needed for edges are included
+  const nodesToAdd = new Map(); // Map of nodeId -> node
+  
+  // First, add all filtered nodes to our map
+  filteredElements.forEach(element => {
+    const nodeId = `${element.type}_${element.id}`;
+    nodesToAdd.set(nodeId, element);
+  });
+  
+  // Convert to array for Cytoscape
+  const cyElements = {
+    elements: Array.from(nodesToAdd.values())
+  };
+  
+  // Display the filtered elements
+  cy.elements().remove();
+  AddNodes(cyElements);
+  UpdateNodes();
+  RunLayout("all");
+  
+  // Highlight nodes that match search queries
+  // cy.ready(() => {
+  //   highlightedNodeIds.forEach(nodeId => {
+  //     const node = cy.getElementById(nodeId);
+  //     if (node) {
+  //       node.addClass("highlighted");
+  //     }
+  //   });
+    
+    // Center on highlighted nodes if any
+    // if (highlightedNodeIds.size > 0) {
+    //   cy.animate({
+    //     fit: { eles: cy.$(".highlighted"), padding: 50 },
+    //     duration: 500
+    //   });
+    // }
+  // });
+  
+  // Save the updated filter state
+  saveState();
+}
+function advancedSearch() {
+  const searchQuery = prompt("Enter search term:");
+  if (!searchQuery || searchQuery.trim() === "") return;
+
+  const lowerCaseQuery = searchQuery.toLowerCase();
+
+  // Get all elements from the graph store
+  const storeElements = graphStore.elements;
+
+  // Sets to track processed elements
+  const processedTags = new Set();
+  const processedNotes = new Set();
+  const resultElements = [];
+  const highlightedNodeIds = new Set(); // Track nodes that directly match the search query
+
+  // Helper function to get all descendants of a tag
+  function getDescendants(tag) {
+    const descendants = [];
+    if (tag.children && tag.children.length > 0) {
+      tag.children.forEach((childId) => {
+        const childTag = storeElements.find(
+          (el) => el.type === "tag" && el.id === childId
+        );
+        if (childTag) {
+          descendants.push(childTag);
+          descendants.push(...getDescendants(childTag));
+        }
+      });
+    }
+    return descendants;
+  }
+
+  // Find tags matching the query
+  const matchedTags = storeElements.filter(
+    (element) =>
+      element.type === "tag" &&
+      element.name &&
+      element.name.toLowerCase().includes(lowerCaseQuery)
+  );
+
   // Process each matched tag and its descendants
-  matchedTags.forEach(tag => {
+  matchedTags.forEach((tag) => {
     // Mark this tag as directly matching the search query
     highlightedNodeIds.add(`tag_${tag.id}`);
-    
+
     // Get all descendants of this tag
     const allRelatedTags = [tag, ...getDescendants(tag)];
-    
+
     // Add each tag to the result set
-    allRelatedTags.forEach(currentTag => {
+    allRelatedTags.forEach((currentTag) => {
       if (!processedTags.has(currentTag.id)) {
         resultElements.push(currentTag);
         processedTags.add(currentTag.id);
-        
+
         // Find and add all notes associated with this tag
         if (currentTag.notes && currentTag.notes.length > 0) {
-          currentTag.notes.forEach(noteId => {
-            const note = storeElements.find(el => el.type === "note" && el.id === noteId);
+          currentTag.notes.forEach((noteId) => {
+            const note = storeElements.find(
+              (el) => el.type === "note" && el.id === noteId
+            );
             if (note && !processedNotes.has(note.id)) {
               resultElements.push(note);
               processedNotes.add(note.id);
@@ -1312,39 +1585,40 @@ function advancedSearch() {
       }
     });
   });
-  
+
   // Find notes matching the query
-  const matchedNotes = storeElements.filter(element => 
-    element.type === "note" && 
-    element.name && 
-    element.name.toLowerCase().includes(lowerCaseQuery)
+  const matchedNotes = storeElements.filter(
+    (element) =>
+      element.type === "note" &&
+      element.name &&
+      element.name.toLowerCase().includes(lowerCaseQuery)
   );
-  
+
   // Add matching notes to the result set and highlight them
-  matchedNotes.forEach(note => {
+  matchedNotes.forEach((note) => {
     if (!processedNotes.has(note.id)) {
       resultElements.push(note);
       processedNotes.add(note.id);
       highlightedNodeIds.add(`note_${note.id}`);
     }
   });
-  
+
   // If there are results, display them
   if (resultElements.length > 0) {
     cy.elements().remove(); // Clear the current graph
     AddNodes({ elements: resultElements }); // Add the filtered elements
     UpdateNodes();
     RunLayout("all");
-    
+
     // Highlight the nodes that directly matched the search query
-    cy.ready(() => {
-      highlightedNodeIds.forEach(nodeId => {
-        const node = cy.getElementById(nodeId);
-        if (node) {
-          node.addClass("highlighted");
-        }
-      });
-      
+    // cy.ready(() => {
+    //   highlightedNodeIds.forEach((nodeId) => {
+    //     const node = cy.getElementById(nodeId);
+    //     if (node) {
+    //       node.addClass("highlighted");
+    //     }
+    //   });
+
       // Center the view on the highlighted nodes
       // const highlightedNodes = cy.$(".highlighted");
       // if (highlightedNodes.length > 0) {
@@ -1353,12 +1627,11 @@ function advancedSearch() {
       //     duration: 500
       //   });
       // }
-    });
+    // });
   } else {
     alert("No matches found for: " + searchQuery);
   }
 }
-
 
 function Spotlight() {
   const searchTerm = prompt("Enter a search term:");
@@ -1426,8 +1699,8 @@ function Spotlight() {
   if (selectedNodes.length > 0) {
     cy.animate({
       fit: {
-        // eles: selectedNodes,
-        padding: 500,
+        eles: selectedNodes,
+        padding: 400,
       },
       duration: 500,
     });
@@ -1449,6 +1722,7 @@ onMounted(() => {
   //log to track changes in state that should be applied after loading data
 
   loadData();
+  applyFilters();
 });
 
 onUnmounted(() => {
@@ -1523,10 +1797,46 @@ onBeforeUnmount(() => {
       v-if="hasControls && isLargeNavbarVisible"
       class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
     >
-      <Button class="flex items-center" @click="Spotlight()">
-        <Search class="" />
-        <span>Search</span>
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
+          <Button class="flex items-center">
+            <Search class="" />
+            <span>Filter</span>
+          </Button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            @click="stackableSearch()"
+          >
+            <Search class="w-5 h-5 text-gray-600" />
+            <span>Search Text</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            @click="searchByTag()"
+          >
+            <Tag class="w-5 h-5 text-gray-600" />
+            <span>Filter by Tag</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            @click="filterByNodeType()"
+          >
+            <FileText class="w-5 h-5 text-gray-600" />
+            <span>Filter by Type</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            @click="clearAllFilters()"
+          >
+            <Eye class="w-5 h-5 text-gray-600" />
+            <span>Show All</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <Button class="flex items-center">
         <Lock class="" />
@@ -1570,9 +1880,9 @@ onBeforeUnmount(() => {
 
       <Button @click="centerGraph()"> <House></House> Center </Button>
 
-      <Button @click="drillDown(cy.$('node:selected')[0])">
+      <!-- <Button @click="searchByTag(cy.$('node:selected')[0]?.data('label'))">
         <ChevronsDown></ChevronsDown> Drill
-      </Button>
+      </Button> -->
 
       <Button variant="destructive" @click="ShuffleGraph()">
         <Shuffle></Shuffle> Shuffle
@@ -1672,31 +1982,42 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- tagbar -->
-    <div 
-  v-if="activeFilters.length > 0"
-  class="flex flex-wrap gap-2 absolute top-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground/80 backdrop-blur-sm p-3 shadow-lg rounded-lg max-w-max"
->
-  <div v-for="filter in activeFilters" :key="filter.id" 
-       class="flex items-center gap-1 px-2 py-1 rounded-md text-sm"
-       :class="filter.type === 'tag' ? 'bg-blue-100 text-blue-800' : 
-               filter.type === 'text' ? 'bg-green-100 text-green-800' : 
-               filter.type === 'nodeType' ? 'bg-purple-100 text-purple-800' : 'bg-gray-100'"
-  >
-    <span v-if="filter.type === 'tag'">🏷️</span>
-    <span v-else-if="filter.type === 'text'">🔍</span>
-    <span v-else-if="filter.type === 'nodeType'">📌</span>
-    <span>{{ filter.label }}</span>
-    <button @click="removeFilter(filter.id)" class="ml-1 text-gray-500 hover:text-gray-700">
-      ×
-    </button>
-  </div>
-  <button 
-    @click="clearAllFilters" 
-    class="text-xs text-gray-600 hover:text-gray-800 flex items-center"
-  >
-    Clear all
-  </button>
-</div>
+    <div
+      v-if="activeFilters.length > 0"
+      class="flex flex-wrap gap-2 absolute top-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground/80 backdrop-blur-sm p-3 shadow-lg rounded-lg max-w-max"
+    >
+      <div
+        v-for="filter in activeFilters"
+        :key="filter.id"
+        class="flex items-center gap-1 px-2 py-1 rounded-md text-sm"
+        :class="
+          filter.type === 'tag'
+            ? 'bg-blue-100 text-blue-800'
+            : filter.type === 'text'
+              ? 'bg-green-100 text-green-800'
+              : filter.type === 'nodeType'
+                ? 'bg-purple-100 text-purple-800'
+                : 'bg-gray-100'
+        "
+      >
+        <span v-if="filter.type === 'tag'">🏷️</span>
+        <span v-else-if="filter.type === 'text'">🔍</span>
+        <span v-else-if="filter.type === 'nodeType'">📌</span>
+        <span>{{ filter.label }}</span>
+        <button
+          @click="removeFilter(filter.id)"
+          class="ml-1 text-gray-500 hover:text-gray-700"
+        >
+          ×
+        </button>
+      </div>
+      <button
+        @click="clearAllFilters"
+        class="text-xs text-gray-600 hover:text-gray-800 flex items-center"
+      >
+        Clear all
+      </button>
+    </div>
 
     <div id="cy" class="w-full h-full absolute"></div>
   </div>

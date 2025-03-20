@@ -35,7 +35,7 @@ export const useGraphStore = defineStore("graphStore", () => {
   }
 
   function addNode(response) {
-    console.error("---Adding node:", response);
+    console.error("---Adding node to db:", response);
     // Check if response has elements array
     if (response.elements && Array.isArray(response.elements)) {
       // Add each element from the response to the store
@@ -44,6 +44,38 @@ export const useGraphStore = defineStore("graphStore", () => {
       });
     } else {
       console.error("Invalid node format:", response);
+    }
+  }
+  function RenameNode(nodeId, newName) {
+    // Parse the nodeId to determine type and actual ID
+    const [type, id] = nodeId.split('_');
+    const numericId = parseInt(id);
+    
+    // Find the element in the store
+    const element = elements.value.find(
+      (el) => el.type === type && el.id === numericId
+    );
+    
+    if (element) {
+      // Update the name in the local store
+      element.name = newName;
+      
+      // Send update to backend
+      return axios.post('/update', {
+        operation: 'rename',
+        id: nodeId,
+        name: newName
+      })
+      .then(response => {
+        console.log(`Node ${nodeId} renamed to "${newName}" successfully`);
+        return response.data;
+      })
+      .catch(error => {
+        console.error(`Error renaming node ${nodeId}:`, error);
+        throw error;
+      });
+    } else {
+      return Promise.reject(new Error(`Node ${nodeId} not found in store`));
     }
   }
   async function DeleteNode(nodeId) {
@@ -249,6 +281,7 @@ export const useGraphStore = defineStore("graphStore", () => {
     updateNoteName,
     updateNoteTags,
     addNode,
+    RenameNode,
     DeleteNode,
     CreateEdge,
     DeleteEdge,

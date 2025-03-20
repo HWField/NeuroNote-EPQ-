@@ -1,7 +1,7 @@
 <script setup>
 import Cytoscape from "@/components/Cytoscape.vue";
 import { useUserStore } from "@/stores/useUserStore";
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed , onMounted, onBeforeUnmount } from "vue";
 import { Calendar } from "@/components/ui/calendar";
 import { Settings } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,22 @@ const tabStore = useTabStore();
 const userStore = useUserStore();
 
 const screenSize = ref("small");
+let active = false;
 
-
-
-
+const activeFilters = ref([]);
+const tabData = computed(() => {
+  const tab = tabStore.getTab(1);
+  if (!tab) return { };
+  // Return tab.state instead of the whole tab object
+  return tab.state;
+});
+const handleFilterChange = (newFilters) => {
+  activeFilters.value = newFilters;
+  tabStore.updateTabState(1, {
+    ...tabData.value,
+    filters: newFilters
+  });
+};
 const OpenNote = (noteId) => {
   const Id = noteId.split("_")[1];
   console.error("Note selected", Id);
@@ -38,10 +50,15 @@ const updateScreenSize = () => {
 onMounted(() => {
   updateScreenSize();
   window.addEventListener("resize", updateScreenSize);
+  if (tabData.value.filters) {
+    activeFilters.value = tabData.value.filters;
+  }
+  active = true;
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("resize", updateScreenSize);
+  active = false;
 });
 
 const mockNotes = ref([
@@ -65,7 +82,25 @@ const mockNotes = ref([
     <div class="flex flex-row w-full h-full">
       <!-- Left Column (Tall) -->
       <div class="w-full h-full bg-primary-foreground rounded-lg 2 border-4 border-gray-800 mb-4 mr-2 overflow-hidden">
-        <Cytoscape @note-selected="OpenNote" />
+        <!-- <Cytoscape 
+  @note-selected="OpenNote" 
+  :externalFilters="activeFilters" 
+  @filters-changed="handleFilterChange"
+  :hasControls="true"
+
+  :tabId="1"  
+/> -->
+
+
+<Cytoscape 
+v-if="active"
+  @note-selected="OpenNote" 
+
+  
+  :hasControls="true"
+
+  :tabId="1"  
+/>
       </div>
 
       <!-- Right Column (Two Short Divs) -->
@@ -110,9 +145,16 @@ const mockNotes = ref([
     </div>
 
     <div class="w-full  bg-primary-foreground rounded-lg 2 border-4 border-gray-800 mb-4 h-1/2 overflow-hidden">
-      <KeepAlive>
-        <Cytoscape @note-selected="OpenNote"/>
-      </KeepAlive>
+      <Cytoscape 
+      v-if="active"
+  @note-selected="OpenNote" 
+
+  
+  :hasControls="true"
+
+  :tabId="1"  
+/>
+
     </div>
     <div class="flex w-full h-1/2 flex-grow">
       <div class="w-1/2 bg-secondary rounded-lg 2 border-4 border-gray-800 mr-2">
@@ -152,9 +194,15 @@ const mockNotes = ref([
     </div>
 
     <div class="w-full border-4 border-gray-800 bg-primary-foreground rounded-lg h-full overflow-hidden">
-      <!-- <KeepAlive> -->
-        <Cytoscape  @note-selected="OpenNote"></Cytoscape>
-      <!-- </KeepAlive> -->
+      <Cytoscape 
+      v-if="active"
+  @note-selected="OpenNote" 
+
+  
+  :hasControls="true"
+
+  :tabId="1"  
+/>
     </div>
    
   </div>

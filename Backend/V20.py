@@ -735,18 +735,22 @@ def update():
     elif operation == "rename":
         data = request.json
         id = data.get('id')
+        
+        type = id.split('_')[0]
         id = int(id.split('_')[1])
-        type = data.get('type')
         name = data.get('name')
         if type == "tag":
-            tag = dbsession.query(Tag).filter_by(user_id=1, user_specific_id=id).first()
+            tag = dbsession.query(Tag).join(Entity).filter(
+            Entity.user_id == user,  # Ensure it belongs to the logged-in user
+            Entity.user_specific_id == id  # Find using per-user unique ID
+            ).first()
             tag.name = name
         elif type == "note":
             # note = dbsession.query(Note).filter_by(user_id=1, user_specific_id=id).first()
             
             note = dbsession.query(Note).join(Entity).filter(
             Entity.user_id == int(user),  # Ensure it belongs to the logged-in user
-            Entity.user_specific_id == note_id  # Find using per-user unique ID
+            Entity.user_specific_id == id  # Find using per-user unique ID
         ).first()
             note.name = name
         dbsession.commit()

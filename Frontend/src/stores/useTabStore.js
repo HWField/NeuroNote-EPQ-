@@ -19,9 +19,7 @@ export const useTabStore = defineStore("tabStore", () => {
       title: "Dashboard",
       component: markRaw(Dashboard),
       type: "locked", // Special type tab that stores multiple components and states
-      state: {
-        someState: {}, // Put your special state here for Dashboard
-      },
+      state: {},
     },
     {
       id: 2,
