@@ -78,6 +78,8 @@ export const useGraphStore = defineStore("graphStore", () => {
       return Promise.reject(new Error(`Node ${nodeId} not found in store`));
     }
   }
+
+
   async function DeleteNode(nodeId) {
   
     
@@ -121,8 +123,6 @@ export const useGraphStore = defineStore("graphStore", () => {
     // Wait for ALL edge deletions to complete before deleting the node
     try {
       await Promise.all(edgeDeletions);
-   
-      
       // Now that edges are deleted, delete the node
       return axios.post("/delete", {
         type: "node",
@@ -130,6 +130,19 @@ export const useGraphStore = defineStore("graphStore", () => {
       })
       .then(response => {
 
+        const nodeTypeId = nodeId.split('_');
+      const nodeType = nodeTypeId[0];
+      const nodeIdNumber = parseInt(nodeTypeId[1]);
+      
+      // Find and remove the node from elements array
+      const nodeIndex = elements.value.findIndex(el => 
+        el.type === nodeType && el.id === nodeIdNumber
+      );
+      
+      if (nodeIndex !== -1) {
+        elements.value.splice(nodeIndex, 1);
+      }
+      
         return response.data;
       })
       .catch(error => {

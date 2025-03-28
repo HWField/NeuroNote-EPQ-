@@ -668,7 +668,7 @@ def update():
         # viewport = data.get('viewport')
         content = (data.get('content'))
         # background = data.get('background')
-        tags = data.get('tags', [])
+       
         name = data.get('name')
         # Clear all existing tag-note relationships
         note = dbsession.query(Note).join(Entity).filter(
@@ -676,20 +676,22 @@ def update():
             Entity.user_specific_id == note_id  # Find using per-user unique ID
         ).first()
         
-        note.tags = []
-        print("------- note", note_id, "has had all tag relationships cleared")
-        print("recieved tags:", tags)
+       
         
         
         # Add new tag relationships
-        if tags:
-            for tag_id in tags:
-                tag = dbsession.query(Tag).join(Entity).filter(
-                    Entity.user_id == int(user),
-                    Entity.id == tag_id
-                ).first()
-                if tag:
-                    note.tags.append(tag)
+         # tags = data.get('tags', [])          UNCOMMENT FOR TAGS
+         # note.tags = []
+        # print("------- note", note_id, "has had all tag relationships cleared")
+        # print("recieved tags:", tags)
+        # if tags:
+        #     for tag_id in tags:
+        #         tag = dbsession.query(Tag).join(Entity).filter(
+        #             Entity.user_id == int(user),
+        #             Entity.id == tag_id
+        #         ).first()
+        #         if tag:
+        #             note.tags.append(tag)
                     
                     
         name = data.get('name')

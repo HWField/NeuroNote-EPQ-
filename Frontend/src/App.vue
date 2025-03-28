@@ -1,8 +1,6 @@
 <!-- stalling to load data from backend if already logged in -->
 <template>
-  <div v-if="!dataLoaded" class="loading-overlay">
-    Loading...
-  </div>
+    <Loading v-if="!dataLoaded" />
   <div v-else>
     <!-- Render the main app UI once data is loaded -->
     <RouterView />
@@ -12,7 +10,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import {useGraphStore} from "@/stores/useGraphStore";
-
+import Loading from "@/components/Loading.vue";
 const dataLoaded = ref(false);  // Track if data is loaded
 const graphStore = useGraphStore();
 

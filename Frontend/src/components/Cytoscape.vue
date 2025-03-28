@@ -21,6 +21,7 @@ import { onMounted, onBeforeUnmount, onUnmounted, ref, watch } from "vue";
 import { useGraphStore } from "@/stores/useGraphStore";
 import {
   Settings,
+  CaseSensitive,
   Bell,
   ChevronsUpDown,
   GalleryVerticalEnd,
@@ -41,6 +42,7 @@ import {
   SeparatorVertical,
   Eye,
   Ellipsis,
+  Filter,
 } from "lucide-vue-next";
 import { useTabStore } from "@/stores/useTabStore";
 import axios from "../axios";
@@ -89,9 +91,9 @@ const loadState = () => {
 const saveState = () => {
   // Save filters to tab store
   tabStore.updateTabState(props.tabId, {
-    filters: activeFilters.value
+    filters: activeFilters.value,
   });
-  
+
   // Emit to parent component
   emit("filters-changed", activeFilters.value);
 };
@@ -100,7 +102,6 @@ function initializeCytoscape() {
   // Initialize Cytoscape
   let state = loadState();
   if (cy) {
-
     cy.destroy();
     cy = null;
   }
@@ -199,7 +200,7 @@ function initializeCytoscape() {
           "transition-timing-function": "ease", // Different easing functions for each property
         },
       },
-  
+
       {
         selector: "node.static",
         style: {
@@ -295,7 +296,6 @@ function initializeCytoscape() {
         },
       },
     ],
-    
   });
 
   let popperEnabled = true;
@@ -492,29 +492,75 @@ function initializeCytoscape() {
     itemColor: "white", // the colour of text in the command's content
     itemTextShadowColor: "transparent", // the text shadow colour of the command's content
     zIndex: 9999, // the z-index of the ui div
+    snapToCenter: true, // Add this option to keep menu centered
     atMouse: false, // draw menu at mouse position
     outsideMenuCancel: 50, // if set to a number, this will cancel the command if the pointer is released outside of the spotlight, padded by the number given
   };
 
   cy.cxtmenu({
     ...sharedMenuConfig,
-    selector: "node", // Apply to all nodes
+    selector: 'node[type="tag"]',
+
     commands: [
       {
         content: "Rename",
         select: function (ele) {
           const node = ele;
-          RenameNode(node)
+          RenameNode(node);
         },
       },
       {
-        content: "Drill Down",
+        content: "Add Filter",
         select: function (ele) {
-
           searchByTag(ele.data("label"));
-          
         },
       },
+      {
+        content: "Delete",
+        select: function (ele) {
+          if (confirm("Are you sure you want to delete this node?")) {
+            // Show loading indicator
+            const loadingNode = ele;
+            loadingNode.data(
+              "originalColor",
+              loadingNode.style("background-color")
+            );
+            loadingNode.style("background-color", "#ff8080"); // Light red to indicate deletion in progress
+
+            graphStore
+              .DeleteNode(ele.id())
+              .then(() => {
+                ele.remove();
+                UpdateNodes();
+              })
+              .catch((error) => {
+                console.error("Failed to delete node:", error);
+                // Reset color on error
+                loadingNode.style(
+                  "background-color",
+                  loadingNode.data("originalColor")
+                );
+                alert("Error deleting node. Please try again.");
+              });
+          }
+        },
+      },
+    ],
+  });
+
+  cy.cxtmenu({
+    ...sharedMenuConfig,
+    selector: 'node[type="note"]',
+
+    commands: [
+      {
+        content: "Rename",
+        select: function (ele) {
+          const node = ele;
+          RenameNode(node);
+        },
+      },
+
       {
         content: "Delete",
         select: function (ele) {
@@ -569,7 +615,6 @@ function initializeCytoscape() {
   cy.on("tap", "node", (event) => {
     const node = event.target.data();
     if (node.type === "note") {
-    
       removeHandle();
       emit("note-selected", node.id);
       // tabStore.openTab(node.id);
@@ -609,10 +654,27 @@ function initializeCytoscape() {
     });
   });
 
-
   document.addEventListener("keydown", HandlecyClick);
-
 }
+
+// function deleteNode(node) {
+//   // Show loading indicator
+//   node.data("originalColor", node.style("background-color"));
+//   node.style("background-color", "#ff8080"); // Light red to indicate deletion in progress
+
+//   graphStore
+//     .DeleteNode(node.id())
+//     .then(() => {
+//       node.remove();
+//       UpdateNodes();
+//     })
+//     .catch((error) => {
+//       console.error("Failed to delete node:", error);
+//       // Reset color on error
+//       node.style("background-color", node.data("originalColor"));
+//       alert("Error deleting node. Please try again.");
+//     });
+// }
 
 function AddNodes(data) {
   const cyElements = [];
@@ -626,11 +688,11 @@ function AddNodes(data) {
   elements.forEach((item) => {
     if (item.name && item.id) {
       const nodeId = `${item.type}_${item.id}`;
-      
+
       // Skip if we've already added this node
       if (addedNodes.has(nodeId)) return;
       addedNodes.add(nodeId);
-      
+
       let position = undefined;
       if (item.data?.x !== null && item.data?.y !== null) {
         position = { x: item.data.x, y: item.data.y };
@@ -679,16 +741,16 @@ function AddNodes(data) {
   // Second pass: Add edges, but only if both source and target nodes exist
   elements.forEach((item) => {
     const sourceId = `${item.type}_${item.id}`;
-    
+
     // Skip if the source node wasn't added
     if (!addedNodes.has(sourceId)) return;
-    
+
     // Add edges for children (tag-to-tag)
     if (item.children && Array.isArray(item.children)) {
       item.children.forEach((childId) => {
         const targetId = `tag_${childId}`;
         const edgeId = `${sourceId}->${targetId}`;
-        
+
         // Only add the edge if the target node exists and we haven't added this edge yet
         if (addedNodes.has(targetId) && !addedEdges.has(edgeId)) {
           cyElements.push({
@@ -708,7 +770,7 @@ function AddNodes(data) {
       item.notes.forEach((noteId) => {
         const targetId = `note_${noteId}`;
         const edgeId = `${sourceId}->${targetId}`;
-        
+
         // Only add the edge if the target node exists and we haven't added this edge yet
         if (addedNodes.has(targetId) && !addedEdges.has(edgeId)) {
           cyElements.push({
@@ -807,10 +869,9 @@ function UpdateNodes() {
 }
 
 function RunLayout(effectors) {
-
   cy.stop(); // Stop any ongoing layouts
   cy.off("layoutstop");
-  console.log("running layout on:", effectors)
+  console.log("running layout on:", effectors);
   let fixedNodeConstraints = [];
   // this function will run the layout on only the nodes specified, all others will remain statitionary
 
@@ -858,8 +919,8 @@ function RunLayout(effectors) {
 
   // Step 2: Start cola layout with infinite animation after fcose completes
   setTimeout(() => {
-  cy.one("layoutstop", runCola);  // Use 'one' instead of 'on'
-}, 50);
+    cy.one("layoutstop", runCola); // Use 'one' instead of 'on'
+  }, 50);
 
   function runCola() {
     const currentColaLayout = cy.layout({
@@ -893,38 +954,78 @@ function HandlecyClick(event) {
   }
 
   if (event.key === "Delete" || event.key === "Backspace") {
-    const selectedElements = cy.$(":selected");
-    selectedElements.forEach((ele) => {
-      if (ele.isNode()) {
+    const selectedElements = cy.$("node:selected");
+    const nodeCount = selectedElements.length;
 
-        if (confirm("Are you sure you want to delete this node?")) {
-            // Show loading indicator
-            const loadingNode = ele;
-            loadingNode.data(
-              "originalColor",
-              loadingNode.style("background-color")
+    // No nodes selected - nothing to do
+    if (nodeCount === 0) return;
+    
+    if (nodeCount === 1) {
+      const node = selectedElements[0];
+      if (confirm(`Are you sure you want to delete "${node.data("label")}"?`)) {
+        const loadingNode = node;
+        loadingNode.data(
+          "originalColor",
+          loadingNode.style("background-color")
+        );
+        loadingNode.style("background-color", "#ff8080"); // Light red to indicate deletion in progress
+
+        graphStore
+          .DeleteNode(node.id())
+          .then(() => {
+            node.remove();
+            UpdateNodes();
+          })
+          .catch((error) => {
+            console.error("Failed to delete node:", error);
+            // Reset color on error
+            loadingNode.style(
+              "background-color",
+              loadingNode.data("originalColor")
             );
-            loadingNode.style("background-color", "#ff8080"); // Light red to indicate deletion in progress
-
-            graphStore
-              .DeleteNode(ele.id())
-              .then(() => {
-                ele.remove();
-                UpdateNodes();
-              })
-              .catch((error) => {
-                console.error("Failed to delete node:", error);
-                // Reset color on error
-                loadingNode.style(
-                  "background-color",
-                  loadingNode.data("originalColor")
+            alert("Error deleting node. Please try again.");
+          });
+      }
+    } else {
+      if (confirm(`Delete ${nodeCount} selected nodes?`)) {
+        if (
+          confirm(
+            `Are you REALLY sure you want to delete ${nodeCount} nodes? This cannot be undone.`
+          )
+        ) {
+          // Process nodes in sequence to avoid backend conflicts
+          selectedElements.forEach((ele) => {
+            if (ele.isNode()) {
+             
+                // Show loading indicator
+                const loadingNode = ele;
+                loadingNode.data(
+                  "originalColor",
+                  loadingNode.style("background-color")
                 );
-                alert("Error deleting node. Please try again.");
-              });
-          }
-     
-      } 
-    });
+                loadingNode.style("background-color", "#ff8080"); // Light red to indicate deletion in progress
+
+                graphStore
+                  .DeleteNode(ele.id())
+                  .then(() => {
+                    ele.remove();
+                    UpdateNodes();
+                  })
+                  .catch((error) => {
+                    console.error("Failed to delete node:", error);
+                    // Reset color on error
+                    loadingNode.style(
+                      "background-color",
+                      loadingNode.data("originalColor")
+                    );
+                    alert("Error deleting node. Please try again.");
+                  });
+              }
+              
+          });
+        }
+      }
+    }
   } else if (event.key === "n") {
     const selectedTag = cy.$('node[type="tag"]:selected');
     if (selectedTag.length > 0) {
@@ -1080,22 +1181,22 @@ function ShuffleGraph() {
 }
 function RenameNode(Node) {
   const currentName = Node.data("label");
-    const newName = prompt("Enter new name for the node:", currentName);
-    if (newName !== null && newName.trim() !== "") {
-      graphStore.RenameNode(Node.id(), newName)
-        .then(data => {
-          if (data.status === "success") {
-            // Update the node name in Cytoscape
-            Node.data("label", newName);
-     
-          } else {
-            console.error("Failed to rename node:", data.message);
-          }
-        })
-        .catch(error => {
-          console.error("Error renaming node:", error);
-        });
-    }
+  const newName = prompt("Enter new name for the node:", currentName);
+  if (newName !== null && newName.trim() !== "") {
+    graphStore
+      .RenameNode(Node.id(), newName)
+      .then((data) => {
+        if (data.status === "success") {
+          // Update the node name in Cytoscape
+          Node.data("label", newName);
+        } else {
+          console.error("Failed to rename node:", data.message);
+        }
+      })
+      .catch((error) => {
+        console.error("Error renaming node:", error);
+      });
+  }
 }
 
 function CreateNote(format) {
@@ -1104,7 +1205,7 @@ function CreateNote(format) {
 
   // Get all currently selected tags before creating the note
   const selectedTags = cy.$('node[type="tag"]:selected');
-  
+
   axios
     .post("/create", {
       type: "note",
@@ -1115,23 +1216,25 @@ function CreateNote(format) {
       AddNodes(response.data); // Call the updateGraph function with the new data
       useGraphStore().addNode(response.data);
       UpdateNodes();
-      
+
       // Get the new note ID
       const newNoteId = "note_" + response.data.elements[0].id;
-      
+
       // Create edges between all selected tags and the new note
       if (selectedTags.length > 0) {
-        console.log(`Creating connections from ${selectedTags.length} selected tags to new note: ${newNoteId}`);
-        
+        console.log(
+          `Creating connections from ${selectedTags.length} selected tags to new note: ${newNoteId}`
+        );
+
         // Process each selected tag
         let edgePromises = [];
         selectedTags.forEach((tagNode) => {
           const tagId = tagNode.id();
-          
+
           // Create an edge between this tag and the new note
-          const edgePromise =  useGraphStore().CreateEdge(tagId, newNoteId);
+          const edgePromise = useGraphStore().CreateEdge(tagId, newNoteId);
           edgePromises.push(edgePromise);
-          
+
           // Also add the edge to the Cytoscape instance immediately for visual feedback
           cy.add({
             group: "edges",
@@ -1141,18 +1244,20 @@ function CreateNote(format) {
             },
           });
         });
-        
+
         // After all edge creation requests are complete
         Promise.all(edgePromises)
           .then(() => {
-        
             UpdateNodes(); // Update the appearance of nodes
           })
           .catch((error) => {
-            console.error("Error creating one or more tag-note connections:", error);
+            console.error(
+              "Error creating one or more tag-note connections:",
+              error
+            );
           });
       }
-      
+
       // Run layout focusing on the new note
       RunLayout(newNoteId);
     })
@@ -1167,7 +1272,7 @@ function CreateTag() {
 
   // Get all currently selected tags before creating the new tag
   const selectedTags = cy.$('node[type="tag"]:selected');
-  
+
   axios
     .post("/create", {
       type: "tag",
@@ -1177,23 +1282,21 @@ function CreateTag() {
       AddNodes(response.data); // Call the updateGraph function with the new data
       useGraphStore().addNode(response.data);
       UpdateNodes();
-      
+
       // Get the new tag ID
       const newTagId = "tag_" + response.data.elements[0].id;
-      
+
       // Create edges between all selected tags and the new tag (selected tags become parents)
       if (selectedTags.length > 0) {
-   
-        
         // Process each selected tag
         let edgePromises = [];
         selectedTags.forEach((parentTagNode) => {
           const parentTagId = parentTagNode.id();
-          
+
           // Create an edge from parent tag to new tag
           const edgePromise = useGraphStore().CreateEdge(parentTagId, newTagId);
           edgePromises.push(edgePromise);
-          
+
           // Also add the edge to the Cytoscape instance immediately for visual feedback
           cy.add({
             group: "edges",
@@ -1203,19 +1306,25 @@ function CreateTag() {
             },
           });
         });
-        
+
         // After all edge creation requests are complete
         Promise.all(edgePromises)
           .then(() => {
-    
-            
             UpdateNodes(); // Update the appearance of nodes
           })
           .catch((error) => {
-            console.error("Error creating one or more parent-child connections:", error);
+            console.error(
+              "Error creating one or more parent-child connections:",
+              error
+            );
           });
       }
-      
+
+      const newNode = cy.getElementById(newTagId);
+
+      if (newNode) {
+        newNode.select();
+      }
       // Run layout focusing on the new tag
       RunLayout(newTagId);
     })
@@ -1223,7 +1332,6 @@ function CreateTag() {
       console.error("Error creating tag:", error);
     });
 }
-
 
 function addFilter(type, value, label) {
   const newFilter = {
@@ -1263,7 +1371,7 @@ function stackableSearch() {
 // Search by tag
 function searchByTag(tagName = null) {
   if (tagName == null) {
-   tagName = prompt("Enter tag name to filter by:");
+    tagName = prompt("Enter tag name to filter by:");
   }
   if (!tagName || tagName.trim() === "") return;
 
@@ -1294,13 +1402,15 @@ function applyFilters() {
   const processedEdgeIds = new Set(); // Track which edges we've already processed
   const resultElements = [];
   const highlightedNodeIds = new Set();
-  
+
   // Helper function to get descendants
   function getDescendants(tag) {
     const descendants = [];
     if (tag.children && tag.children.length > 0) {
-      tag.children.forEach(childId => {
-        const childTag = allElements.find(el => el.type === "tag" && el.id === childId);
+      tag.children.forEach((childId) => {
+        const childTag = allElements.find(
+          (el) => el.type === "tag" && el.id === childId
+        );
         if (childTag) {
           descendants.push(childTag);
           descendants.push(...getDescendants(childTag));
@@ -1309,97 +1419,98 @@ function applyFilters() {
     }
     return descendants;
   }
-  
+
   // Start with all elements
   let filteredElements = [...allElements];
-  
+
   // Apply each filter sequentially, narrowing down results
-  activeFilters.value.forEach(filter => {
-    if (filter.type === 'text') {
+  activeFilters.value.forEach((filter) => {
+    if (filter.type === "text") {
       // Text search filter
-      filteredElements = filteredElements.filter(element => 
-        element.name && element.name.toLowerCase().includes(filter.value)
+      filteredElements = filteredElements.filter(
+        (element) =>
+          element.name && element.name.toLowerCase().includes(filter.value)
       );
-      
+
       // Highlight matches for text search
-      filteredElements.forEach(element => {
+      filteredElements.forEach((element) => {
         if (element.name && element.name.toLowerCase().includes(filter.value)) {
           highlightedNodeIds.add(`${element.type}_${element.id}`);
         }
       });
-    } 
-    else if (filter.type === 'tag') {
+    } else if (filter.type === "tag") {
       // Find tags matching the filter
-      const matchingTags = filteredElements.filter(element =>
-        element.type === "tag" && 
-        element.name && 
-        element.name.toLowerCase().includes(filter.value)
+      const matchingTags = filteredElements.filter(
+        (element) =>
+          element.type === "tag" &&
+          element.name &&
+          element.name.toLowerCase().includes(filter.value)
       );
-      
+
       // Highlight matching tags
-      matchingTags.forEach(tag => {
+      matchingTags.forEach((tag) => {
         highlightedNodeIds.add(`tag_${tag.id}`);
       });
-      
+
       // Get all tag IDs that match
-      const matchingTagIds = new Set(matchingTags.map(tag => tag.id));
-      
+      const matchingTagIds = new Set(matchingTags.map((tag) => tag.id));
+
       // Include notes that have these tags
-      const relatedNotes = allElements.filter(element =>
-        element.type === "note" && 
-        element.tags && 
-        element.tags.some(tagId => matchingTagIds.has(tagId))
+      const relatedNotes = allElements.filter(
+        (element) =>
+          element.type === "note" &&
+          element.tags &&
+          element.tags.some((tagId) => matchingTagIds.has(tagId))
       );
-      
+
       // Include the matching tags, their descendants, and related notes
       const includedTags = new Set();
-      matchingTags.forEach(tag => {
+      matchingTags.forEach((tag) => {
         includedTags.add(tag.id);
-        
+
         // Add all descendants
-        getDescendants(tag).forEach(descendant => {
+        getDescendants(tag).forEach((descendant) => {
           includedTags.add(descendant.id);
         });
       });
-      
+
       // Create new filtered set with matching tags, their descendants, and related notes
       filteredElements = [
         ...matchingTags,
-        ...allElements.filter(element => 
-          element.type === "tag" && includedTags.has(element.id)
+        ...allElements.filter(
+          (element) => element.type === "tag" && includedTags.has(element.id)
         ),
-        ...relatedNotes
+        ...relatedNotes,
       ];
-    }
-    else if (filter.type === 'nodeType') {
+    } else if (filter.type === "nodeType") {
       // Filter by node type
-      filteredElements = filteredElements.filter(element => 
-        element.type === filter.value
+      filteredElements = filteredElements.filter(
+        (element) => element.type === filter.value
       );
     }
   });
-  
+
   // Now prepare elements for Cytoscape, ensuring all nodes needed for edges are included
   const nodesToAdd = new Map(); // Map of nodeId -> node
-  
+
   // First, add all filtered nodes to our map
-  filteredElements.forEach(element => {
+  filteredElements.forEach((element) => {
     const nodeId = `${element.type}_${element.id}`;
     nodesToAdd.set(nodeId, element);
   });
-  
+
   // Convert to array for Cytoscape
   const cyElements = {
-    elements: Array.from(nodesToAdd.values())
+    elements: Array.from(nodesToAdd.values()),
   };
-  
+
   // Display the filtered elements
   cy.elements().remove();
   AddNodes(cyElements);
   UpdateNodes();
   saveState();
   RunLayout("all");
-  
+
   // Highlight nodes that match search queries
   // cy.ready(() => {
   //   highlightedNodeIds.forEach(nodeId => {
@@ -1408,18 +1519,17 @@ function applyFilters() {
   //       node.addClass("highlighted");
   //     }
   //   });
-    
-    // Center on highlighted nodes if any
-    // if (highlightedNodeIds.size > 0) {
-    //   cy.animate({
-    //     fit: { eles: cy.$(".highlighted"), padding: 50 },
-    //     duration: 500
-    //   });
-    // }
+
+  // Center on highlighted nodes if any
+  // if (highlightedNodeIds.size > 0) {
+  //   cy.animate({
+  //     fit: { eles: cy.$(".highlighted"), padding: 50 },
+  //     duration: 500
+  //   });
+  // }
   // });
-  
+
   // Save the updated filter state
-  
 }
 function advancedSearch() {
   const searchQuery = prompt("Enter search term:");
@@ -1524,14 +1634,14 @@ function advancedSearch() {
     //     }
     //   });
 
-      // Center the view on the highlighted nodes
-      // const highlightedNodes = cy.$(".highlighted");
-      // if (highlightedNodes.length > 0) {
-      //   cy.animate({
-      //     fit: { eles: highlightedNodes, padding: 500 },
-      //     duration: 500
-      //   });
-      // }
+    // Center the view on the highlighted nodes
+    // const highlightedNodes = cy.$(".highlighted");
+    // if (highlightedNodes.length > 0) {
+    //   cy.animate({
+    //     fit: { eles: highlightedNodes, padding: 500 },
+    //     duration: 500
+    //   });
+    // }
     // });
   } else {
     alert("No matches found for: " + searchQuery);
@@ -1605,7 +1715,7 @@ function Spotlight() {
     cy.animate({
       fit: {
         eles: selectedNodes,
-        padding: 400,
+        padding: 10,
       },
       duration: 500,
     });
@@ -1698,7 +1808,7 @@ onBeforeUnmount(() => {
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button class="flex items-center">
-            <Search class="" />
+            <Filter class="" />
             <span>Filter</span>
           </Button>
         </DropdownMenuTrigger>
@@ -1708,8 +1818,8 @@ onBeforeUnmount(() => {
             class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
             @click="stackableSearch()"
           >
-            <Search class="w-5 h-5 text-gray-600" />
-            <span>Search Text</span>
+            <CaseSensitive class="w-5 h-5 text-gray-600" />
+            <span>Filter by Name</span>
           </DropdownMenuItem>
           <DropdownMenuItem
             class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
@@ -1737,8 +1847,8 @@ onBeforeUnmount(() => {
       </DropdownMenu>
 
       <Button class="flex items-center">
-        <Lock class="" />
-        <span>Lock</span>
+        <Search class="" />
+        <span>Spotlight</span>
       </Button>
       <!-- <Separator orientation="vertical"></Separator> -->
       <DropdownMenu>
@@ -1777,8 +1887,6 @@ onBeforeUnmount(() => {
       <!-- <Separator orientation="vertical"></Separator> -->
 
       <Button @click="centerGraph()"> <House></House> Center </Button>
-
-
 
       <Button variant="destructive" @click="ShuffleGraph()">
         <Shuffle></Shuffle> Shuffle
@@ -1863,8 +1971,8 @@ onBeforeUnmount(() => {
           <DropdownMenuItem
             class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
           >
-            <Lock class="w-5 h-5 text-gray-600" />
-            <span>Lock</span>
+            <Search class="w-5 h-5 text-gray-600" />
+            <span>Spotlight</span>
           </DropdownMenuItem>
 
           <DropdownMenuItem

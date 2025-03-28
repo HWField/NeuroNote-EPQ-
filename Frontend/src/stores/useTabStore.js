@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { markRaw, ref } from "vue";
 import Cytoscape from "@/components/Cytoscape.vue";
 import Dashboard from "@/components/Dashboard.vue";
+import Loading from "@/components/Loading.vue";
 // import TipTap from "@/components/Document editor/TipTap.vue";
 import Chat from "@/components/Chat.vue";
 // import Note from "@/components/Note.vue";
@@ -14,6 +15,13 @@ export const useTabStore = defineStore("tabStore", () => {
   const activeTab = ref(1); // Set first tab as active by default
 
   const defaultTabs = [
+    {
+      id: 0,
+      title: "Loading",
+      component: markRaw(Loading),
+      type: "loading", // Special type tab that stores multiple components and states
+      state: {},
+    },
     {
       id: 1,
       title: "Dashboard",

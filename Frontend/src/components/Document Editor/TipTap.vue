@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-
+import { debounce } from 'lodash';
 import { Commands } from "@/components/Document Editor/commands.js";
 import CommandsList, {
   commands,
@@ -282,69 +282,8 @@ function extractTagsFromDocument(document) {
 
   return Array.from(uniqueTagIds);
 }
-function populateTagsContainer(tagIds) {
-  // Get the graph store to access tag information
-  const graphStore = useGraphStore();
-  
-  // Find the tags container
-  const doc = editor.state.doc;
-  let tagsContainerPos = null;
-  
-  // Find the tags container position
-  doc.descendants((node, pos) => {
-    if (node.type.name === "tagsContainer") {
-      tagsContainerPos = pos;
-      return false; // Stop traversal
-    }
-    return true;
-  });
-  
-  if (tagsContainerPos === null) {
-    console.error("Tags container not found");
-    return;
-  }
-  
-  // Clear existing tags
-  editor
-    .chain()
-    .command(({ tr }) => {
-      const node = doc.nodeAt(tagsContainerPos);
-      if (node) {
-        tr.deleteRange(tagsContainerPos, tagsContainerPos + node.nodeSize);
-        return true;
-      }
-      return false;
-    })
-    .insertContentAt(tagsContainerPos, { type: "tagsContainer" })
-    .run();
-  
-  // Add each tag
-  if (tagIds && tagIds.length) {
-    // Find tag data from graph store
-    const allTags = graphStore.elements.filter(el => el.type === 'tag');
-    
-    tagIds.forEach((tagId) => {
-      // Find the tag in graph store
-      const tag = allTags.find(tag => tag.id === tagId);
-      
-      if (tag) {
-        editor
-          .chain()
-          .focus()
-          .insertContentAt(tagsContainerPos + 1, {
-            type: "mention",
-            attrs: {
-              id: tagId,
-              label: tag.name
-            }
-          })
-          .run();
-      }
-    });
-  }
-}
+
 function SaveToBackend() {
-  console.error("Saving to backend...", props.noteId);
   let noteContent = editor.getJSON();
   let noteName = "Untitled Note";
   const tags = extractTagsFromDocument(noteContent);
@@ -365,8 +304,6 @@ function SaveToBackend() {
       }
     }
   }
-
-  console.error("Note name:", noteName);
 
   const graphStore = useGraphStore();
   graphStore.updateNoteName(props.noteId, noteName);
@@ -402,11 +339,22 @@ function LoadFromBackend() {
         try {
           if (response.data.name) {
             // Make sure we can find the title node
-            console.error("NOTE NAME", response.data.name);
+
             const titleNode = editor.state.doc.content.firstChild;
 
             if (titleNode && titleNode.type.name === "title") {
               // Now safely select and modify the titles
+              console.error("titleNode", titleNode);
+              if (response.data.name == "Untitled Note" || response.data.name == "Untitled Note ") {
+                editor
+                  .chain()
+                  .focus()
+                  .setNodeSelection(1)
+                  .deleteSelection()
+
+                  .run();
+              } else {
+            
               editor
                 .chain()
                 .focus()
@@ -422,8 +370,33 @@ function LoadFromBackend() {
                 .run();
             }
           }
-          populateTagsContainer(response.data.tags || []);
-          editor.commands.focus("end");
+          }
+          // const titleNodeSize = editor.state.doc.content.firstChild?.nodeSize || 0;
+          // const pos = titleNodeSize + 1; // Position right after the title node
+          
+          // // Insert tags container with three sample mentions
+          // editor.chain()
+          //   .insertContentAt(pos, {
+          //       type: "paragraph",
+          //     content: [
+          //       {
+          //         type: "mention",
+          //         attrs: { id: "tag1", label: "ProjectA" }
+          //       },
+          //       { type: "text", text: " " },
+          //       {
+          //         type: "mention",
+          //         attrs: { id: "tag2", label: "Important" }
+          //       },
+          //       { type: "text", text: " " },
+          //       {
+          //         type: "mention",
+          //         attrs: { id: "tag3", label: "InProgress" }
+          //       }
+          //     ]
+          //   })
+          //   .run();
+          // editor.commands.focus("end");
         } catch (e) {
           console.error("Error updating title:", e);
         }
@@ -433,8 +406,12 @@ function LoadFromBackend() {
 
 function focusTagsContainer() {
   editor.state.doc.descendants((node, pos) => {
-    if (node.type.name === 'tagsContainer') {
-      editor.chain().focus().setTextSelection(pos + 1).run();
+    if (node.type.name === "tagsContainer") {
+      editor
+        .chain()
+        .focus()
+        .setTextSelection(pos + 1)
+        .run();
       return false;
     }
     return true;
@@ -447,19 +424,20 @@ onMounted(() => {
   // Add event listener for tag updates
   editor.on("update", () => {
     // Extract tags from editor
-    const tagIds = extractTagsFromDocument(editor.getJSON());
-
+    // const tagIds = extractTagsFromDocument(editor.getJSON());
     // Update the GraphStore
-    const graphStore = useGraphStore();
-    graphStore.updateNoteTags(props.noteId, tagIds);
+    // const graphStore = useGraphStore();
+    // graphStore.updateNoteTags(props.noteId, tagIds);
   });
   // event listener for the image modal
   eventBus.on("open-image-modal", openImageModal);
+  //ful save every minute 
+setInterval(SaveToBackend(), 60000);
 });
 
 onBeforeUnmount(() => {
   eventBus.off("open-image-modal", openImageModal);
-  console.error("Saving to backend...");
+
   SaveToBackend();
   if (editor) {
     editor.destroy();
@@ -467,19 +445,7 @@ onBeforeUnmount(() => {
 });
 
 const CustomDocument = Document.extend({
-  content: "title tagsContainer block+",
-  
-  // Add validation rule to ensure exactly one tags container
-  parseRule: {
-    validate: (nodes) => {
-      let tagContainerCount = 0;
-      nodes.forEach(node => {
-        if (node.type.name === 'tagsContainer') tagContainerCount++;
-      });
-      
-      return tagContainerCount === 1;
-    }
-  }
+  content: "title block+",
 });
 
 const Title = Heading.extend({
@@ -503,29 +469,13 @@ const Title = Heading.extend({
   },
 }).configure({ levels: [1] });
 
-// Add this code near your other extensions
-// Replace your existing TagsContainer with this improved version
-const TagsContainer = Heading.extend({
-  name: "tagsContainer",
-  marks: "",
-  group: "tagsContainer",
-  content: "inline*",
-  defining: true,
-  selectable: false,
 
-  parseHTML() {
-    return [{ tag: "div.tags-container h1" }, { tag: "h1:first-child" }];
-  },
 
-  renderHTML({ HTMLAttributes }) {
-    return [
-      "div",
-      { class: "tags-container" },
-      ["h1", HTMLAttributes, 0],
-    ];
-  },
-}).configure({ levels: [1] });
 let editor = new Editor({
+  //save every 5seconds to backend on modification
+  onUpdate: debounce(() => {
+    SaveToBackend();
+  }, 1000),
   extensions: [
     Document,
     Details.configure({
@@ -534,7 +484,6 @@ let editor = new Editor({
         class: "details",
       },
     }),
-    TagsContainer,
     DetailsSummary,
     DetailsContent,
     Paragraph,
@@ -780,28 +729,6 @@ let editor = new Editor({
         }
         return false;
       },
-
-      // This is optional but might be used by the extension internally
-      // uploadFunction: async (file) => {
-      //   try {
-      //     const formData = new FormData();
-      //     formData.append("file", file);
-
-      //     const response = await axios.post("/upload-file", formData, {
-      //       headers: {
-      //         "Content-Type": "multipart/form-data",
-      //       },
-      //     });
-
-      //     if (response.data.url) {
-      //       return response.data.url;
-      //     }
-      //     throw new Error("Upload failed");
-      //   } catch (error) {
-      //     console.error("Error uploading image:", error);
-      //     return null;
-      //   }
-      // },
     }),
     ImageUpload,
     Gapcursor,
@@ -826,7 +753,6 @@ let editor = new Editor({
   <div class="note-title-container">
     <h1>Untitled Note</h1>
   </div>
-  <div class="tags-container"></div>
   <p></p>
 `,
 });
@@ -1337,104 +1263,6 @@ let editor = new Editor({
 </template>
 
 <style lang="scss">
-.tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  margin: 0.5rem 0 1.5rem;
-  min-height: 2.5rem;
-  background-color: rgba(106, 0, 245, 0.05);
-  border-radius: 0.75rem;
-  align-items: center;
-  position: relative;
-  transition: all 0.2s ease;
-  border: 1px solid rgba(106, 0, 245, 0.1);
-  
-  /* Prevent direct text editing when not focused */
-  &:not(:focus-within)::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: all;
-    cursor: pointer;
-  }
-
-  &:focus-within {
-    outline: 2px solid rgba(106, 0, 245, 0.25);
-    background-color: rgba(106, 0, 245, 0.08);
-    box-shadow: 0 2px 8px rgba(106, 0, 245, 0.08);
-  }
-  
-  &:hover:not(:focus-within) {
-    background-color: rgba(106, 0, 245, 0.08);
-  }
-}
-
-.tags-container:empty::before {
-  content: "Add tags with @...";
-  color: rgba(106, 0, 245, 0.4);
-  position: absolute;
-  font-size: 0.9rem;
-  font-style: italic;
-  left: 1rem;
-}
-
-.tags-container .mention {
-  font-size: 0.9rem;
-  display: inline-flex;
-  align-items: center;
-  padding: 0.35rem 0.75rem;
-  margin: 0.1rem;
-  border-radius: 1rem;
-  background-color: rgba(106, 0, 245, 0.15);
-  color: rgb(106, 0, 245);
-  transition: all 0.2s;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.tags-container .mention:hover {
-  background-color: rgba(106, 0, 245, 0.25);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.tags-container .mention::before {
-  content: "#";
-  margin-right: 0.35rem;
-  font-weight: normal;
-  opacity: 0.6;
-}
-
-.tags-container .mention::after {
-  content: "×";
-  margin-left: 0.5rem;
-  font-weight: bold;
-  opacity: 0.6;
-  font-size: 1.1rem;
-  line-height: 0.8;
-}
-
-.tags-container .mention:hover::after {
-  opacity: 1;
-}
-
-/* Dark mode styles */
-.dark .tags-container {
-  background-color: rgba(106, 0, 245, 0.1);
-  border-color: rgba(106, 0, 245, 0.15);
-}
-
-.dark .tags-container .mention {
-  background-color: rgba(106, 0, 245, 0.25);
-  color: rgb(175, 125, 255);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.dark .tags-container:empty::before {
-  color: rgba(175, 125, 255, 0.4);
-}
 .hypermultimedia {
   iframe,
   audio,

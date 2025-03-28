@@ -77,7 +77,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter, useRoute } from "vue-router"; // Vue Router for navigation
 import {
   Settings,
-  Bell,
+  RefreshCcw,
   ChevronsUpDown,
   GalleryVerticalEnd,
   LogOut,
@@ -99,6 +99,7 @@ import { ref, markRaw } from "vue";
 import draggable from "vuedraggable";
 
 import { useTabStore } from "@/stores/useTabStore";
+import { useGraphStore } from "@/stores/useGraphStore";
 import { useUserStore } from "@/stores/useUserStore";
 import Input from "@/components/ui/input/Input.vue";
 
@@ -130,7 +131,7 @@ watch(
 const tabs = computed(() => tabStore.tabs);
 const activeTab = computed(() => tabStore.activeTab);
 const filteredTabs = computed(() =>
-  tabs.value.filter((tab) => tab.id !== 1 && tab.id !== 2)
+  tabs.value.filter((tab) => tab.id !== 0 && tab.id !== 1 && tab.id !== 2) //remove loading, dashboard and chat tabs
 );
 
 const activeTabKey = computed(() => `${activeTab.value}-${Date.now()}`);
@@ -149,9 +150,24 @@ function switchTab(id) {
   tabStore.setActiveTab(id);
 }
 
+
 function openNewTab() {
   // Example: Adding a new tab dynamically
   tabStore.addTab("New Tab:", "generic");
+}
+
+async function Sync() {
+let currentTab = useTabStore().GetActiveTabID();
+
+useTabStore().setActiveTab(0) 
+useGraphStore().resetGraph();
+await useGraphStore().fetchGraph();
+useTabStore().setActiveTab(currentTab);
+toast({
+    title: "Success",
+    description: "Sucesfully Synced Data",
+    variant: "success",
+  });
 }
 
 function logOut() {
@@ -467,9 +483,9 @@ function handleOpenChange() {
                     Settings
                   </DropdownMenuItem>
 
-                  <DropdownMenuItem>
-                    <Bell />
-                    Notifications
+                  <DropdownMenuItem @click="Sync()">
+                    <RefreshCcw/>
+                    Sync
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />

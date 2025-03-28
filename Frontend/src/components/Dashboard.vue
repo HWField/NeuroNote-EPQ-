@@ -1,7 +1,7 @@
 <script setup>
 import Cytoscape from "@/components/Cytoscape.vue";
 import { useUserStore } from "@/stores/useUserStore";
-import { ref, computed , onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { Calendar } from "@/components/ui/calendar";
 import { Settings } from "lucide-vue-next";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ let active = false;
 const activeFilters = ref([]);
 const tabData = computed(() => {
   const tab = tabStore.getTab(1);
-  if (!tab) return { };
+  if (!tab) return {};
   // Return tab.state instead of the whole tab object
   return tab.state;
 });
@@ -27,7 +27,7 @@ const handleFilterChange = (newFilters) => {
   activeFilters.value = newFilters;
   tabStore.updateTabState(1, {
     ...tabData.value,
-    filters: newFilters
+    filters: newFilters,
   });
 };
 const OpenNote = (noteId) => {
@@ -81,7 +81,9 @@ const mockNotes = ref([
     </div>
     <div class="flex flex-row w-full h-full">
       <!-- Left Column (Tall) -->
-      <div class="w-full h-full bg-primary-foreground rounded-lg 2 border-4 border-gray-800 mb-4 mr-2 overflow-hidden">
+      <div
+        class="w-full h-full bg-primary-foreground rounded-lg 2 border-4 border-gray-800 mb-4 mr-2 overflow-hidden"
+      >
         <!-- <Cytoscape 
   @note-selected="OpenNote" 
   :externalFilters="activeFilters" 
@@ -91,36 +93,36 @@ const mockNotes = ref([
   :tabId="1"  
 /> -->
 
-
-<Cytoscape 
-v-if="active"
-  @note-selected="OpenNote" 
-
-  
-  :hasControls="true"
-
-  :tabId="1"  
-/>
+        <Cytoscape
+          v-if="active"
+          @note-selected="OpenNote"
+          :hasControls="true"
+          :tabId="1"
+        />
       </div>
 
       <!-- Right Column (Two Short Divs) -->
       <div class="w-1/2 h-full flex flex-col ml-2">
-        <div class="h-full bg-secondary border-gray-800 border-4 rounded-lg mb-2">
+        <div
+          class="h-full bg-secondary border-gray-800 border-4 rounded-lg mb-2"
+        >
           <h1 class="text-2xl font-bold m-5">Recent Notes:</h1>
           <ScrollArea class="overflow-y-auto">
-          <ul>
-            <li
-              v-for="note in mockNotes.slice(0, 5)"
-              :key="note.id"
-              class="m-2 p-2 rounded bg-primary text-secondary"
-            >
-              {{ note.title }}
-            </li>
-          </ul>
-        </ScrollArea>
+            <ul>
+              <li
+                v-for="note in mockNotes.slice(0, 5)"
+                :key="note.id"
+                class="m-2 p-2 rounded bg-primary text-secondary"
+              >
+                {{ note.title }}
+              </li>
+            </ul>
+          </ScrollArea>
         </div>
-        
-        <div class="h-full bg-secondary border-gray-800 border-4 rounded-lg mt-2">
+
+        <div
+          class="h-full bg-secondary border-gray-800 border-4 rounded-lg mt-2"
+        >
           <div class="flex justify-between items-center m-5">
             <h1 class="text-2xl font-bold">Shortcuts</h1>
             <Settings class="" />
@@ -141,69 +143,72 @@ v-if="active"
   <!-- medium layout -->
   <div v-if="screenSize === 'medium'" class="flex w-full h-full flex-col p-4">
     <div class="flex flex-col items-center justify-center m-5">
-      <h1 class="text-2xl font-bold my-4">Welcome, {{ userStore.username }} :)</h1>
+      <h1 class="text-2xl font-bold my-4">
+        Welcome, {{ userStore.username }} :)
+      </h1>
     </div>
 
-    <div class="w-full  bg-primary-foreground rounded-lg 2 border-4 border-gray-800 mb-4 h-1/2 overflow-hidden">
-      <Cytoscape 
-      v-if="active"
-  @note-selected="OpenNote" 
-
-  
-  :hasControls="true"
-
-  :tabId="1"  
-/>
-
+    <div
+      class="w-full bg-primary-foreground rounded-lg 2 border-4 border-gray-800 mb-4 h-1/2 overflow-hidden"
+    >
+      <Cytoscape
+        v-if="active"
+        @note-selected="OpenNote"
+        :hasControls="true"
+        :tabId="1"
+      />
     </div>
     <div class="flex w-full h-1/2 flex-grow">
-      <div class="w-1/2 bg-secondary rounded-lg 2 border-4 border-gray-800 mr-2">
+      <div
+        class="w-1/2 bg-secondary rounded-lg 2 border-4 border-gray-800 mr-2"
+      >
         <h1 class="text-xl font-bold m-5">Recent Notes</h1>
-          <ul>
-            <li
-              v-for="note in mockNotes.slice(0, 5)"
-              :key="note.id"
-              class="m-2 p-2 rounded bg-primary text-secondary"
-            >
-              {{ note.title }}
-            </li>
-          </ul>
+        <ul>
+          <li
+            v-for="note in mockNotes.slice(0, 5)"
+            :key="note.id"
+            class="m-2 p-2 rounded bg-primary text-secondary"
+          >
+            {{ note.title }}
+          </li>
+        </ul>
       </div>
-      <div class="w-1/2 bg-secondary rounded-lg 2 border-4 border-gray-800 ml-2">
+      <div
+        class="w-1/2 bg-secondary rounded-lg 2 border-4 border-gray-800 ml-2"
+      >
         <div class="flex justify-between items-center m-5">
-            <h1 class="text-xl font-bold">Shortcuts</h1>
-            <Settings class="" />
-          </div>
-          <div class="grid grid-cols-2 gap-2 text-secondary m-2">
-            <Button class="bg-primary p-2 rounded">Shortcut 1</Button>
-            <Button class="bg-primary p-2 rounded">Shortcut 2</Button>
-            <Button class="bg-primary p-2 rounded">Shortcut 3</Button>
-            <Button class="bg-primary p-2 rounded">Shortcut 4</Button>
-            <Button class="bg-primary p-2 rounded">Shortcut 5</Button>
-            <Button class="bg-primary p-2 rounded">Shortcut 6</Button>
-          </div>
+          <h1 class="text-xl font-bold">Shortcuts</h1>
+          <Settings class="" />
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-secondary m-2">
+          <Button class="bg-primary p-2 rounded">Shortcut 1</Button>
+          <Button class="bg-primary p-2 rounded">Shortcut 2</Button>
+          <Button class="bg-primary p-2 rounded">Shortcut 3</Button>
+          <Button class="bg-primary p-2 rounded">Shortcut 4</Button>
+          <Button class="bg-primary p-2 rounded">Shortcut 5</Button>
+          <Button class="bg-primary p-2 rounded">Shortcut 6</Button>
+        </div>
       </div>
     </div>
   </div>
 
-
   <!-- small layout -->
   <div v-if="screenSize === 'small'" class="flex w-full h-full flex-col p-4">
     <div class="flex flex-col items-center justify-center m-5">
-      <h1 class="text-2xl font-bold my-4">Welcome, {{ userStore.username }} :)</h1>
+      <h1 class="text-2xl font-bold my-4">
+        Welcome, {{ userStore.username }} :)
+      </h1>
     </div>
 
-    <div class="w-full border-4 border-gray-800 bg-primary-foreground rounded-lg h-full overflow-hidden">
-      <Cytoscape 
-      v-if="active"
-  @note-selected="OpenNote" 
-
-  
-  :hasControls="true"
-
-  :tabId="1"  
-/>
+    <div
+      class="w-full border-4 border-gray-800 bg-primary-foreground rounded-lg h-full overflow-hidden"
+    >
+        <Cytoscape
+          v-if="active"
+          @note-selected="OpenNote"
+          :hasControls="true"
+          :tabId="1"
+        />
     </div>
-   
   </div>
 </template>
