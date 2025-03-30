@@ -39,13 +39,13 @@ export const useTabStore = defineStore("tabStore", () => {
         userData: {},
       },
     },
-    {
-      id: 3,
-      title: "DemoTab",
-      component: markRaw(GenericTab),
-      type: "generic", // Regular tab type
-      state: {view: "graph", noteId: null},
-    },
+    // {
+    //   id: 3,
+    //   title: "DemoTab",
+    //   component: markRaw(GenericTab),
+    //   type: "generic", // Regular tab type
+    //   state: {view: "graph", noteId: null},
+    // },
   ];
 
   const tabs = ref(cloneDeep(defaultTabs)); // Initialize tabs with default tabs
@@ -109,7 +109,7 @@ export const useTabStore = defineStore("tabStore", () => {
   function removeTab(id) {
     tabs.value = tabs.value.filter((tab) => tab.id !== id);
     if (activeTab.value === id) {
-      activeTab.value = tabs.value.length ? tabs.value[0].id : null;
+      activeTab.value = tabs.value.length ? tabs.value[1].id : null; // Set to first tab if available if not set to dashbaord
     }
   }
 

@@ -431,6 +431,11 @@ onMounted(() => {
   });
   // event listener for the image modal
   eventBus.on("open-image-modal", openImageModal);
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      emit('note-closed');
+    }
+  });
   //ful save every minute 
 setInterval(SaveToBackend(), 60000);
 });
