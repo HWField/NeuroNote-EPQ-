@@ -21,29 +21,13 @@ export const useUserStore = defineStore(
 
     watch(theme, (newTheme) => {
       if (isAuthenticated.value) {
-        console.error("Theme changed to:", newTheme);
         saveUser({ theme: newTheme });
       }
     });
 
     const router = useRouter(); // Router instance for programmatic navigation
 
-    async function FetchUser() {
-      try {
-        const response = await axios.post("/load", {
-          operation: "user",
-        });
-
-        isAuthenticated.value = true;
-        console.log("user data:", response.data);
-        UpdateUser(response.data);
-        return true;
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-        isAuthenticated.value = false;
-        return false;
-      }
-    }
+  
 
     function UpdateUser(data) {
       username.value = data.username;
@@ -62,26 +46,26 @@ export const useUserStore = defineStore(
         // Load recent notes if available
         if (data.preferences?.recentNotes) {
           recentNotes.value = data.preferences.recentNotes;
-          console.error("Loaded recent notes:", recentNotes.value);
+
         }
 
         if (data.preferences?.tabs) {
           const tabStore = useTabStore();
           tabStore.loadTabsFromPreferences(data.preferences.tabs);
-          console.error("Loaded recent notes:", tabStore.tabs.value);
+       
         }
       }
     }
 
     async function saveUser(updates = {}) {
-      console.error("Saving user updates:", updates);
+     
 
       try {
         const response = await axios.post("/update", {
           operation: "user",
           ...updates, // This spreads all updates directly into the request body
         });
-        console.error("Server response:", response.data);
+    
         // Update local state with any returned values
         if (response.data.status === "success") {
           // Update local state for each field that was updated
@@ -107,33 +91,31 @@ export const useUserStore = defineStore(
       }
     }
 
+    
+    async function FetchUser() {
+      try {
+        const response = await axios.post("/load", {
+          operation: "user",
+        });
+
+        isAuthenticated.value = true;
+        console.log("user data:", response.data);
+        UpdateUser(response.data);
+        return true;
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        isAuthenticated.value = false;
+        return false;
+      }
+    }
+
     async function Login(userData, redirect = null) {
-      username.value = userData.username;
-      email.value = userData.email;
-      role.value = userData.userStatus;
       token.value = userData.token;
-      preferences.value = userData.preferences;
       isAuthenticated.value = true;
-
-      // Set theme from preferences
-      if (preferences.value?.theme) {
-        console.error("---loaded theme:", preferences.value.theme);
-        theme.value = preferences.value.theme;
-      }
-
-      // Load recent notes if available
-      if (preferences.value?.recentNotes) {
-        recentNotes.value = preferences.value.recentNotes;
-      }
-
-      // Load tabs if available
-      if (preferences.value?.tabs) {
-        const tabStore = useTabStore();
-        tabStore.loadTabsFromPreferences(preferences.value.tabs);
-      }
 
       const graphStore = useGraphStore();
       await graphStore.fetchGraph();
+      FetchUser();
 
       if (redirect) {
         router.replace(decodeURIComponent(redirect));
@@ -142,7 +124,8 @@ export const useUserStore = defineStore(
       }
     }
 
-    async function InstantLogout() {
+    async function InstantLogout() // used for quick wiping of data
+     { 
       isAuthenticated.value = false;
       username.value = "";
       email.value = "";
@@ -155,10 +138,8 @@ export const useUserStore = defineStore(
 
     async function Logout() {
       const graphStore = useGraphStore();
-      graphStore.resetGraph();
-
       const tabStore = useTabStore();
-      tabStore.setActiveTab(1); //saves current state of tab
+      tabStore.setActiveTab(0); //saves current state of tab (as saves on tab change)
       saveUser({ tabs: tabStore.tabs.value });
       // saveUser({ tabs: Array.from(tabStore.tabs) });
 

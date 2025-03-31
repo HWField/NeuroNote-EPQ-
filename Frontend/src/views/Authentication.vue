@@ -54,9 +54,6 @@ const login = async () => {
     const redirect = route.query.redirect as string;
 
     userStore.Login({
-      username: response.data.username,
-      email: response.data.email,
-      role: response.data.userStatus,
       token: response.data.access_token,
       redirect: redirect ? redirect : null,
     });

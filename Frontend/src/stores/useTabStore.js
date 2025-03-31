@@ -149,6 +149,7 @@ export const useTabStore = defineStore("tabStore", () => {
     if (activeTab.value === id) {
       activeTab.value = tabs.value.length ? tabs.value[1].id : null; // Set to first tab if available if not set to dashbaord
     }
+    useUserStore().saveUser({ tabs: Array.from(tabs.value) });
   }
 
   // Set active tab
@@ -158,20 +159,19 @@ export const useTabStore = defineStore("tabStore", () => {
   }
 
 
-  async function SendTabs() {
-    try {
-   
+  // async function SendTabs() {
+  //   try {
+      
+  //     const response = await axios.post("/update", {
+  //       operation: "tabs",
+  //       data: tabs.value,
+  //     });
      
-      const response = await axios.post("/update", {
-        operation: "tabs",
-        data: tabs.value,
-      });
-     
-    } catch (error) {
-      console.error("Error sending tabs:", error);
-    }
+  //   } catch (error) {
+  //     console.error("Error sending tabs:", error);
+  //   }
     
-  }
+  // }
 
   function GetActiveTabID() {
     return activeTab.value;
@@ -195,7 +195,7 @@ export const useTabStore = defineStore("tabStore", () => {
     removeTab,
     clearStore,
     GetActiveTabID,
-    SendTabs,
+    // SendTabs,
     RenameTab,
   loadTabsFromPreferences,
   };
