@@ -66,7 +66,8 @@ export const useUserStore = defineStore(
         }
 
         if (data.preferences?.tabs) {
-          useTabStore().tabs = data.preferences.tabs;
+          const tabStore = useTabStore();
+          tabStore.loadTabsFromPreferences(data.preferences.tabs);
           console.error("Loaded recent notes:", tabStore.tabs.value);
         }
       }
@@ -114,7 +115,22 @@ export const useUserStore = defineStore(
       preferences.value = userData.preferences;
       isAuthenticated.value = true;
 
- 
+      // Set theme from preferences
+      if (preferences.value?.theme) {
+        console.error("---loaded theme:", preferences.value.theme);
+        theme.value = preferences.value.theme;
+      }
+
+      // Load recent notes if available
+      if (preferences.value?.recentNotes) {
+        recentNotes.value = preferences.value.recentNotes;
+      }
+
+      // Load tabs if available
+      if (preferences.value?.tabs) {
+        const tabStore = useTabStore();
+        tabStore.loadTabsFromPreferences(preferences.value.tabs);
+      }
 
       const graphStore = useGraphStore();
       await graphStore.fetchGraph();
@@ -138,30 +154,13 @@ export const useUserStore = defineStore(
     }
 
     async function Logout() {
-      const graphStore= useGraphStore();
+      const graphStore = useGraphStore();
       graphStore.resetGraph();
 
       const tabStore = useTabStore();
       tabStore.setActiveTab(1); //saves current state of tab
-
-      saveUser({ tabs: Array.from(tabStore.tabs) });
-      // await tabStore.SendTabs();
-
-      // try {
-      //   console.error("📤 SENDING USER DATA!");
-      //   const response = await axios.post("/update", {
-      //     operation: "user",
-      //     data: {
-      //       username: username.value,
-      //       email: email.value,
-      //       preferences: preferences.value,
-      //     },
-      //   });
-      //   console.log("user data:", response.data);
-      //   setUser(response.data);
-      // } catch (error) {
-      //   console.error("Error sending user data:");
-      // }
+      saveUser({ tabs: tabStore.tabs.value });
+      // saveUser({ tabs: Array.from(tabStore.tabs) });
 
       tabStore.clearStore();
       graphStore.resetGraph();

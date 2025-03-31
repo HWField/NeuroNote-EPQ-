@@ -13,26 +13,34 @@ import { useUserStore } from "@/stores/useUserStore";
 
 export const useTabStore = defineStore("tabStore", () => {
   const activeTab = ref(1); // Set first tab as active by default
-
+  const componentMapping = {
+    'Loading': markRaw(Loading),
+    'Dashboard': markRaw(Dashboard),
+    'Chat': markRaw(Chat),
+    'GenericTab': markRaw(GenericTab)
+  };
   const defaultTabs = [
     {
       id: 0,
       title: "Loading",
-      component: markRaw(Loading),
+      componentName: "Loading",  // Store component name instead of reference
+      component: componentMapping.Loading,
       type: "loading", // Special type tab that stores multiple components and states
       state: {},
     },
     {
       id: 1,
       title: "Dashboard",
-      component: markRaw(Dashboard),
+      componentName: "Dashboard",
+      component: componentMapping.Dashboard,
       type: "locked", // Special type tab that stores multiple components and states
       state: {},
     },
     {
       id: 2,
       title: "Chat",
-      component: markRaw(Chat),
+      componentName: "Chat",
+      component: componentMapping.Chat,
       type: "locked", // Special type for Chat tab
       state: {
         messages: [],
@@ -48,6 +56,8 @@ export const useTabStore = defineStore("tabStore", () => {
     // },
   ];
 
+
+
   const tabs = ref(cloneDeep(defaultTabs)); // Initialize tabs with default tabs
 
   // Add a new tab
@@ -62,7 +72,8 @@ export const useTabStore = defineStore("tabStore", () => {
         tabs.value.push({
           id,
           title,
-          component: markRaw(GenericTab),
+          ccomponentName: "GenericTab", // Store name for serialization
+          component: componentMapping.GenericTab,
           type: "generic",
           state: state || { view: "graph", noteId: null }
         });
@@ -84,6 +95,33 @@ export const useTabStore = defineStore("tabStore", () => {
   // 🚀 Get a tab by id and type (to handle different component types)
   function getTab(id) {
     return tabs.value.find((tab) => tab.id === id);
+  }
+
+  function loadTabsFromPreferences(preferenceTabs) {
+    if (!preferenceTabs || !Array.isArray(preferenceTabs) || preferenceTabs.length === 0) {
+      tabs.value = cloneDeep(defaultTabs);
+      return;
+    }
+    
+    // Restore components in the loaded tabs
+    const loadedTabs = preferenceTabs.map(tab => {
+      // Create a copy of the tab
+      const newTab = {...tab};
+      
+      // Restore the component reference from the componentName
+      if (tab.componentName && componentMapping[tab.componentName]) {
+        newTab.component = componentMapping[tab.componentName];
+      } else {
+        // Fallback to GenericTab if component not found
+        newTab.component = componentMapping.GenericTab;
+        newTab.componentName = "GenericTab";
+      }
+      
+      return newTab;
+    });
+    
+    // Replace tabs with loaded tabs
+    tabs.value = loadedTabs;
   }
 
   function updateTabState(id, newState) {
@@ -119,27 +157,6 @@ export const useTabStore = defineStore("tabStore", () => {
     useUserStore().saveUser({ tabs: Array.from(tabs.value) });
   }
 
-  // async function FetchTabs() {
-  //   if (useUserStore().isAuthenticated) {
-  //     try {
-  //       const response = await axios.post("/load", {
-  //         operation: "tabs",
-  //       });
-     
-
-  //       if (response.data.length > 0) {
-  //         tabs.value = response.data;
-  //       }
-  //       else 
-  //       {
-  //         tabs.value = cloneDeep(defaultTabs);
-  //       }
- 
-  //     } catch (error) {
-  //       console.error("Error fetching graph data:", error);
-  //     }
-  //   }
-  // }
 
   async function SendTabs() {
     try {
@@ -178,8 +195,8 @@ export const useTabStore = defineStore("tabStore", () => {
     removeTab,
     clearStore,
     GetActiveTabID,
-    // FetchTabs,
     SendTabs,
-    RenameTab
+    RenameTab,
+  loadTabsFromPreferences,
   };
 });
