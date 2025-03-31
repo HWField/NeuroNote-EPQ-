@@ -10,13 +10,15 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import {useGraphStore} from "@/stores/useGraphStore";
+import {useUserStore} from "@/stores/useUserStore";
 import Loading from "@/components/Loading.vue";
 const dataLoaded = ref(false);  // Track if data is loaded
 const graphStore = useGraphStore();
-
+const userStore = useUserStore();
 
 onMounted(async () => {
-    await graphStore.fetchGraph();  // Fetch data when the app is mounted
+  await graphStore.fetchGraph();  // Fetch data when the app is mounted
+  await userStore.FetchUser();  // Fetch user data
   dataLoaded.value = true;  // Set data as loaded after the fetch is complete
 });
 </script>

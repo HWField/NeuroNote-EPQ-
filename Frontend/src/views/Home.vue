@@ -163,6 +163,9 @@ useTabStore().setActiveTab(0)
 useGraphStore().resetGraph();
 await useGraphStore().fetchGraph();
 useTabStore().setActiveTab(currentTab);
+await useUserStore().FetchUser();
+
+
 toast({
     title: "Success",
     description: "Sucesfully Synced Data",

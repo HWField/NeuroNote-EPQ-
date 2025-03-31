@@ -52,7 +52,7 @@ export const useTabStore = defineStore("tabStore", () => {
 
   // Add a new tab
   function addTab(title, type, state = null) {
-
+    useUserStore().saveUser({ tabs: Array.from(tabs.value) });
     const id = Date.now();
     // const component = type === "cytoscape" ? markRaw(Cytoscape) : null; // Add other components as needed
     let component;
@@ -116,33 +116,30 @@ export const useTabStore = defineStore("tabStore", () => {
   // Set active tab
   function setActiveTab(id) {
     activeTab.value = id;
+    useUserStore().saveUser({ tabs: Array.from(tabs.value) });
   }
 
-  // function FetchTabs(){
-  //   tabs.value = newTabs;
-  // }
-
-  async function FetchTabs() {
-    if (useUserStore().isAuthenticated) {
-      try {
-        const response = await axios.post("/load", {
-          operation: "tabs",
-        });
+  // async function FetchTabs() {
+  //   if (useUserStore().isAuthenticated) {
+  //     try {
+  //       const response = await axios.post("/load", {
+  //         operation: "tabs",
+  //       });
      
 
-        if (response.data.length > 0) {
-          tabs.value = response.data;
-        }
-        else 
-        {
-          tabs.value = cloneDeep(defaultTabs);
-        }
+  //       if (response.data.length > 0) {
+  //         tabs.value = response.data;
+  //       }
+  //       else 
+  //       {
+  //         tabs.value = cloneDeep(defaultTabs);
+  //       }
  
-      } catch (error) {
-        console.error("Error fetching graph data:", error);
-      }
-    }
-  }
+  //     } catch (error) {
+  //       console.error("Error fetching graph data:", error);
+  //     }
+  //   }
+  // }
 
   async function SendTabs() {
     try {
@@ -181,7 +178,7 @@ export const useTabStore = defineStore("tabStore", () => {
     removeTab,
     clearStore,
     GetActiveTabID,
-    FetchTabs,
+    // FetchTabs,
     SendTabs,
     RenameTab
   };

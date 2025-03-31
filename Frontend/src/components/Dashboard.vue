@@ -1,6 +1,7 @@
 <script setup>
 import Cytoscape from "@/components/Cytoscape.vue";
 import { useUserStore } from "@/stores/useUserStore";
+import { useGraphStore } from "@/stores/useGraphStore";
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { Calendar } from "@/components/ui/calendar";
 import { Settings } from "lucide-vue-next";
@@ -12,6 +13,7 @@ import { useTabStore } from "@/stores/useTabStore";
 const tabStore = useTabStore();
 
 const userStore = useUserStore();
+const graphStore = useGraphStore();
 
 const screenSize = ref("small");
 let active = false;
@@ -33,7 +35,9 @@ const handleFilterChange = (newFilters) => {
 const OpenNote = (noteId) => {
   const Id = noteId.split("_")[1];
   console.error("Note selected", Id);
-  tabStore.addTab("Note View", "generic", { view: "note", noteId: Id });
+  const note = graphStore.elements.find((el) => el.id === parseInt(Id));
+  const noteName = note ? note.name : `Note: ${Id}`;
+  tabStore.addTab(noteName, "generic", { view: "note", noteId: Id });
 };
 
 const updateScreenSize = () => {
@@ -61,13 +65,27 @@ onBeforeUnmount(() => {
   active = false;
 });
 
-const mockNotes = ref([
-  { id: 1, title: "Note 1", content: "Content for note 1" },
-  { id: 2, title: "Note 2", content: "Content for note 2" },
-  { id: 3, title: "Note 3", content: "Content for note 3" },
-  { id: 4, title: "Note 4", content: "Content for note 4" },
-  { id: 5, title: "Note 5", content: "Content for note 5" },
-]);
+const recentNotes = computed(() => {
+  // Check if userStore.recentNotes exists and has items
+  if (!userStore.recentNotes || userStore.recentNotes.length === 0) {
+    return [];
+  }
+
+  return userStore.recentNotes.map((noteId) => {
+    // Safely check if graphStore and elements exist
+    const noteElement =
+      graphStore.elements && graphStore.elements.find
+        ? graphStore.elements.find(
+            (el) => el.type === "note" && el.id === noteId
+          )
+        : null;
+
+    return {
+      id: noteId,
+      title: noteElement ? noteElement.name : `Note ${noteId}`,
+    };
+  });
+});
 </script>
 
 <template>
@@ -103,21 +121,60 @@ const mockNotes = ref([
 
       <!-- Right Column (Two Short Divs) -->
       <div class="w-1/2 h-full flex flex-col ml-2">
+        <!-- Update this div in the large layout -->
         <div
-          class="h-full bg-secondary border-gray-800 border-4 rounded-lg mb-2"
+          class="h-full max-h-[40vh] bg-secondary border-gray-800 border-4 rounded-lg mb-2 flex flex-col"
         >
           <h1 class="text-2xl font-bold m-5">Recent Notes:</h1>
-          <ScrollArea class="overflow-y-auto">
-            <ul>
-              <li
-                v-for="note in mockNotes.slice(0, 5)"
-                :key="note.id"
-                class="m-2 p-2 rounded bg-primary text-secondary"
-              >
-                {{ note.title }}
-              </li>
-            </ul>
-          </ScrollArea>
+          <div class="flex-1 overflow-hidden  px-5 pb-5">
+            <ScrollArea
+              className="h-full"
+              style="
+                --scrollbar-thumb: rgb(255, 0, 0);
+                --scrollbar-track: rgba(var(--secondary-foreground), 0.2);
+                --scrollbar-thumb: rgb(var(--destructive));
+                --scrollbar-track: rgba(var(--secondary-foreground), 0.2);
+              "
+            >
+              <ul class="pr-4 space-y-2">
+                <li
+                  v-for="(note, index) in recentNotes"
+                  :key="note.id"
+                  @click="OpenNote(`note_${note.id}`)"
+                  class="p-3 rounded-md bg-primary/90 text-secondary shadow-sm border border-primary/20 cursor-pointer transition-all duration-200 hover:bg-primary hover:shadow-md hover:scale-[1.01] flex items-center"
+                >
+                  <div
+                    class="mr-3 flex-shrink-0 w-6 h-6 bg-secondary-foreground rounded-full flex items-center justify-center text-xs font-semibold text-secondary"
+                  >
+                    {{ index + 1 }}
+                  </div>
+                  <div class="mr-3 flex-shrink-0">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="lucide lucide-file-text"
+                    >
+                      <path
+                        d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+                      />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" x2="8" y1="13" y2="13" />
+                      <line x1="16" x2="8" y1="17" y2="17" />
+                      <line x1="10" x2="8" y1="9" y2="9" />
+                    </svg>
+                  </div>
+                  <div class="truncate">{{ note.title }}</div>
+                </li>
+              </ul>
+            </ScrollArea>
+          </div>
         </div>
 
         <div
@@ -160,18 +217,56 @@ const mockNotes = ref([
     </div>
     <div class="flex w-full h-1/2 flex-grow">
       <div
-        class="w-1/2 bg-secondary rounded-lg 2 border-4 border-gray-800 mr-2"
+        class="w-1/2 max-h-[40vh] bg-secondary rounded-lg 2 border-4 border-gray-800 mr-2 flex flex-col"
       >
-        <h1 class="text-xl font-bold m-5">Recent Notes</h1>
-        <ul>
-          <li
-            v-for="note in mockNotes.slice(0, 5)"
-            :key="note.id"
-            class="m-2 p-2 rounded bg-primary text-secondary"
+        <h1 class="text-2xl font-bold m-5">Recent Notes:</h1>
+        <div class="flex-1 overflow-hidden px-5 pb-5">
+          <ScrollArea
+            className="h-full"
+            style="
+              --scrollbar-thumb: rgb(var(--primary));
+              --scrollbar-track: rgba(var(--secondary-foreground), 0.2);
+            "
           >
-            {{ note.title }}
-          </li>
-        </ul>
+            <ul class="pr-4 space-y-2">
+              <li
+                v-for="(note, index) in recentNotes"
+                :key="note.id"
+                @click="OpenNote(`note_${note.id}`)"
+                class="p-3 rounded-md bg-primary/90 text-secondary shadow-sm border border-primary/20 cursor-pointer transition-all duration-200 hover:bg-primary hover:shadow-md hover:scale-[1.01] flex items-center"
+              >
+                <div
+                  class="mr-3 flex-shrink-0 w-6 h-6 bg-secondary-foreground rounded-full flex items-center justify-center text-xs font-semibold text-secondary"
+                >
+                  {{ index + 1 }}
+                </div>
+                <div class="mr-3 flex-shrink-0">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="lucide lucide-file-text"
+                  >
+                    <path
+                      d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"
+                    />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" x2="8" y1="13" y2="13" />
+                    <line x1="16" x2="8" y1="17" y2="17" />
+                    <line x1="10" x2="8" y1="9" y2="9" />
+                  </svg>
+                </div>
+                <div class="truncate">{{ note.title }}</div>
+              </li>
+            </ul>
+          </ScrollArea>
+        </div>
       </div>
       <div
         class="w-1/2 bg-secondary rounded-lg 2 border-4 border-gray-800 ml-2"
@@ -203,12 +298,12 @@ const mockNotes = ref([
     <div
       class="w-full border-4 border-gray-800 bg-primary-foreground rounded-lg h-full overflow-hidden"
     >
-        <Cytoscape
-          v-if="active"
-          @note-selected="OpenNote"
-          :hasControls="true"
-          :tabId="1"
-        />
+      <Cytoscape
+        v-if="active"
+        @note-selected="OpenNote"
+        :hasControls="true"
+        :tabId="1"
+      />
     </div>
   </div>
 </template>

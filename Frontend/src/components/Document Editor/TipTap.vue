@@ -105,6 +105,7 @@ import {
 } from "lucide-vue-next";
 
 import { useGraphStore } from "@/stores/useGraphStore";
+import { useUserStore } from "@/stores/useUserStore";
 import axios, { getBaseUrl } from "../../axios.js";
 
 import { ref, onBeforeUnmount, watch } from "vue";
@@ -420,6 +421,7 @@ function focusTagsContainer() {
 
 onMounted(() => {
   LoadFromBackend();
+  useUserStore().addToRecentNotes(props.noteId);
   editor.chain().focus().run();
   // Add event listener for tag updates
   editor.on("update", () => {

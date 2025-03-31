@@ -758,27 +758,85 @@ def update():
         dbsession.commit()
         return jsonify({'status': 'success', 'message': '{type}: {id} name updated successfully.'})
         
+   
     elif operation == "user":
-        data = request.json
-        username = data.get('username')
-        email = data.get('email')
-        preferences = data.get('preferences')
+        print("########################## updating user data")
 
-        user = dbsession.query(User).filter_by(id=current_user).first()
-        user.preferences = preferences
-        user.username = username
-        user.email = email
- 
-        dbsession.commit()
-        return jsonify({'status': 'success', 'message': 'User preferences updated successfully.'})
+        try:
+            # Get the current user
+            user_id = get_jwt_identity()
+            user = dbsession.query(User).filter_by(id=user_id).first()
+
+            print("########################## REQUEST JSON:", request.json)
+
+            if not user:
+                return jsonify({'status': 'error', 'message': 'User not found'}), 404
+                
+            # Fix for issue: create a working copy of preferences
+            preferences = dict(user.preferences) if user.preferences is not None else {}
+                
+            # Check for username update
+            if 'username' in request.json:
+                user.username = request.json['username']
+                
+            # Check for email update
+            if 'email' in request.json:
+                user.email = request.json['email']
+                
+            # Check for preferences update
+            if 'preferences' in request.json:
+                print(f"Updating preferences with: {request.json['preferences']}")
+                preferences.update(request.json['preferences'])
+                
+            
+            if 'theme' in request.json:
+                preferences['theme'] = request.json['theme']
+                print(f"Updated user preferences: {preferences}")
+                
+            # Check for tabs update
+            if 'tabs' in request.json:
+                preferences['tabs'] = request.json['tabs']
+                print(f"Updated user preferences: {preferences}")
+                
+            # Check for recent notes update
+            if 'recentNotes' in request.json:
+                print(f"Updating recent notes with: {request.json['recentNotes']}")
+                preferences['recentNotes'] = request.json['recentNotes']
+                print(f"Updated user preferences: {preferences}")
+                
+            # IMPORTANT: This flags the entire preferences object as changed
+            user.preferences = preferences
+
+            # Commit changes and ensure they persist
+            dbsession.commit()
+
+            # Verify the data was saved by re-querying
+            dbsession.refresh(user)
+            print(f"User preferences after update: {user.preferences}")
+
+            return jsonify({
+                'status': 'success',
+                'message': 'User data updated successfully',
+                'preferences': user.preferences
+            })
+
+        except Exception as e:
+            dbsession.rollback()
+            print(f"Error updating user data: {e}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'status': 'error', 'message': f'Failed to update user data: {str(e)}'}), 500
     
-    elif operation == "tabs":
-        data = request.json
-        tabs = data.get('tabs')
-        user = dbsession.query(User).filter_by(id=current_user).first()
-        user.tabs = tabs
-        dbsession.commit()
-        return jsonify({'status': 'success', 'message': 'User tabs updated successfully.'})
+    
+    
+    # elif operation == "tabs":
+    #     data = request.json
+    #     tabs = data.get('tabs')
+    #     user = dbsession.query(User).filter_by(id=current_user).first()
+    #     user.tabs = tabs
+    #     dbsession.commit()
+    #     return jsonify({'status': 'success', 'message': 'User tabs updated successfully.'})
+    
       
 @app.route('/load', methods=['POST'])
 # @login_required
@@ -826,81 +884,7 @@ def load():
         
         return jsonify(elements=elements)
     
-    # elif operation == "search": 
-    #     query = data.get('query')
-        
-    #     def get_descendants(tag):
-    #         """Recursively fetch all descendant tags."""
-    #         descendants = []
-    #         for child in tag.children:
-    #             descendants.append(child)
-    #             descendants.extend(get_descendants(child))
-    #         return descendants
-
-    #     elements = []
-    #     processed_tags = set()  # Keep track of added tags
-    #     processed_notes = set()  # Keep track of added notes
-
-    #     # Find tags matching the query
-    #     matched_tags = dbsession.query(Tag).filter(and_(
-    #     Tag.user_id == current_user,  # Match the current user's tags
-    #     Tag.name.ilike(f"%{query}%"))).all()
-
-    #     # Process each matched tag and its descendants
-    #     for tag in matched_tags:
-    #         all_tags = [tag] + get_descendants(tag)  # Include the tag and its descendants
-
-    #         for current_tag in all_tags:
-    #             # Add tag to elements if not already processed
-    #             if current_tag.id not in processed_tags:
-    #                 elements.append({
-    #                     'id': current_tag.user_specific_id,
-    #                     'name': current_tag.name,
-    #                     'children': [child.user_specific_id for child in current_tag.children],
-    #                     'notes': [note.user_specific_id for note in current_tag.notes],
-    #                     'type': "tag",
-    #                     'data': {
-    #             'x': current_tag.x,
-    #             'y': current_tag.y,
-    #             'colour': current_tag.colour,
-    #         }
-    #                 })
-    #                 processed_tags.add(current_tag.id)
-
-    #             # Add notes associated with this tag
-    #             for note in current_tag.notes:
-    #                 if note.id not in processed_notes:
-    #                     elements.append({
-    #                         'id': note.user_specific_id,
-    #                         'name': note.name,
-    #                         'tags': [], #don't include tags for notes to prevent errors as tries to link to non existent tags
-    #                         'type': "note",
-    #                         'data': {
-    #             'x': note.x,
-    #             'y': note.y,
-    #             'colour': note.colour,
-    #         }
-    #                     })
-    #                     processed_notes.add(note.id)
-    #     matched_notes = dbsession.query(Note).filter(and_(Note.user_id == current_user, Note.name.ilike(f"%{query}%"))).all()
-        
-    #     for note in matched_notes:
-    #         if note.id not in processed_notes:
-    #             elements.append({
-    #                 'id': note.user_specific_id ,
-    #                 'name': note.name,
-    #                 'tags': [tag.id for tag in note.tags],
-    #                 'type': "note",
-    #                 'format': note.format,
-    #                 'data': {
-    #             'x': note.x,
-    #             'y': note.y,
-    #             'colour': note.colour,
-    #         }
-    #             })
-    #             processed_notes.add(note.id)
-    #     print(elements)
-    #     return jsonify(elements=elements)
+    
         
     elif operation == "content":
         note_id = data.get('id')
