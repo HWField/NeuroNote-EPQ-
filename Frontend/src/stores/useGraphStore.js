@@ -276,14 +276,48 @@ export const useGraphStore = defineStore("graphStore", () => {
       note.name = newName;
     }
   }
-
-  // Update the tags of a note in the store
-  function updateNoteTags(noteId, tagIds) {
-    const note = this.elements.find((el) => el.id === parseInt(noteId));
-    if (note) {
-      note.tags = tagIds;
-    }
+// Add this new function to the returned object in useGraphStore
+function replaceNoteTags(noteId, tagIds) {
+  const noteKey = `note_${noteId}`;
+  const existingNote = elements.value.find(el => el.id === parseInt(noteId) && el.type === 'note');
+  
+  if (!existingNote) {
+    console.error(`Note with id ${noteId} not found`);
+    return;
   }
+  
+  // Step 1: Get existing tags for this note
+  const existingTags = existingNote.tags || [];
+  
+  // Step 2: Remove all existing tag edges
+  existingTags.forEach(tagId => {
+    DeleteEdge(`tag_${tagId}`, noteKey);
+  });
+  
+  // Step 3: Create new edges for each tag
+  tagIds.forEach(tagId => {
+    CreateEdge(`tag_${tagId}`, noteKey);
+  });
+  
+  // Step 4: Update the in-memory note's tags
+  // updateNoteTags(noteId, tagIds);
+  
+  // Step 5: Send the updated tags to the backend
+  // axios.post("/update", {
+  //   operation: "tags",
+  //   id: noteId,
+  //   tags: tagIds
+  // }).catch(error => {
+  //   console.error("Error updating note tags:", error);
+  // });
+}
+  // Update the tags of a note in the store
+  // function updateNoteTags(noteId, tagIds) {
+  //   const note = this.elements.find((el) => el.id === parseInt(noteId));
+  //   if (note) {
+  //     note.tags = tagIds;
+  //   }
+  // }
 
   return {
     elements,
@@ -292,7 +326,7 @@ export const useGraphStore = defineStore("graphStore", () => {
     updatePositions,
     resetGraph,
     updateNoteName,
-    updateNoteTags,
+    replaceNoteTags,
     addNode,
     RenameNode,
     DeleteNode,

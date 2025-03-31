@@ -71,6 +71,7 @@ import { SmilieReplacer } from "@/components/Document Editor/SymbolReplacer.ts";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Extension } from "@tiptap/core";
 import { Node } from "@tiptap/core";
+import NoteHeader from "@/components/Document Editor/NoteHeader.vue";
 import { Button } from "@/components/ui/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -134,6 +135,13 @@ const focusEditor = (event) => {
     editor.chain().focus().run();
   }
 };
+
+const handleHeaderEnter = () => {
+  focusEditor(); // Call focusEditor without an event
+};
+
+const noteTitle = ref("Untitled Note");
+const noteTags = ref([]);
 
 // Add to your imports at the top
 import { Camera } from "lucide-vue-next"; // You already have UploadIcon
@@ -286,34 +294,20 @@ function extractTagsFromDocument(document) {
 
 function SaveToBackend() {
   let noteContent = editor.getJSON();
-  let noteName = "Untitled Note";
-  const tags = extractTagsFromDocument(noteContent);
-  if (noteContent && noteContent.content && noteContent.content.length > 0) {
-    const titleNode = noteContent.content[0];
-
-    // Extract text content from title node without mentions
-    if (titleNode.content) {
-      noteName = titleNode.content
-        .filter((item) => item.type !== "mention")
-        .map((item) => item.text || "")
-        .join("")
-        .trim();
-
-      // Use default if title is empty after removing mentions
-      if (!noteName) {
-        noteName = "Untitled Note";
-      }
-    }
-  }
-
+  // Use the noteTitle ref instead of extracting from content
+  const title = noteTitle.value || "Untitled Note";
+  // Use the noteTags ref instead of extracting from content
+  const tags = noteTags.value;
+  
   const graphStore = useGraphStore();
-  graphStore.updateNoteName(props.noteId, noteName);
+  graphStore.updateNoteName(props.noteId, title);
+  graphStore.replaceNoteTags(props.noteId, tags);
   axios
     .post("/update", {
       operation: "content",
-      name: noteName,
+      name: title,
       content: noteContent,
-      tags: tags, // Send the extracted tags
+      tags: tags,
       id: props.noteId,
     })
     .catch((error) => {
@@ -328,95 +322,32 @@ function LoadFromBackend() {
       operation: "content",
     })
     .then((response) => {
-      // Clone the content to avoid direct mutation
-      const content = JSON.parse(JSON.stringify(response.data.content));
-
-      // Set content first
-      if (content != []) {
-        editor.commands.setContent(content);
+      // Set the title in our ref
+      noteTitle.value = response.data.name || "Untitled Note";
+      
+      // Extract tags if they exist in the response
+      if (response.data.tags) {
+        noteTags.value = response.data.tags;
+      } else {
+        // If no tags in response, extract them from content
+        noteTags.value = extractTagsFromDocument(response.data.content);
       }
-      // Wait for content to be properly set
-      setTimeout(() => {
-        try {
-          if (response.data.name) {
-            // Make sure we can find the title node
-
-            const titleNode = editor.state.doc.content.firstChild;
-
-            if (titleNode && titleNode.type.name === "title") {
-              // Now safely select and modify the titles
-              console.error("titleNode", titleNode);
-              if (response.data.name == "Untitled Note" || response.data.name == "Untitled Note ") {
-                editor
-                  .chain()
-                  .focus()
-                  .setNodeSelection(1)
-                  .deleteSelection()
-
-                  .run();
-              } else {
-            
-              editor
-                .chain()
-                .focus()
-                .setNodeSelection(1)
-                .deleteSelection()
-                .insertContent({
-                  type: "title",
-                  content: [
-                    { type: "text", text: response.data.name },
-                    { type: "text", text: " " },
-                  ],
-                })
-                .run();
-            }
-          }
-          }
-          // const titleNodeSize = editor.state.doc.content.firstChild?.nodeSize || 0;
-          // const pos = titleNodeSize + 1; // Position right after the title node
-          
-          // // Insert tags container with three sample mentions
-          // editor.chain()
-          //   .insertContentAt(pos, {
-          //       type: "paragraph",
-          //     content: [
-          //       {
-          //         type: "mention",
-          //         attrs: { id: "tag1", label: "ProjectA" }
-          //       },
-          //       { type: "text", text: " " },
-          //       {
-          //         type: "mention",
-          //         attrs: { id: "tag2", label: "Important" }
-          //       },
-          //       { type: "text", text: " " },
-          //       {
-          //         type: "mention",
-          //         attrs: { id: "tag3", label: "InProgress" }
-          //       }
-          //     ]
-          //   })
-          //   .run();
-          // editor.commands.focus("end");
-        } catch (e) {
-          console.error("Error updating title:", e);
-        }
-      }, 10); // Small delay to ensure content is set
+      
+      // Set content
+      if (response.data.content) {
+        editor.commands.setContent(response.data.content);
+      }
     });
 }
 
-function focusTagsContainer() {
-  editor.state.doc.descendants((node, pos) => {
-    if (node.type.name === "tagsContainer") {
-      editor
-        .chain()
-        .focus()
-        .setTextSelection(pos + 1)
-        .run();
-      return false;
-    }
-    return true;
-  });
+// Update title from the header component
+function updateNoteTitle(newTitle) {
+  noteTitle.value = newTitle;
+}
+
+// Update tags from the header component
+function updateNoteTags(newTags) {
+  noteTags.value = newTags;
 }
 
 onMounted(() => {
@@ -452,29 +383,10 @@ onBeforeUnmount(() => {
 });
 
 const CustomDocument = Document.extend({
-  content: "title block+",
+  content: "block+",
 });
 
-const Title = Heading.extend({
-  name: "title",
-  marks: "",
-  group: "title",
-  content: "inline*",
-  defining: true,
-  selectable: false,
 
-  parseHTML() {
-    return [{ tag: "div.note-title-container h1" }, { tag: "h1:first-child" }];
-  },
-
-  renderHTML({ HTMLAttributes }) {
-    return [
-      "div",
-      { class: "note-title-container" },
-      ["h1", HTMLAttributes, 0],
-    ];
-  },
-}).configure({ levels: [1] });
 
 
 
@@ -497,7 +409,7 @@ let editor = new Editor({
     Heading,
     Underline,
     Text,
-    Title,
+
     TaskList,
     TaskItem.configure({
       nested: true,
@@ -756,12 +668,7 @@ let editor = new Editor({
       class: "",
     },
   },
-  content: `
-  <div class="note-title-container">
-    <h1>Untitled Note</h1>
-  </div>
-  <p></p>
-`,
+  content: '<p></p>',
 });
 </script>
 
@@ -1198,6 +1105,14 @@ let editor = new Editor({
         class="editor w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-y-auto bg-primary-foreground rounded-lg border border-input m-4"
         @click="focusEditor"
       >
+      <NoteHeader
+          :initial-title="noteTitle"
+          :initial-tags="noteTags"
+          @update:title="updateNoteTitle"
+          @update:tags="updateNoteTags"
+          @enter-pressed="handleHeaderEnter" 
+          class="px-4 pt-4"
+        />
         <editor-content class="p-4" :editor="editor" />
       </ScrollArea>
     </div>
