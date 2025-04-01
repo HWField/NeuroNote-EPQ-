@@ -32,7 +32,9 @@ onUnmounted(() => {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(20, 15, 30, 0.8); /* Darker background with purple tint */
+  /* background-color: rgba(20, 15, 30, 0.8); Darker background with purple tint */
+  @apply bg-[rgba(245,240,255,0.85)] dark:bg-[rgba(20,15,30,0.8)];
+  /* bg-[rgba(245,240,255,0.85)] */
   display: flex;
   justify-content: center;
   align-items: center;

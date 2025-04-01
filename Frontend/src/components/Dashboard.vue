@@ -16,7 +16,7 @@ const userStore = useUserStore();
 const graphStore = useGraphStore();
 
 const screenSize = ref("small");
-let active = false;
+let active = ref(false);
 
 const activeFilters = ref([]);
 const tabData = computed(() => {

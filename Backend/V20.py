@@ -10,7 +10,9 @@ from sqlalchemy.orm import sessionmaker, relationship, backref, scoped_session, 
 from flask_jwt_extended import (
     JWTManager, create_access_token, jwt_required, get_jwt_identity
 )
-
+from datetime import datetime
+from sqlalchemy import DateTime
+from sqlalchemy.sql import func
 from flask import Flask, render_template, request, jsonify, flash, redirect, url_for, session
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -160,8 +162,38 @@ class User(Base, UserMixin):
     preferences = Column(JSONB, default={})  # JSONB column for storing user preferences
     tabs = Column(JSONB, default={})  # JSONB column for storing user tabs
 
+class Feedback(Base):
+    __tablename__ = 'feedback'
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True)  # Can be null for anonymous feedback
+    
+    # Basic feedback data
+    rating = Column(Integer, CheckConstraint('rating >= 1 AND rating <= 5'), nullable=False)
+    category = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+    
+    # Screenshot IDs (stored as JSONB array)
+    screenshot_ids = Column(JSONB, default=[])
+    
+    # Metadata
+    created_at = Column(DateTime, default=func.now())
+    status = Column(String, default="unread")  # unread, read, responded, closed
+    
+    # Relationship to user
+    user = relationship('User', backref=backref('feedback', lazy='dynamic'))
+    
+    def __init__(self, rating, category, message, user_id=None, name=None, email=None, screenshot_ids=None):
+        self.rating = rating
+        self.category = category
+        self.message = message
+        self.user_id = user_id
+        self.screenshot_ids = screenshot_ids or []
+
+
 # Create the tables if they don't exist
 Base.metadata.create_all(engine)
+
 
 
 def populate_sample_data():
@@ -919,8 +951,102 @@ def load():
     
     
  # Add image upload endpoint
+ 
+@app.route('/feedback', methods=['POST'])
+@jwt_required(optional=True)  # Make JWT optional to allow anonymous feedback
+def feedback():
+    try:
 
+        # JSON data
+        data = request.json
+        rating = int(data.get('rating'))
+        category = data.get('category')
+        message = data.get('message')
+        screenshots_data = data.get('screenshots', {})
+        
+        # Get current user if authenticated
+        try:
+            current_user_id = get_jwt_identity()
+        except:
+            current_user_id = None
+        
+        # Validate required fields
+        if not rating or not category or not message:
+            return jsonify({'status': 'error', 'message': 'Missing required fields'}), 400
+        
+        # Create new feedback entry
+        new_feedback = Feedback(
+            rating=rating,
+            category=category,
+            message=message,
+            user_id=current_user_id,
+            screenshot_ids=[]  # Initialize with empty array
+        )
+        
+        dbsession.add(new_feedback)
+        dbsession.flush()  # Get the ID without committing
+        
+        screenshot_ids = []
+        
+        # Handle screenshots if provided in form data
+         # Create feedback screenshots folder if it doesn't exist
+        screenshots_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'feedback')
+        if not os.path.exists(screenshots_folder):
+            os.makedirs(screenshots_folder)
+        
+        # Process screenshots from JSON (base64 encoded)
+        for key, base64_data in screenshots_data.items():
+            try:
+                # Extract the actual base64 data (remove metadata)
+                if ',' in base64_data:
+                    format_data, base64_string = base64_data.split(',', 1)
+                else:
+                    base64_string = base64_data
+                
+                # Get file extension from mimetype
+                file_ext = '.png'  # Default to png
+                if 'image/jpeg' in format_data:
+                    file_ext = '.jpg'
+                elif 'image/gif' in format_data:
+                    file_ext = '.gif'
+                
+                # Generate filename
+                filename = f"feedback_{new_feedback.id}_{uuid.uuid4()}{file_ext}"
+                file_path = os.path.join(screenshots_folder, filename)
+                
+                # Decode base64 and save as image
+                import base64
+                img_data = base64.b64decode(base64_string)
+                with open(file_path, 'wb') as f:
+                    f.write(img_data)
+                
+                # Add filename to list
+                screenshot_ids.append(filename)
+            except Exception as e:
+                print(f"Error processing screenshot {key}: {e}")
+        
+        # Update the feedback record with screenshot IDs
+        new_feedback.screenshot_ids = screenshot_ids
+        
+        dbsession.commit()
+        
+        return jsonify({
+            'status': 'success', 
+            'message': 'Feedback submitted successfully',
+            'feedback_id': new_feedback.id
+        }), 201
+        
+    except Exception as e:
+        dbsession.rollback()
+        print(f"Error saving feedback: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'status': 'error', 'message': 'Failed to save feedback'}), 500
 
+# Helper function to check allowed file types
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 

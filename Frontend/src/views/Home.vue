@@ -9,7 +9,7 @@ import Cytoscape from "@/components/Cytoscape.vue";
 import tabview from "@/components/GenericTab.vue";
 import Note from "@/components/Note.vue";
 import LightDark from "@/components/LightDark.vue";
-
+import TreeView from "@/components/TreeView/TreeView.vue";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Toaster from "@/components/ui/toast/Toaster.vue";
@@ -89,6 +89,7 @@ import {
   MessagesSquare,
   X,
   GripVertical,
+  MessageSquareText,
 } from "lucide-vue-next";
 import * as icons from "lucide-vue-next";
 
@@ -110,28 +111,26 @@ const { toast } = useToast();
 const tabStore = useTabStore();
 const userStore = useUserStore();
 
-
 watch(
   () => userStore.authenticated,
   (isAuthenticated) => {
     if (isAuthenticated === false) {
-       // Save the original route in the query parameters
-       const currentRoute = window.location.pathname;
+      // Save the original route in the query parameters
+      const currentRoute = window.location.pathname;
       // window.location.replace(`login?redirect=${encodeURIComponent(currentRoute)}`);
-      router.push({ 
-        path: '/login', 
-        query: { redirect: currentRoute }
+      router.push({
+        path: "/login",
+        query: { redirect: currentRoute },
       });
     }
   },
   { immediate: true } // Check immediately when component mounts
 );
 
-
 const tabs = computed(() => tabStore.tabs);
 const activeTab = computed(() => tabStore.activeTab);
-const filteredTabs = computed(() =>
-  tabs.value.filter((tab) => tab.id !== 0 && tab.id !== 1 && tab.id !== 2) //remove loading, dashboard and chat tabs
+const filteredTabs = computed(
+  () => tabs.value.filter((tab) => tab.id !== 0 && tab.id !== 1 && tab.id !== 2) //remove loading, dashboard and chat tabs
 );
 
 const activeTabKey = computed(() => `${activeTab.value}-${Date.now()}`);
@@ -150,23 +149,29 @@ function switchTab(id) {
   tabStore.setActiveTab(id);
 }
 
-
-function openNewTab() {
+function openNewTab(tabType) {
   // Example: Adding a new tab dynamically
-  tabStore.addTab("New Tab:", "generic");
+  if (tabType === "generic") {
+    console.error("Generic tab type is not implemented yet.");
+    tabStore.addTab("New Tab:", "generic");
+  } else if (tabType === "Settings") {
+    tabStore.addTab("Settings", "settings");
+    // tabStore.addTab("New Tab:", "generic");
+  } else if (tabType === "Feedback") {
+    tabStore.addTab("Feedback", "feedback");
+  } 
 }
 
 async function Sync() {
-let currentTab = useTabStore().GetActiveTabID();
+  let currentTab = useTabStore().GetActiveTabID();
 
-useTabStore().setActiveTab(0) 
-useGraphStore().resetGraph();
-await useGraphStore().fetchGraph();
-useTabStore().setActiveTab(currentTab);
-await useUserStore().FetchUser();
+  useTabStore().setActiveTab(0);
+  useGraphStore().resetGraph();
+  await useGraphStore().fetchGraph();
+  useTabStore().setActiveTab(currentTab);
+  await useUserStore().FetchUser();
 
-
-toast({
+  toast({
     title: "Success",
     description: "Sucesfully Synced Data",
     variant: "success",
@@ -396,7 +401,7 @@ function handleOpenChange() {
           <SidebarGroupLabel>Tabs:</SidebarGroupLabel>
 
           <!-- Add new tab button -->
-          <SidebarGroupAction title="Add Tab" @click="openNewTab">
+          <SidebarGroupAction title="Add Tab" @click="openNewTab('generic')">
             <Plus /> <span class="sr-only">Add Tab</span>
           </SidebarGroupAction>
 
@@ -420,6 +425,22 @@ function handleOpenChange() {
             </SidebarGroupContent>
           </ScrollArea>
         </SidebarGroup>
+        <!-- 
+        <SidebarSeparator />
+
+        <SidebarGroup class="flex flex-col h-full overflow-hidden">
+          <SidebarGroupLabel>Tree:</SidebarGroupLabel>
+
+          <SidebarGroupAction title="Add Tab" @click="openNewTab">
+            <Plus /> <span class="sr-only">Add Tab</span>
+          </SidebarGroupAction>
+
+          <ScrollArea class="flex-1 min-h-0 overflow-y-auto">
+            <SidebarGroupContent>
+              <tree-view />
+            </SidebarGroupContent>
+          </ScrollArea>
+        </SidebarGroup> -->
       </SidebarContent>
 
       <SidebarFooter class="pb-[40px] md:pb-0"
@@ -481,13 +502,20 @@ function handleOpenChange() {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem @click="openNewTab('Feedback')">
+                    <MessageSquareText />
+                    Feedback
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem @click="openNewTab('Settings')">
                     <Settings />
                     Settings
                   </DropdownMenuItem>
 
                   <DropdownMenuItem @click="Sync()">
-                    <RefreshCcw/>
+                    <RefreshCcw />
                     Sync
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
@@ -510,7 +538,7 @@ function handleOpenChange() {
         <div class="flex items-center">
           <SidebarTrigger class="ml-1" />
           <Separator orientation="vertical" class="mx-2" />
-            <span class="text-lg font-semibold">{{ activeTab.title }}</span>
+          <span class="text-lg font-semibold">{{ activeTab.title }}</span>
 
           <div class="absolute top-4 right-4">
             <LightDark class="bg-white p-4 rounded-lg shadow-lg"></LightDark>

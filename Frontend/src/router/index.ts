@@ -4,6 +4,7 @@ import AuthenticationView from '@/views/Authentication.vue'
 import Error from '@/views/Error.vue'
 import { useUserStore } from "@/stores/useUserStore";
 
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [

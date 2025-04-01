@@ -8,6 +8,8 @@ import Chat from "@/components/Chat.vue";
 // import Note from "@/components/Note.vue";
 import { cloneDeep } from "lodash"; // Install lodash first
 import GenericTab from "@/components/GenericTab.vue";
+import Settings from "@/components/Settings.vue";
+import Feedback from "@/components/Feedback.vue";
 import axios from "../axios"; // Import the Axios instance
 import { useUserStore } from "@/stores/useUserStore";
 
@@ -18,6 +20,8 @@ export const useTabStore = defineStore("tabStore", () => {
     Dashboard: markRaw(Dashboard),
     Chat: markRaw(Chat),
     GenericTab: markRaw(GenericTab),
+    Settings: markRaw(Settings),
+    Feedback: markRaw(Feedback),
   };
   const defaultTabs = [
     {
@@ -47,53 +51,80 @@ export const useTabStore = defineStore("tabStore", () => {
         userData: {},
       },
     },
-    // {
-    //   id: 3,
-    //   title: "DemoTab",
-    //   component: markRaw(GenericTab),
-    //   type: "generic", // Regular tab type
-    //   state: {view: "graph", noteId: null},
-    // },
   ];
 
   const tabs = ref(cloneDeep(defaultTabs)); // Initialize tabs with default tabs
 
   // Add a new tab
   function addTab(title, type, state = null) {
-    if (state && state.noteId) {
-      // Find any existing tab that has this noteId
-      const existingTab = tabs.value.find(
-        (tab) => tab.state && tab.state.noteId === state.noteId
-      );
-
-      // If found, just activate that tab instead of creating a new one
-      if (existingTab) {
-        console.log(
-          `Note ${state.noteId} already open in tab ${existingTab.id} - switching to it`
-        );
-        setActiveTab(existingTab.id);
-        return; // Exit early - no need to create a new tab
-      }
-    }
-
     const id = Date.now();
     // const component = type === "cytoscape" ? markRaw(Cytoscape) : null; // Add other components as needed
     let component;
     switch (type) {
       case "generic":
       case "note":
+        if (state && state.noteId) {
+          // Find any existing tab that has this noteId
+          const existingTab = tabs.value.find(
+            (tab) => tab.state && tab.state.noteId === state.noteId
+          );
+
+          // If found, just activate that tab instead of creating a new one
+          if (existingTab) {
+            console.log(
+              `Note ${state.noteId} already open in tab ${existingTab.id} - switching to it`
+            );
+            setActiveTab(existingTab.id);
+            return; // Exit early - no need to create a new tab
+          }
+        }
+
         tabs.value.push({
           id,
           title,
-          ccomponentName: "GenericTab", // Store name for serialization
+          componentName: "GenericTab", // Store name for serialization
           component: componentMapping.GenericTab,
           type: "generic",
           state: state || { view: "graph", noteId: null },
         });
         break;
-      // case "settings":
-      // component = markRaw(Settings);
-      // break;
+
+      case "settings":
+        // Find any existing tab that is of type settings
+        const existingSettingsTab = tabs.value.find(
+          (tab) => tab.type === "settings"
+        );
+
+        if (existingSettingsTab) {
+          console.log(
+            `Settings already open in tab ${existingSettingsTab.id} - switching to it`
+          );
+          setActiveTab(existingSettingsTab.id);
+          return; // Exit early - no need to create a new tab
+        }
+
+        component = markRaw(Settings);
+        tabs.value.push({
+          id,
+          title,
+          componentName: "Settings", // Store name for serialization
+          component: componentMapping.Settings,
+          type: "settings",
+          state: state || {},
+        });
+        break;
+
+      case "feedback":
+        component = markRaw(Settings);
+        tabs.value.push({
+          id,
+          title,
+          componentName: "Feedback", // Store name for serialization
+          component: componentMapping.Feedback,
+          type: "feedback",
+          state: state || {},
+        });
+        break;
 
       // case "Help":
       // component = markRaw(Help);
