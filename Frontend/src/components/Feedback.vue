@@ -1,7 +1,9 @@
 <template>
-  <ScrollArea
-    class="editor w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-y-auto bg-primary-foreground rounded-lg border border-input m-4"
-  >
+  <div class="w-full h-full p-6">
+    <ScrollArea
+      class="editor w-full h-full overflow-y-auto bg-primary-foreground rounded-lg border border-input"
+    >
+  <!-- max-h-[calc(100vh-12rem)]  -->
     <div class="max-w-2xl mx-auto p-6">
       <Card class="w-full">
         <CardHeader>
@@ -193,13 +195,15 @@
       </Transition>
     </div>
   </ScrollArea>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeMount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 
 import axios from "../axios"; // Import the Axios instance
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useTabStore } from "@/stores/useTabStore";
 import { useToast } from "@/components/ui/toast/use-toast";
 import {
   Card,
@@ -245,6 +249,48 @@ const isValid = computed(() => {
   return rating.value > 0 && category.value && message.value.trim().length > 0;
 });
 
+const tabid = useTabStore().GetActiveTabID();
+onMounted(() => {
+  let tabid = useTabStore().GetActiveTabID();
+  console.error("Tab ID:", tabid);
+  const tab = useTabStore().getTab(tabid);
+  if (tab && tab.state) {
+    // Restore form values from tab state
+    rating.value = tab.state.rating || 0;
+    category.value = tab.state.category || "";
+    message.value = tab.state.message || "";
+    // includeAccount.value = tab.state.includeAccount !== undefined ? tab.state.includeAccount : true;
+    
+    // Restore screenshots if they exist
+    if (tab.state.screenshots && Array.isArray(tab.state.screenshots)) {
+      screenshots.value = [...tab.state.screenshots];
+    }
+  }
+});
+
+// Save state when component unmounts
+onBeforeUnmount(() => {
+  saveFormState();
+});
+
+// Save state when form values change
+// watch([rating, category, message, includeAccount, name, email, screenshots], () => {
+//   saveFormState();
+// }, { deep: true });
+
+// Function to save form state to tab store
+function saveFormState() {
+  useTabStore().updateTabState(tabid, {
+    rating: rating.value,
+    category: category.value,
+    message: message.value,
+    includeAccount: includeAccount.value,
+    name: name.value,
+    email: email.value,
+    screenshots: screenshots.value,
+  });
+}
+
 // Handle Screenshot Upload
 function handleFileUpload(event) {
   const files = event.target.files;
@@ -289,6 +335,7 @@ function resetForm() {
   name.value = "";
   email.value = "";
   screenshots.value = [];
+  saveFormState();
 }
 
 async function submitFeedback() {

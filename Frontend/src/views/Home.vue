@@ -90,6 +90,7 @@ import {
   X,
   GripVertical,
   MessageSquareText,
+  BookOpenText,
 } from "lucide-vue-next";
 import * as icons from "lucide-vue-next";
 
@@ -503,6 +504,13 @@ function handleOpenChange() {
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem @click="openNewTab('Feedback')">
+                    <BookOpenText />
+                    Tutorial
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem @click="openNewTab('Feedback')">
                     <MessageSquareText />
                     Feedback
                   </DropdownMenuItem>
@@ -532,7 +540,7 @@ function handleOpenChange() {
       <!-- <SidebarRail /> -->
     </Sidebar>
 
-    <SidebarInset class="overflow-hidden">
+    <SidebarInset class="overflow-hidden  h-screen flex flex-col">
       <!-- Header -->
       <header class="flex h-16 shrink-0 items-center gap-2 border-b">
         <div class="flex items-center">
@@ -557,7 +565,7 @@ function handleOpenChange() {
 
       <!-- Tab Content -->
       <!-- mx auto relative  -->
-      <div class="h-full w-full overflow-hidden">
+      <div class="flex-1 w-full overflow-hidden">
         <component
           :is="getActiveComponent"
           v-if="getActiveComponent"

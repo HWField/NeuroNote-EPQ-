@@ -23,10 +23,11 @@
         </div>
   
         <!-- Settings Content -->
-        <ScrollArea
-        class="editor w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-y-auto bg-primary-foreground rounded-lg border border-input m-4"
-       
-      >
+
+        <div class="w-full h-full p-6">
+          <ScrollArea
+      class="editor w-full h-full overflow-y-auto bg-primary-foreground rounded-lg border border-input"
+    >
         <div class="flex-1 overflow-y-auto p-6">
           <!-- Account Settings -->
           <div v-if="currentTab === 'account'" class="space-y-6">
@@ -323,6 +324,7 @@
           </div>
         </div>
         </ScrollArea>
+      </div>  
       </div>
     </div>
   </template>

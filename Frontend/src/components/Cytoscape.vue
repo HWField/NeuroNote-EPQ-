@@ -5,6 +5,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,7 +54,7 @@ let cy = null; // Reference for Cytoscape instance
 const props = defineProps({
   tabId: Number,
   hasControls: {
-    type: Boolean,
+    type: Boolean,  
     default: true,
   },
   externalFilters: {
@@ -1798,6 +1799,10 @@ onBeforeUnmount(() => {
 }
 </style>
 <template>
+   <div class="w-full h-full p-6">
+    <div
+      class="editor w-full h-full overflow-y-auto bg-primary-foreground rounded-lg border border-input"
+    >
   <div ref="navbarContainer" class="h-full w-full relative">
     <!-- Large toolbar -->
 
@@ -2025,4 +2030,6 @@ onBeforeUnmount(() => {
 
     <div id="cy" class="w-full h-full absolute"></div>
   </div>
+    </div>
+</div>
 </template>
