@@ -91,6 +91,8 @@ import {
   GripVertical,
   MessageSquareText,
   BookOpenText,
+  Globe,
+  NotepadText,
 } from "lucide-vue-next";
 import * as icons from "lucide-vue-next";
 
@@ -154,13 +156,13 @@ function openNewTab(tabType) {
   // Example: Adding a new tab dynamically
   if (tabType === "generic") {
     console.error("Generic tab type is not implemented yet.");
-    tabStore.addTab("New Tab:", "generic");
+    tabStore.addTab("Graph", "generic");
   } else if (tabType === "Settings") {
     tabStore.addTab("Settings", "settings");
     // tabStore.addTab("New Tab:", "generic");
   } else if (tabType === "Feedback") {
     tabStore.addTab("Feedback", "feedback");
-  } 
+  }
 }
 
 async function Sync() {
@@ -264,6 +266,23 @@ function setActiveTeam(team: (typeof data.teams)[number]) {
 }
 
 const open = ref(false);
+
+// Function to get icon for a tab
+function getTabIcon(tab) {
+  // Default to BookOpenText if no mapping exists
+
+  if (tab.type === "generic") {
+    if (tab.state.view === "graph") {
+      return Globe;
+    } else if (tab.state.view === "note") {
+      return NotepadText;
+    }
+  } else if (tab.type === "settings") {
+    return Settings;
+  } else if (tab.type === "feedback") {
+    return MessageSquareText;
+  }
+}
 
 const { Meta_J, Ctrl_J } = useMagicKeys({
   passive: false,
@@ -409,20 +428,24 @@ function handleOpenChange() {
           <!-- Tab List -->
           <ScrollArea class="flex-1 min-h-0 overflow-y-auto">
             <SidebarGroupContent>
-              <div
-                v-for="tab in filteredTabs"
-                :key="tab.id"
-                class="text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground flex items-center justify-between p-2 cursor-pointer rounded-md"
-                :class="{ 'bg-secondary': tab.id === activeTab }"
-                @click="switchTab(tab.id)"
-              >
-                <span class="truncate">{{ tab.title }}</span>
+              <SidebarMenu>
+                <SidebarMenuItem
+                  v-for="tab in filteredTabs"
+                  :key="tab.id"
+                  @click="switchTab(tab.id)"
+                  :class="{ 'bg-secondary': tab.id === activeTab }"
+                >
+                  <SidebarMenuButton>
+                    <component :is="getTabIcon(tab)" class="w-4 h-4" />
+                    <span class="truncate">{{ tab.title }}</span>
+                  </SidebarMenuButton>
 
-                <X
-                  @click.stop="closeTab(tab.id)"
-                  class="w-4 h-4 hover:text-red-700"
-                />
-              </div>
+                  <SidebarMenuAction @click.stop="closeTab(tab.id)">
+                    <X class="w-4 h-4 hover:text-red-700" />
+                    <span class="sr-only">Close Tab</span>
+                  </SidebarMenuAction>
+                </SidebarMenuItem>
+              </SidebarMenu>
             </SidebarGroupContent>
           </ScrollArea>
         </SidebarGroup>
@@ -540,7 +563,7 @@ function handleOpenChange() {
       <!-- <SidebarRail /> -->
     </Sidebar>
 
-    <SidebarInset class="overflow-hidden  h-screen flex flex-col">
+    <SidebarInset class="overflow-hidden h-screen flex flex-col">
       <!-- Header -->
       <header class="flex h-16 shrink-0 items-center gap-2 border-b">
         <div class="flex items-center">
@@ -565,14 +588,102 @@ function handleOpenChange() {
 
       <!-- Tab Content -->
       <!-- mx auto relative  -->
-      <div class="flex-1 w-full overflow-hidden">
+      <div class="flex-1 w-full overflow-auto">
+        <!-- <TransitionGroup name="tab-change" mode="out-in"> -->
         <component
           :is="getActiveComponent"
           v-if="getActiveComponent"
           :key="activeTabKey"
           :tab-id="activeTab"
         />
+        <!-- </TransitionGroup> -->
       </div>
     </SidebarInset>
   </SidebarProvider>
 </template>
+
+<style>
+/* Fade with slight slide effect */
+
+/* Slide and fade */
+/* .tab-change-enter-active,
+.tab-change-leave-active {
+  transition: all 0.25s ease-out;
+}
+
+.tab-change-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.tab-change-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+} */
+
+/* Zoom/scale effect */
+/* .tab-change-enter-active,
+.tab-change-leave-active {
+  transition: all 0.2s ease-out;
+}
+
+.tab-change-enter-from {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.tab-change-leave-to {
+  opacity: 0;
+  transform: scale(1.05);
+} */
+
+/* Vertical slide */
+/* .tab-change-enter-active,
+.tab-change-leave-active {
+  transition: all 0.2s ease;
+}
+
+.tab-change-enter-from {
+  opacity: 0;
+  transform: translateY(15px);
+}
+
+.tab-change-leave-to {
+  opacity: 0;
+  transform: translateY(-15px);
+} */
+
+/* Crossfade - good for dashboards */
+/* .tab-change-enter-active,
+.tab-change-leave-active {
+  transition: all 0.15s;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.tab-change-enter-active {
+  transition-delay: 0.15s;
+}
+
+.tab-change-enter-from,
+.tab-change-leave-to {
+  opacity: 0;
+} */
+
+/* Material design inspired */
+.tab-change-enter-active,
+.tab-change-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-change-enter-from {
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+}
+
+.tab-change-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+</style>

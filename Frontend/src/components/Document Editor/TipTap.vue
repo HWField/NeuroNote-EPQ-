@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { debounce } from 'lodash';
+import { debounce } from "lodash";
 import { Commands } from "@/components/Document Editor/commands.js";
 import CommandsList, {
   commands,
@@ -106,9 +106,10 @@ import {
 } from "lucide-vue-next";
 
 import { useGraphStore } from "@/stores/useGraphStore";
+import { useTabStore } from "@/stores/useTabStore";
 import { useUserStore } from "@/stores/useUserStore";
 import axios, { getBaseUrl } from "../../axios.js";
-
+import { useToast } from "@/components/ui/toast/use-toast";
 import { ref, onBeforeUnmount, watch } from "vue";
 import { onMounted } from "vue";
 import { set } from "@vueuse/core";
@@ -127,7 +128,8 @@ lowlight.register("json", json);
 lowlight.register("sql", sql);
 
 const props = defineProps({
-  noteId: Number || 31,
+  noteId: Number || 0,
+  tabId: Number || 0,
 });
 
 const focusEditor = (event) => {
@@ -142,7 +144,7 @@ const handleHeaderEnter = () => {
 
 const noteTitle = ref("Untitled Note");
 const noteTags = ref([]);
-
+const { toast } = useToast();
 // Add to your imports at the top
 import { Camera } from "lucide-vue-next"; // You already have UploadIcon
 
@@ -298,7 +300,7 @@ function SaveToBackend() {
   const title = noteTitle.value || "Untitled Note";
   // Use the noteTags ref instead of extracting from content
   const tags = noteTags.value;
-  
+
   const graphStore = useGraphStore();
   graphStore.updateNoteName(props.noteId, title);
   graphStore.replaceNoteTags(props.noteId, tags);
@@ -315,7 +317,7 @@ function SaveToBackend() {
     });
 }
 
-function LoadFromBackend() {
+async function LoadFromBackend() {
   axios
     .post("/load", {
       id: props.noteId,
@@ -324,7 +326,7 @@ function LoadFromBackend() {
     .then((response) => {
       // Set the title in our ref
       noteTitle.value = response.data.name || "Untitled Note";
-      
+
       // Extract tags if they exist in the response
       if (response.data.tags) {
         noteTags.value = response.data.tags;
@@ -332,17 +334,31 @@ function LoadFromBackend() {
         // If no tags in response, extract them from content
         noteTags.value = extractTagsFromDocument(response.data.content);
       }
-      
+
       // Set content
       if (response.data.content) {
         editor.commands.setContent(response.data.content);
       }
+    })
+    .catch((error) => {
+      // Display error toast
+      toast({
+        title: "Note not found",
+        description: "The requested note could not be loaded.",
+        variant: "destructive",
+      });
+      
+      // Close the note view
+      emit("note-closed");
+      
+      console.error("Error loading note:", error);
     });
 }
 
 // Update title from the header component
 function updateNoteTitle(newTitle) {
   noteTitle.value = newTitle;
+  useTabStore().RenameTab(props.tabId, newTitle); //update tab live
 }
 
 // Update tags from the header component
@@ -350,27 +366,21 @@ function updateNoteTags(newTags) {
   noteTags.value = newTags;
 }
 
-onMounted(() => {
-  LoadFromBackend();
+onMounted(async () => {
+  await LoadFromBackend();
   useUserStore().addToRecentNotes(props.noteId);
   editor.chain().focus().run();
   // Add event listener for tag updates
-  editor.on("update", () => {
-    // Extract tags from editor
-    // const tagIds = extractTagsFromDocument(editor.getJSON());
-    // Update the GraphStore
-    // const graphStore = useGraphStore();
-    // graphStore.updateNoteTags(props.noteId, tagIds);
-  });
+
   // event listener for the image modal
   eventBus.on("open-image-modal", openImageModal);
-  window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      emit('note-closed');
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      emit("note-closed");
     }
   });
-  //ful save every minute 
-setInterval(SaveToBackend(), 60000);
+  //full save every minute
+  setInterval(SaveToBackend(), 60000);
 });
 
 onBeforeUnmount(() => {
@@ -385,10 +395,6 @@ onBeforeUnmount(() => {
 const CustomDocument = Document.extend({
   content: "block+",
 });
-
-
-
-
 
 let editor = new Editor({
   //save every 5seconds to backend on modification
@@ -668,7 +674,7 @@ let editor = new Editor({
       class: "",
     },
   },
-  content: '<p></p>',
+  content: "<p></p>",
 });
 </script>
 
@@ -1105,12 +1111,12 @@ let editor = new Editor({
         class="editor w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-y-auto bg-primary-foreground rounded-lg border border-input m-4"
         @click="focusEditor"
       >
-      <NoteHeader
+        <NoteHeader
           :initial-title="noteTitle"
           :initial-tags="noteTags"
           @update:title="updateNoteTitle"
           @update:tags="updateNoteTags"
-          @enter-pressed="handleHeaderEnter" 
+          @enter-pressed="handleHeaderEnter"
           class="px-4 pt-4"
         />
         <editor-content class="p-4" :editor="editor" />

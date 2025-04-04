@@ -2,7 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/Home.vue'
 import AuthenticationView from '@/views/Authentication.vue'
 import Error from '@/views/Error.vue'
+import TreeView from '@/components/TreeView/TreeView.vue'
 import { useUserStore } from "@/stores/useUserStore";
+
 
 
 const router = createRouter({

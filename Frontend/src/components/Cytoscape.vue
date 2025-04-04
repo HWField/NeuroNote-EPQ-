@@ -1127,30 +1127,33 @@ function HandlecyClick(event) {
     const selectedNode = cy.$("node:selected");
     if (selectedNode.length === 1) {
       const currentName = selectedNode.data("label");
-      const newName = prompt("Enter new name for the node:", currentName);
-      if (newName !== null && newName.trim() !== "") {
-        fetch("/update", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            operation: "rename",
-            id: selectedNode.id(),
-            name: newName,
-            type: selectedNode.data("type"),
-          }),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.status === "success") {
-              selectedNode.data("label", newName);
-            }
-          })
-          .catch((error) => {
-            console.error("Error renaming node:", error);
-          });
-      }
+      let ele = selectedNode[0];
+          const node = ele;
+          RenameNode(node);
+      // const newName = prompt("Enter new name for the node:", currentName);
+      // if (newName !== null && newName.trim() !== "") {
+      //   fetch("/update", {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify({
+      //       operation: "rename",
+      //       id: selectedNode.id(),
+      //       name: newName,
+      //       type: selectedNode.data("type"),
+      //     }),
+      //   })
+      //     .then((response) => response.json())
+      //     .then((data) => {
+      //       if (data.status === "success") {
+      //         selectedNode.data("label", newName);
+      //       }
+      //     })
+      //     .catch((error) => {
+      //       console.error("Error renaming node:", error);
+      //     });
+      // }
     }
   } else if (event.key === "i") {
     Spotlight();
@@ -1799,9 +1802,9 @@ onBeforeUnmount(() => {
 }
 </style>
 <template>
-   <div class="w-full h-full p-6">
+   <!-- <div class="w-full h-full p-6"> -->
     <div
-      class="editor w-full h-full overflow-y-auto bg-primary-foreground rounded-lg border border-input"
+      class="editor w-full h-full overflow-y-auto "
     >
   <div ref="navbarContainer" class="h-full w-full relative">
     <!-- Large toolbar -->
@@ -2031,5 +2034,5 @@ onBeforeUnmount(() => {
     <div id="cy" class="w-full h-full absolute"></div>
   </div>
     </div>
-</div>
+<!-- </div> -->
 </template>

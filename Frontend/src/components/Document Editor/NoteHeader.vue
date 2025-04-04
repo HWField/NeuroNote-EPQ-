@@ -1,26 +1,31 @@
 <script setup>
-import { ref, onMounted, watch, nextTick, computed } from 'vue';
-import { useGraphStore } from '@/stores/useGraphStore';
+import { ref, onMounted, watch, nextTick, computed } from "vue";
+import { useGraphStore } from "@/stores/useGraphStore";
+import axios from "@/axios";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const props = defineProps({
   initialTitle: {
     type: String,
-    default: ''
+    default: "",
   },
   initialTags: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 });
 
-const emit = defineEmits(['update:title', 'update:tags', 'enter-pressed']);
+const tagInputFocused = ref(false);
+const isCreatingTag = ref(false);
+
+const emit = defineEmits(["update:title", "update:tags", "enter-pressed"]);
 const graphStore = useGraphStore();
 
 // Initialize title as empty string, let the placeholder handle "Untitled Note"
-const title = ref(props.initialTitle || '');
+const title = ref(props.initialTitle || "");
 const titleInputRef = ref(null);
 const selectedTags = ref([]);
-const tagInput = ref('');
+const tagInput = ref("");
 const tagSuggestions = ref([]);
 const showSuggestions = ref(false);
 const tagInputRef = ref(null);
@@ -29,10 +34,10 @@ const showAllTags = ref(false); // State to track if we should show all tags or 
 // Get available tags from GraphStore
 const availableTags = computed(() => {
   return graphStore.elements
-    .filter(el => el.type === 'tag')
-    .map(tag => ({
+    .filter((el) => el.type === "tag")
+    .map((tag) => ({
       id: tag.id,
-      label: tag.name
+      label: tag.name,
     }));
 });
 
@@ -44,16 +49,23 @@ onMounted(() => {
 });
 
 watch(() => props.initialTags, loadTags, { deep: true });
-watch(() => props.initialTitle, (newTitle) => {
-  // If the incoming title is "Untitled Note" or empty, use empty string
-  // This will make the placeholder visible
-  title.value = newTitle === 'Untitled Note' ? '' : (newTitle || '');
-}, { immediate: true });
+watch(
+  () => props.initialTitle,
+  (newTitle) => {
+    // If the incoming title is "Untitled Note" or empty, use empty string
+    // This will make the placeholder visible
+    title.value = newTitle === "Untitled Note" ? "" : newTitle || "";
+  },
+  { immediate: true }
+);
 
 async function loadTags() {
   // Use tags from GraphStore instead of separate API call
-  selectedTags.value = props.initialTags.map(tagId => {
-    const foundTag = availableTags.value.find(tag => tag.id === tagId) || { id: tagId, label: `Tag ${tagId}` };
+  selectedTags.value = props.initialTags.map((tagId) => {
+    const foundTag = availableTags.value.find((tag) => tag.id === tagId) || {
+      id: tagId,
+      label: `Tag ${tagId}`,
+    };
     return foundTag;
   });
 }
@@ -61,70 +73,129 @@ async function loadTags() {
 function updateTitle(e) {
   // Update local title with exactly what the user typed
   title.value = e.target.value;
-  
+
   // Emit the actual user input (could be empty string)
   // Let parent decide if it needs a fallback value
-  emit('update:title', title.value);
+  emit("update:title", title.value);
 }
 
 function handleTitleKeydown(e) {
-  if (e.key === 'Enter') {
+  if (e.key === "Enter") {
     e.preventDefault(); // Prevent default Enter behavior
-    emit('enter-pressed'); // Signal parent to focus editor
+    emit("enter-pressed"); // Signal parent to focus editor
   }
 }
 
-async function searchTags(e) {
+function searchTags(e) {
   if (tagInput.value.length > 0) {
     // Filter tags from GraphStore
-    tagSuggestions.value = availableTags.value
-      .filter(tag => 
+    tagSuggestions.value = availableTags.value.filter(
+      (tag) =>
         tag.label.toLowerCase().includes(tagInput.value.toLowerCase()) &&
-        !selectedTags.value.some(selected => selected.id === tag.id)
-      );
-    showSuggestions.value = true;
+        !selectedTags.value.some((selected) => selected.id === tag.id)
+    );
   } else {
-    showSuggestions.value = false;
+    // Show all available tags that aren't already selected
+    tagSuggestions.value = availableTags.value.filter(
+      (tag) => !selectedTags.value.some((selected) => selected.id === tag.id)
+    );
   }
+  showSuggestions.value = true;
+}
+
+function handleTagInputFocus() {
+  tagInputFocused.value = true;
+  // Show all available tags immediately when focused
+  searchTags();
+}
+
+function handleTagInputBlur(e) {
+  // Small delay to allow clicking on suggestions
+  setTimeout(() => {
+    if (!e.relatedTarget?.closest(".tag-suggestions")) {
+      tagInputFocused.value = false;
+      showSuggestions.value = false;
+    }
+  }, 150);
 }
 
 function selectTag(tag) {
   selectedTags.value.push(tag);
-  tagInput.value = '';
+  tagInput.value = "";
   showSuggestions.value = false;
-  emit('update:tags', selectedTags.value.map(tag => tag.id));
+  emit(
+    "update:tags",
+    selectedTags.value.map((tag) => tag.id)
+  );
   nextTick(() => {
     tagInputRef.value?.focus();
   });
 }
 
 function removeTag(tag) {
-  selectedTags.value = selectedTags.value.filter(t => t.id !== tag.id);
-  emit('update:tags', selectedTags.value.map(tag => tag.id));
+  selectedTags.value = selectedTags.value.filter((t) => t.id !== tag.id);
+  emit(
+    "update:tags",
+    selectedTags.value.map((tag) => tag.id)
+  );
 }
 
-function addTag(e) {
+async function addTag(e) {
   e.preventDefault();
   if (tagInput.value.trim()) {
     // Find if tag already exists in store
     const existingTag = availableTags.value.find(
-      tag => tag.label.toLowerCase() === tagInput.value.trim().toLowerCase()
+      (tag) => tag.label.toLowerCase() === tagInput.value.trim().toLowerCase()
     );
-    
+
     if (existingTag) {
       selectTag(existingTag);
     } else {
-      // If it's a new tag, create it with a temporary ID
-      // GraphStore will assign the real ID when saved
-      const newTag = {
-        id: `tag-${Date.now()}`,
-        label: tagInput.value.trim()
-      };
-      selectTag(newTag);
+      // Create new tag
+      await createNewTag(tagInput.value.trim());
     }
   } else if (e.shiftKey) {
     // If Shift+Enter and no tag text, focus the editor
-    emit('enter-pressed');
+    emit("enter-pressed");
+  }
+}
+
+async function createNewTag(tagName) {
+  try {
+    isCreatingTag.value = true;
+    const response = await axios.post("/create", {
+      type: "tag",
+      name: tagName,
+    });
+
+    // Add new tag to the store
+    graphStore.addNode(response.data);
+
+    // Find the newly created tag in the updated store
+    const newTag = graphStore.elements
+      .filter((el) => el.type === "tag" && el.name === tagName)
+      .map((tag) => ({
+        id: tag.id,
+        label: tag.name,
+      }))[0];
+
+    // Select the newly created tag
+    if (newTag) {
+      selectTag(newTag);
+    }
+
+    tagInput.value = "";
+  } catch (error) {
+    console.error("Error creating new tag:", error);
+    // Could add error handling/notification here
+  } finally {
+    isCreatingTag.value = false;
+  }
+}
+
+function handleCreateNewTag() {
+  if (tagInput.value.trim()) {
+    createNewTag(tagInput.value.trim());
   }
 }
 
@@ -145,25 +216,31 @@ function handleClickOutside(event) {
     <!-- Title input with improved placeholder behavior -->
     <div class="note-title-container">
       <h1>
-        <input 
+        <input
           ref="titleInputRef"
-          type="text" 
-          v-model="title" 
-          class="title-input" 
+          type="text"
+          v-model="title"
+          class="title-input"
           placeholder="Untitled Note"
-          @input="updateTitle" 
+          @input="updateTitle"
           @keydown="handleTitleKeydown"
           @click.stop
         />
       </h1>
     </div>
-    
+
     <!-- Tags multiselect with compact styling -->
-    <div class="tags-container" @click.stop :class="{ 'expanded': showAllTags || selectedTags.length > 5 }">
+    <div
+      class="tags-container"
+      @click.stop
+      :class="{ expanded: showAllTags || selectedTags.length > 5 }"
+    >
       <div class="tags-header">
         <div class="tags-label">
           Tags
-          <span v-if="selectedTags.length > 0" class="tag-count">{{ selectedTags.length }}</span>
+          <span v-if="selectedTags.length > 0" class="tag-count">{{
+            selectedTags.length
+          }}</span>
         </div>
         <button
           v-if="selectedTags.length > 5"
@@ -171,58 +248,96 @@ function handleClickOutside(event) {
           class="expand-button"
           :aria-label="showAllTags ? 'Show fewer tags' : 'Show all tags'"
         >
-          {{ showAllTags ? 'Show less' : 'Show all' }}
+          {{ showAllTags ? "Show less" : "Show all" }}
         </button>
       </div>
-      <div class="tags-content" :class="{ 'compact': !showAllTags && selectedTags.length > 5 }">
+      <div
+        class="tags-content"
+        :class="{ compact: !showAllTags && selectedTags.length > 5 }"
+      >
         <div class="tags-wrapper">
           <!-- Selected tags with compact styling -->
           <div v-if="selectedTags.length" class="selected-tags">
-            <span 
-              v-for="(tag, index) in selectedTags" 
+            <span
+              v-for="(tag, index) in selectedTags"
               :key="tag.id"
-              v-show="showAllTags || index < 5" 
+              v-show="showAllTags || index < 5"
               class="tag"
             >
               <span class="tag-label">{{ tag.label }}</span>
-              <button @click.stop="removeTag(tag)" class="tag-remove" aria-label="Remove tag">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <button
+                @click.stop="removeTag(tag)"
+                class="tag-remove"
+                aria-label="Remove tag"
+              >
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M18 6L6 18M6 6L18 18"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
               </button>
             </span>
-            <span v-if="!showAllTags && selectedTags.length > 5" class="more-tags">
+            <span
+              v-if="!showAllTags && selectedTags.length > 5"
+              class="more-tags"
+            >
               +{{ selectedTags.length - 5 }} more
             </span>
           </div>
-          
+
           <!-- Tag input with compact styling -->
           <div class="tag-input-wrapper">
-            <input 
+            <input
               ref="tagInputRef"
-              type="text" 
-              v-model="tagInput" 
+              type="text"
+              v-model="tagInput"
               @input="searchTags"
               @keydown.enter="addTag"
+              @focus="handleTagInputFocus"
+              @blur="handleTagInputBlur"
               placeholder="Add tag..."
-              class="tag-input" 
+              class="tag-input"
+              :class="{ 'is-focused': tagInputFocused }"
             />
+            <div v-if="isCreatingTag" class="tag-loading">
+              <span class="loader"></span>
+            </div>
           </div>
         </div>
       </div>
-      
+
       <!-- Tag suggestions dropdown -->
-      <div 
-        v-if="showSuggestions && tagSuggestions.length" 
-        class="tag-suggestions"
-      >
-        <div 
-          v-for="tag in tagSuggestions" 
-          :key="tag.id" 
+      <div v-if="showSuggestions" class="tag-suggestions">
+        <div v-if="tagSuggestions.length === 0" class="tag-suggestion-empty">
+          No matching tags
+        </div>
+
+        <div
+          v-for="tag in tagSuggestions"
+          :key="tag.id"
           @click="selectTag(tag)"
           class="tag-suggestion-item"
         >
           {{ tag.label }}
+        </div>
+
+        <!-- Create tag button always shows when text is entered -->
+        <div
+          v-if="tagInput.trim().length > 0"
+          @click="handleCreateNewTag"
+          class="tag-suggestion-item create-tag"
+        >
+          <span class="create-tag-icon">+</span> Create tag "{{ tagInput }}"
         </div>
       </div>
     </div>
@@ -244,7 +359,7 @@ function handleClickOutside(event) {
 }
 
 .note-title-container::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: 0;
   left: 0;
@@ -484,8 +599,14 @@ function handleClickOutside(event) {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tag-suggestion-item {
@@ -551,6 +672,82 @@ function handleClickOutside(event) {
 }
 
 :global(.dark) .note-title-container::after {
-  background: linear-gradient(90deg, rgb(124, 58, 237), rgba(124, 58, 237, 0.15));
+  background: linear-gradient(
+    90deg,
+    rgb(124, 58, 237),
+    rgba(124, 58, 237, 0.15)
+  );
+}
+.tag-input.is-focused {
+  color: rgb(107, 33, 168);
+}
+
+.tag-loading {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.loader {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(124, 58, 237, 0.3);
+  border-radius: 50%;
+  border-top-color: rgb(124, 58, 237);
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tag-suggestion-empty {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  color: rgba(107, 33, 168, 0.5);
+  font-style: italic;
+}
+
+.create-tag {
+  display: flex;
+  align-items: center;
+  color: rgb(107, 33, 168);
+  font-weight: 500;
+}
+
+.create-tag:hover {
+  background-color: rgba(124, 58, 237, 0.15);
+}
+
+.create-tag-icon {
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+.tag-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 60px;
+}
+
+:global(.dark) .tag-input.is-focused {
+  color: rgb(216, 180, 254);
+}
+
+:global(.dark) .loader {
+  border-color: rgba(216, 180, 254, 0.3);
+  border-top-color: rgb(216, 180, 254);
+}
+
+:global(.dark) .tag-suggestion-empty {
+  color: rgba(216, 180, 254, 0.5);
+}
+
+:global(.dark) .create-tag {
+  color: rgb(216, 180, 254);
 }
 </style>
