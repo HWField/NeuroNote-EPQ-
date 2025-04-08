@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, watch, nextTick, computed } from "vue";
 import { useGraphStore } from "@/stores/useGraphStore";
-import axios from "@/axios";
+import axios from "../../axios";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const props = defineProps({
@@ -17,9 +17,57 @@ const props = defineProps({
 
 const tagInputFocused = ref(false);
 const isCreatingTag = ref(false);
-
 const emit = defineEmits(["update:title", "update:tags", "enter-pressed"]);
 const graphStore = useGraphStore();
+const selectedSuggestionIndex = ref(0);
+const enhancedTagSuggestions = computed(() => {
+  const tagElements = graphStore.elements.filter((el) => el.type === "tag");
+
+  return tagSuggestions.value.map((tag) => {
+    // Find parent tags (tags that have this tag as a child)
+    const parentTags = tagElements
+      .filter((t) => t.children && t.children.includes(tag.id))
+      .map((t) => t.name);
+
+    return {
+      ...tag,
+      parents: parentTags,
+    };
+  });
+});
+
+function handleTagInputKeydown(e) {
+  if (!showSuggestions.value) return;
+
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    selectedSuggestionIndex.value =
+      (selectedSuggestionIndex.value + 1) %
+      (enhancedTagSuggestions.value.length + (tagInput.value.trim() ? 1 : 0));
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    const totalOptions =
+      enhancedTagSuggestions.value.length + (tagInput.value.trim() ? 1 : 0);
+    selectedSuggestionIndex.value =
+      (selectedSuggestionIndex.value - 1 + totalOptions) % totalOptions;
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+
+    // If we have suggestions and a selected index
+    if (enhancedTagSuggestions.value.length > 0) {
+      if (selectedSuggestionIndex.value < enhancedTagSuggestions.value.length) {
+        // Select the highlighted tag
+        selectTag(enhancedTagSuggestions.value[selectedSuggestionIndex.value]);
+      } else if (tagInput.value.trim()) {
+        // Create new tag option
+        handleCreateNewTag();
+      }
+    } else if (tagInput.value.trim()) {
+      // Just create new tag
+      handleCreateNewTag();
+    }
+  }
+}
 
 // Initialize title as empty string, let the placeholder handle "Untitled Note"
 const title = ref(props.initialTitle || "");
@@ -31,6 +79,9 @@ const showSuggestions = ref(false);
 const tagInputRef = ref(null);
 const showAllTags = ref(false); // State to track if we should show all tags or compact view
 
+watch(tagSuggestions, () => {
+  selectedSuggestionIndex.value = 0;
+});
 // Get available tags from GraphStore
 const availableTags = computed(() => {
   return graphStore.elements
@@ -168,6 +219,8 @@ async function createNewTag(tagName) {
       name: tagName,
     });
 
+    
+
     // Add new tag to the store
     graphStore.addNode(response.data);
 
@@ -212,15 +265,16 @@ function handleClickOutside(event) {
 </script>
 
 <template>
-  <div class="note-header" @click.stop>
+  <div class="top-0 z-10 bg-white dark:bg-slate-900 pb-2" @click.stop>
     <!-- Title input with improved placeholder behavior -->
-    <div class="note-title-container">
-      <h1>
+    <div class="mb-3 py-2 relative">
+      <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-700 to-purple-300/30 rounded"></div>
+      <h1 class="m-0 text-3xl font-semibold text-purple-800 dark:text-purple-300">
         <input
           ref="titleInputRef"
           type="text"
           v-model="title"
-          class="title-input"
+          class="bg-transparent border-0 w-full font-inherit text-inherit transition-colors duration-200 placeholder:text-purple-800/30 dark:placeholder:text-purple-300/30 placeholder:italic placeholder:font-normal focus:outline-none focus:placeholder:opacity-20"
           placeholder="Untitled Note"
           @input="updateTitle"
           @keydown="handleTitleKeydown"
@@ -231,43 +285,46 @@ function handleClickOutside(event) {
 
     <!-- Tags multiselect with compact styling -->
     <div
-      class="tags-container"
+      class="relative mb-2 bg-purple-100/5 dark:bg-purple-900/5 rounded-xl py-1.5 px-2.5 border border-purple-300/10 dark:border-purple-600/10 transition-all duration-200 hover:bg-purple-100/8 dark:hover:bg-purple-900/8 hover:border-purple-300/20 dark:hover:border-purple-600/20"
       @click.stop
-      :class="{ expanded: showAllTags || selectedTags.length > 5 }"
+      :class="{ 'py-2 px-3': showAllTags || selectedTags.length > 5 }"
     >
-      <div class="tags-header">
-        <div class="tags-label">
+      <div class="flex justify-between items-center mb-0.5">
+        <div class="text-[0.65rem] font-medium text-purple-800/60 dark:text-purple-300/60 uppercase tracking-wider flex items-center">
           Tags
-          <span v-if="selectedTags.length > 0" class="tag-count">{{
-            selectedTags.length
-          }}</span>
+          <span 
+            v-if="selectedTags.length > 0" 
+            class="inline-flex items-center justify-center bg-purple-800/10 dark:bg-purple-300/10 text-purple-800 dark:text-purple-300 rounded-full py-0.5 px-1.5 text-[0.6rem] ml-1.5"
+          >
+            {{ selectedTags.length }}
+          </span>
         </div>
         <button
           v-if="selectedTags.length > 5"
           @click.stop="toggleTagsDisplay"
-          class="expand-button"
+          class="text-[0.65rem] text-purple-800/80 dark:text-purple-300/80 bg-transparent border-0 cursor-pointer py-0.5 px-1.5 rounded transition-colors duration-200 hover:bg-purple-800/10 dark:hover:bg-purple-300/10"
           :aria-label="showAllTags ? 'Show fewer tags' : 'Show all tags'"
         >
           {{ showAllTags ? "Show less" : "Show all" }}
         </button>
       </div>
       <div
-        class="tags-content"
-        :class="{ compact: !showAllTags && selectedTags.length > 5 }"
+        class="max-h-[300px] overflow-y-auto transition-all duration-300"
+        :class="{ 'max-h-8': !showAllTags && selectedTags.length > 5 }"
       >
-        <div class="tags-wrapper">
+        <div class="flex flex-wrap gap-1 items-center">
           <!-- Selected tags with compact styling -->
-          <div v-if="selectedTags.length" class="selected-tags">
+          <div v-if="selectedTags.length" class="flex flex-wrap gap-1 items-center">
             <span
               v-for="(tag, index) in selectedTags"
               :key="tag.id"
               v-show="showAllTags || index < 5"
-              class="tag"
+              class="rounded-md py-0.5 px-1.5 bg-purple-800 dark:bg-purple-700 text-slate-100 inline-flex items-center gap-0.5 text-xs leading-tight transition-all duration-200 max-w-[180px] h-5 hover:bg-purple-900 dark:hover:bg-purple-800 hover:-translate-y-px"
             >
-              <span class="tag-label">{{ tag.label }}</span>
+              <span class="whitespace-nowrap overflow-hidden text-ellipsis">{{ tag.label }}</span>
               <button
                 @click.stop="removeTag(tag)"
-                class="tag-remove"
+                class="flex items-center justify-center border-0 bg-transparent text-inherit opacity-70 cursor-pointer p-0 w-3 h-3 rounded-full transition-opacity duration-200 hover:opacity-100"
                 aria-label="Remove tag"
               >
                 <svg
@@ -289,465 +346,89 @@ function handleClickOutside(event) {
             </span>
             <span
               v-if="!showAllTags && selectedTags.length > 5"
-              class="more-tags"
+              class="text-xs text-purple-800/80 dark:text-purple-300/80 bg-purple-800/10 dark:bg-purple-300/10 py-0.5 px-1.5 rounded-md cursor-pointer hover:bg-purple-800/15 dark:hover:bg-purple-300/15"
             >
               +{{ selectedTags.length - 5 }} more
             </span>
           </div>
 
           <!-- Tag input with compact styling -->
-          <div class="tag-input-wrapper">
+          <div class="flex-1 min-w-[60px] relative">
             <input
               ref="tagInputRef"
               type="text"
               v-model="tagInput"
               @input="searchTags"
+              @keydown="handleTagInputKeydown"
               @keydown.enter="addTag"
               @focus="handleTagInputFocus"
               @blur="handleTagInputBlur"
               placeholder="Add tag..."
-              class="tag-input"
-              :class="{ 'is-focused': tagInputFocused }"
+              class="bg-transparent border-0 py-0.5 px-0 text-xs w-full h-5 placeholder:text-purple-800/30 dark:placeholder:text-purple-300/30 placeholder:italic focus:outline-none focus:text-purple-800 dark:focus:text-purple-300 focus:placeholder:opacity-20"
+              :class="{ 'text-purple-800 dark:text-purple-300': tagInputFocused }"
             />
-            <div v-if="isCreatingTag" class="tag-loading">
-              <span class="loader"></span>
+            <div v-if="isCreatingTag" class="absolute right-2 top-1/2 -translate-y-1/2">
+              <span class="inline-block w-3 h-3 border-2 border-purple-300/30 dark:border-purple-600/30 border-t-purple-600 dark:border-t-purple-300 rounded-full animate-spin"></span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Tag suggestions dropdown -->
-      <div v-if="showSuggestions" class="tag-suggestions">
-        <div v-if="tagSuggestions.length === 0" class="tag-suggestion-empty">
-          No matching tags
-        </div>
+      <div 
+        v-if="showSuggestions" 
+        class="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-white dark:bg-slate-800 border border-purple-300/20 dark:border-purple-600/20 rounded-lg shadow-lg animate-fadeIn overflow-hidden"
+      >
+        <ScrollArea className="h-[180px]">
+          <div
+            v-if="enhancedTagSuggestions.length === 0"
+            class="py-1.5 px-2.5 text-xs text-purple-800/50 dark:text-purple-300/50 italic text-center"
+          >
+            No matching tags
+          </div>
 
-        <div
-          v-for="tag in tagSuggestions"
-          :key="tag.id"
-          @click="selectTag(tag)"
-          class="tag-suggestion-item"
-        >
-          {{ tag.label }}
-        </div>
-
-        <!-- Create tag button always shows when text is entered -->
-        <div
-          v-if="tagInput.trim().length > 0"
-          @click="handleCreateNewTag"
-          class="tag-suggestion-item create-tag"
-        >
-          <span class="create-tag-icon">+</span> Create tag "{{ tagInput }}"
-        </div>
+          <div
+            v-for="(tag, index) in enhancedTagSuggestions"
+            :key="tag.id"
+            @click="selectTag(tag)"
+            @mouseover="selectedSuggestionIndex = index"
+            class="py-2 px-2.5 cursor-pointer transition-colors duration-150 text-xs rounded mx-1 my-0.5"
+            :class="{ 'bg-purple-100/15 dark:bg-purple-800/25': index === selectedSuggestionIndex }"
+          >
+            <div class="flex flex-col">
+              <div class="font-medium">{{ tag.label }}</div>
+              <div
+                v-if="tag.parents && tag.parents.length"
+                class="mt-0.5 text-[0.65rem] text-purple-800/60 dark:text-purple-300/60 italic"
+              >
+                Parents: {{ tag.parents.join(", ") }}
+              </div>
+            </div>
+          </div>
+          
+          <!-- Create tag button always shows when text is entered -->
+          <div
+            v-if="tagInput.trim().length > 0"
+            @click="handleCreateNewTag"
+            @mouseover="selectedSuggestionIndex = enhancedTagSuggestions.length"
+            class="py-2 px-2.5 cursor-pointer transition-colors duration-150 text-xs rounded mx-1 my-0.5 flex items-center text-purple-800 dark:text-purple-300 font-medium"
+            :class="{ 'bg-purple-100/15 dark:bg-purple-800/25': selectedSuggestionIndex === enhancedTagSuggestions.length }"
+          >
+            <span class="mr-1.5 font-bold">+</span> Create tag "{{ tagInput }}"
+          </div>
+        </ScrollArea>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.note-header {
-  top: 0;
-  z-index: 10;
-  background-color: var(--background);
-  padding-bottom: 0.5rem;
-}
-
-.note-title-container {
-  margin: 0 0 0.75rem;
-  padding: 0.5rem 0; /* Reduced vertical padding */
-  position: relative;
-}
-
-.note-title-container::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #6a00f5, rgba(124, 58, 237, 0.3));
-  border-radius: 2px;
-}
-
-.note-title-container h1 {
-  margin: 0;
-  font-size: 1.8rem;
-  font-weight: 600;
-  color: rgb(107, 33, 168);
-}
-
-.title-input {
-  background: transparent;
-  border: none;
-  width: 100%;
-  font-size: inherit;
-  font-weight: inherit;
-  color: inherit;
-  font-family: inherit;
-  transition: color 0.2s ease;
-}
-
-/* Enhanced placeholder styling */
-.title-input::placeholder {
-  color: rgba(107, 33, 168, 0.3);
-  font-style: italic;
-  opacity: 1;
-  font-weight: 400;
-  transition: opacity 0.3s ease;
-}
-
-.title-input:focus::placeholder {
-  opacity: 0.2;
-}
-
-.title-input:focus {
-  outline: none;
-}
-
-/* More compact tag container */
-.tags-container {
-  position: relative;
-  margin-bottom: 0.5rem; /* Reduced margin */
-  background-color: rgba(124, 58, 237, 0.05);
-  border-radius: 0.75rem;
-  padding: 0.4rem 0.6rem; /* Further reduced padding */
-  border: 1px solid rgba(124, 58, 237, 0.1);
-  transition: all 0.2s ease;
-}
-
-.tags-container:hover,
-.tags-container:has(.tag-input:focus) {
-  background-color: rgba(124, 58, 237, 0.08);
-  border-color: rgba(124, 58, 237, 0.2);
-}
-
-.tags-container.expanded {
-  padding: 0.5rem 0.75rem;
-}
-
-.tags-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.2rem; /* Even more reduced margin */
-}
-
-.tags-label {
-  font-size: 0.65rem; /* Smaller font */
-  font-weight: 500;
-  color: rgb(107, 33, 168, 0.6);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  display: flex;
-  align-items: center;
-}
-
-.tag-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(107, 33, 168, 0.1);
-  color: rgb(107, 33, 168);
-  border-radius: 9999px;
-  padding: 0.1rem 0.35rem;
-  font-size: 0.6rem;
-  margin-left: 0.3rem;
-}
-
-.expand-button {
-  font-size: 0.65rem;
-  color: rgb(107, 33, 168, 0.8);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.1rem 0.3rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.2s ease;
-}
-
-.expand-button:hover {
-  background-color: rgba(107, 33, 168, 0.1);
-}
-
-.tags-content {
-  max-height: 300px; /* Allow room for expansion */
-  overflow-y: auto; /* Add scrolling for many tags */
-  transition: max-height 0.3s ease;
-}
-
-.tags-content.compact {
-  max-height: 32px; /* Just enough for one row */
-}
-
-.tags-wrapper {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem; /* Even smaller gap */
-  align-items: center;
-}
-
-.selected-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem; /* Even smaller gap */
-  align-items: center;
-}
-
-.tag {
-  border-radius: 0.3rem;
-  padding: 0.1rem 0.3rem; /* Smaller padding */
-  background-color: rgb(91, 33, 182);
-  color: rgb(226, 232, 240);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  font-size: 0.7rem; /* Smaller font */
-  line-height: 1.2;
-  transition: all 0.2s ease;
-  max-width: 180px;
-  height: 20px;
-}
-
-.tag:hover {
-  background-color: rgb(76, 29, 149);
-  transform: translateY(-1px);
-}
-
-.more-tags {
-  font-size: 0.7rem;
-  color: rgb(107, 33, 168, 0.8);
-  background-color: rgba(107, 33, 168, 0.1);
-  padding: 0.1rem 0.35rem;
-  border-radius: 0.3rem;
-  cursor: pointer;
-}
-
-.more-tags:hover {
-  background-color: rgba(107, 33, 168, 0.15);
-}
-
-.tag-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.tag-remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  color: inherit;
-  opacity: 0.7;
-  cursor: pointer;
-  padding: 0;
-  width: 12px; /* Even smaller remove button */
-  height: 12px;
-  border-radius: 50%;
-  transition: opacity 0.2s ease;
-}
-
-.tag-remove:hover {
-  opacity: 1;
-}
-
-.tag-input-wrapper {
-  flex: 1;
-  min-width: 60px; /* Smaller min-width */
-}
-
-.tag-input {
-  background: transparent;
-  border: none;
-  padding: 0.1rem 0; /* Reduced padding */
-  font-size: 0.75rem; /* Smaller font */
-  width: 100%;
-  color: inherit;
-  height: 20px; /* Match height of tags */
-}
-
-/* Enhanced placeholder styling for tags too */
-.tag-input::placeholder {
-  color: rgba(107, 33, 168, 0.3);
-  font-style: italic;
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-
-.tag-input:focus::placeholder {
-  opacity: 0.2;
-}
-
-.tag-input:focus {
-  outline: none;
-}
-
-.tag-suggestions {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  width: 100%;
-  max-height: 140px;
-  overflow-y: auto;
-  z-index: 20;
-  background-color: white;
-  border: 1px solid rgba(124, 58, 237, 0.2);
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  animation: fadeIn 0.2s ease;
-}
-
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.tag-suggestion-item {
-  padding: 0.35rem 0.6rem; /* Reduced padding */
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-  font-size: 0.75rem; /* Smaller font */
-}
-
-.tag-suggestion-item:hover {
-  background-color: rgba(124, 58, 237, 0.1);
-}
-
-/* Dark mode adjustments */
-:global(.dark) .note-title-container h1 {
-  color: rgb(216, 180, 254);
-}
-
-:global(.dark) .title-input::placeholder {
-  color: rgba(216, 180, 254, 0.3);
-}
-
-:global(.dark) .tags-label {
-  color: rgba(216, 180, 254, 0.6);
-}
-
-:global(.dark) .tag-count {
-  background-color: rgba(216, 180, 254, 0.1);
-  color: rgb(216, 180, 254, 0.9);
-}
-
-:global(.dark) .more-tags {
-  color: rgb(216, 180, 254, 0.8);
-  background-color: rgba(216, 180, 254, 0.1);
-}
-
-:global(.dark) .expand-button {
-  color: rgb(216, 180, 254, 0.8);
-}
-
-:global(.dark) .expand-button:hover {
-  background-color: rgba(216, 180, 254, 0.1);
-}
-
-:global(.dark) .tag-input::placeholder {
-  color: rgba(216, 180, 254, 0.3);
-}
-
-:global(.dark) .tag-suggestions {
-  background-color: #1f2937;
-  border-color: rgba(124, 58, 237, 0.3);
-}
-
-:global(.dark) .tags-container {
-  background-color: rgba(124, 58, 237, 0.08);
-  border-color: rgba(124, 58, 237, 0.2);
-}
-
-:global(.dark) .tags-container:hover,
-:global(.dark) .tags-container:has(.tag-input:focus) {
-  background-color: rgba(124, 58, 237, 0.12);
-  border-color: rgba(124, 58, 237, 0.3);
-}
-
-:global(.dark) .note-title-container::after {
-  background: linear-gradient(
-    90deg,
-    rgb(124, 58, 237),
-    rgba(124, 58, 237, 0.15)
-  );
-}
-.tag-input.is-focused {
-  color: rgb(107, 33, 168);
-}
-
-.tag-loading {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.loader {
-  width: 12px;
-  height: 12px;
-  border: 2px solid rgba(124, 58, 237, 0.3);
-  border-radius: 50%;
-  border-top-color: rgb(124, 58, 237);
-  animation: spin 0.8s linear infinite;
-  display: inline-block;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.tag-suggestion-empty {
-  padding: 0.35rem 0.6rem;
-  font-size: 0.75rem;
-  color: rgba(107, 33, 168, 0.5);
-  font-style: italic;
-}
-
-.create-tag {
-  display: flex;
-  align-items: center;
-  color: rgb(107, 33, 168);
-  font-weight: 500;
-}
-
-.create-tag:hover {
-  background-color: rgba(124, 58, 237, 0.15);
-}
-
-.create-tag-icon {
-  margin-right: 6px;
-  font-weight: bold;
-}
-
-.tag-input-wrapper {
-  position: relative;
-  flex: 1;
-  min-width: 60px;
-}
-
-:global(.dark) .tag-input.is-focused {
-  color: rgb(216, 180, 254);
-}
-
-:global(.dark) .loader {
-  border-color: rgba(216, 180, 254, 0.3);
-  border-top-color: rgb(216, 180, 254);
-}
-
-:global(.dark) .tag-suggestion-empty {
-  color: rgba(216, 180, 254, 0.5);
-}
-
-:global(.dark) .create-tag {
-  color: rgb(216, 180, 254);
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease;
 }
 </style>

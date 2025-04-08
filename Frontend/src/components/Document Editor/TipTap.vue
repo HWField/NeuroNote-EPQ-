@@ -545,34 +545,6 @@ let editor = new Editor({
       },
       // suggestion,
     }),
-    Extension.create({
-      name: "customSelectAll",
-
-      addKeyboardShortcuts() {
-        return {
-          "Mod-a": ({ editor }) => {
-            const { state } = editor;
-            const { doc } = state;
-
-            // Skip the title node (first node) and find the position right after it
-            if (doc.firstChild && doc.childCount > 1) {
-              // Get the position after the first node (title)
-              const startPos = doc.firstChild.nodeSize;
-
-              // Set selection from start of content to end of document
-              editor.commands.setTextSelection({
-                from: startPos,
-                to: doc.content.size,
-              });
-
-              return true;
-            }
-
-            return false;
-          },
-        };
-      },
-    }),
     Commands.configure({
       suggestion: {
         items: ({ query }) => {

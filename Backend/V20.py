@@ -703,18 +703,15 @@ def update():
         # note_id = int(note_id.split('_')[1])
         # viewport = data.get('viewport')
         content = (data.get('content'))
+        tags_ids = data.get('tags', [])
         # background = data.get('background')
        
         name = data.get('name')
-        # Clear all existing tag-note relationships
-        note = dbsession.query(Note).join(Entity).filter(
-            Entity.user_id == int(user),  # Ensure it belongs to the logged-in user
-            Entity.user_specific_id == note_id  # Find using per-user unique ID
-        ).first()        
+        
+
+     
                     
         name = data.get('name')
-        
-        print("------- note", note_id, "has made a save request")
 
         # Validate input
         if note_id is None:
@@ -722,7 +719,6 @@ def update():
             return jsonify({'status': 'error', 'message': 'Invalid input data'}), 400
 
         # Query the note
-        # note = dbsession.query(Note).filter_by(user_id=int(get_jwt_identity()), user_specific_id=note_id).first()
         note = dbsession.query(Note).join(Entity).filter(
             Entity.user_id == int(user),  # Ensure it belongs to the logged-in user
             Entity.user_specific_id == note_id  # Find using per-user unique ID
@@ -740,10 +736,28 @@ def update():
         note.name = name
         print("------- note: ", note.name, ", has had content, viewport and background set")
 
-        # try:
-        # try:
+        
+        # Get all Tag objects for the provided IDs
+        new_tags = []
+        for tag_id in tags_ids:
+            tag = dbsession.query(Tag).join(Entity).filter(
+                Entity.user_id == int(user),  # Match user
+                Entity.user_specific_id == tag_id  # Match tag's user-specific ID
+            ).first()
+            
+            if tag:
+                new_tags.append(tag)
+            else:
+                print(f"Warning: Tag with ID {tag_id} not found for user {user}")
+        
+        # Replace all tag associations in one operation
+        # SQLAlchemy handles adding new ones and removing old ones automatically
+        note.tags = new_tags
+        print(f"------- set {len(new_tags)} tags on note {note_id}")
         
         dbsession.commit()
+          # IMPORTANT: Explicitly refresh the object from DB to ensure latest state
+        dbsession.refresh(note)
         print(f"Updated note {note_id} to database")
         return jsonify({'status': 'success', 'message': 'Note content updated successfully.'})
             
@@ -809,28 +823,27 @@ def update():
             
             if 'theme' in request.json:
                 preferences['theme'] = request.json['theme']
-                print(f"Updated user preferences: {preferences}")
+                # print(f"Updated user preferences: {preferences}")
                 
             # Check for tabs update
             if 'tabs' in request.json:
                 preferences['tabs'] = request.json['tabs']
-                print(f"Updated user preferences: {preferences}")
+                # print(f"Updated user preferences: {preferences}")
                 
             # Check for recent notes update
             if 'recentNotes' in request.json:
                 print(f"Updating recent notes with: {request.json['recentNotes']}")
                 preferences['recentNotes'] = request.json['recentNotes']
-                print(f"Updated user preferences: {preferences}")
+                # print(f"Updated user preferences: {preferences}")
                 
             # IMPORTANT: This flags the entire preferences object as changed
             user.preferences = preferences
 
             # Commit changes and ensure they persist
             dbsession.commit()
-
             # Verify the data was saved by re-querying
             dbsession.refresh(user)
-            print(f"User preferences after update: {user.preferences}")
+            # print(f"User preferences after update: {user.preferences}")
 
             return jsonify({
                 'status': 'success',
@@ -1068,9 +1081,19 @@ def upload_file():
         }), 200
   
 @app.route('/files/<user_id>/<filename>')
+# @jwt_required()
 def serve_image(user_id, filename):
     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
     return send_from_directory(user_folder, filename)
+
+# @app.route('/files', methods=['GET'])
+# @jwt_required()
+# def serve_file():
+#     user_id = get_jwt_identity()
+#     data = request.json
+#     filename = data.get('path')
+#     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
+#     return send_from_directory(user_folder, filename)
     
 if __name__ == '__main__':
     socketio.run(app, debug=True, host='0.0.0.0', port=8000)

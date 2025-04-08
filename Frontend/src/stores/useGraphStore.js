@@ -154,7 +154,7 @@ export const useGraphStore = defineStore("graphStore", () => {
       throw error;
     }
   }
-  function CreateEdge(source, target) {
+  function CreateEdge(source, target, localOnly = false) {
     
 
     // Update the relationships in the frontend data model
@@ -201,6 +201,10 @@ export const useGraphStore = defineStore("graphStore", () => {
     }
 
     // Send to backend
+    if (localOnly) {
+      return Promise.resolve(); // No backend call if localOnly is true
+    }
+
     axios.post("/create", {
       type: "edge",
       source: source,
@@ -211,7 +215,7 @@ export const useGraphStore = defineStore("graphStore", () => {
     });;
   }
 
-  function DeleteEdge(source, target) {
+  function DeleteEdge(source, target, localOnly = false) {
    
   
     // Update the relationships in the frontend data model
@@ -258,6 +262,9 @@ export const useGraphStore = defineStore("graphStore", () => {
     }
   
     // Send to backend
+    if (localOnly) {
+      return Promise.resolve(); // No backend call if localOnly is true
+    }
     return axios.post("/delete", {
       type: "edge",
       source: source,
@@ -294,21 +301,19 @@ function replaceNoteTags(noteId, tagIds) {
   
   // Step 2: Remove all existing tag edges
   existingTags.forEach(tagId => {
-    console.error(`Deleting edge from ${noteKey} to tag_${tagId}`);
-    DeleteEdge(`tag_${tagId}`, noteKey);
+    DeleteEdge(`tag_${tagId}`, noteKey, true);
   });
   
   // Step 3: Create new edges for each tag
   tagIds.forEach(tagId => {
-    console.error(`Creating edge from ${noteKey} to tag_${tagId}`);
-    CreateEdge(`tag_${tagId}`, noteKey);
+    CreateEdge(`tag_${tagId}`, noteKey, true);
   });
 }
 
   return {
     elements,
     fetchGraph,
-    setGraph,
+    setGraph,   
     updatePositions,
     resetGraph,
     updateNoteName,
