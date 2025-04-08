@@ -205,7 +205,10 @@ export const useGraphStore = defineStore("graphStore", () => {
       type: "edge",
       source: source,
       target: target,
-    });
+    }).catch(error => {
+      console.error("Edge creation failed:", error);
+      throw error;
+    });;
   }
 
   function DeleteEdge(source, target) {
@@ -291,33 +294,16 @@ function replaceNoteTags(noteId, tagIds) {
   
   // Step 2: Remove all existing tag edges
   existingTags.forEach(tagId => {
+    console.error(`Deleting edge from ${noteKey} to tag_${tagId}`);
     DeleteEdge(`tag_${tagId}`, noteKey);
   });
   
   // Step 3: Create new edges for each tag
   tagIds.forEach(tagId => {
+    console.error(`Creating edge from ${noteKey} to tag_${tagId}`);
     CreateEdge(`tag_${tagId}`, noteKey);
   });
-  
-  // Step 4: Update the in-memory note's tags
-  // updateNoteTags(noteId, tagIds);
-  
-  // Step 5: Send the updated tags to the backend
-  // axios.post("/update", {
-  //   operation: "tags",
-  //   id: noteId,
-  //   tags: tagIds
-  // }).catch(error => {
-  //   console.error("Error updating note tags:", error);
-  // });
 }
-  // Update the tags of a note in the store
-  // function updateNoteTags(noteId, tagIds) {
-  //   const note = this.elements.find((el) => el.id === parseInt(noteId));
-  //   if (note) {
-  //     note.tags = tagIds;
-  //   }
-  // }
 
   return {
     elements,

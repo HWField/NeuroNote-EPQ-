@@ -66,7 +66,8 @@ def shutdown_session(exception=None):
 # Association table for the many-to-many relationship between Note and Tag
 note_tag_association = Table('note_tag', Base.metadata,
     Column('note_id', Integer, ForeignKey('notes.id')),
-    Column('tag_id', Integer, ForeignKey('tags.id'))
+    Column('tag_id', Integer, ForeignKey('tags.id')),
+    UniqueConstraint('note_id', 'tag_id', name='uq_note_tag')  # Add this line
 )
 
 # Association table for the many-to-many relationship between Tag and Tag (for multiple parents)
@@ -368,7 +369,6 @@ def create():
         if not source_id or not target_id:
             return jsonify({'status': 'error', 'message': 'Source or target ID is missing.'}), 400
 
-
         # Determine the type of the source and target
         if source_id.startswith('tag_') and target_id.startswith('tag_'):
             source_tag_id = int(source_id.split('_')[1])
@@ -547,30 +547,34 @@ def  delete():
                 target_note_id = int(target_id.split('_')[1])
 
                 # Query the tag and note
-            
-                source_tag = dbsession.query(Tag).join(Entity).filter(
-                Entity.user_id == userId,  # Ensure it belongs to the logged-in user
-                Entity.user_specific_id == source_tag_id  # Find using per-user unique ID
-                ).first()
-                target_note = dbsession.query(Note).join(Entity).filter(
-                Entity.user_id == userId,  # Ensure it belongs to the logged-in user
-                Entity.user_specific_id == target_note_id  # Find using per-user unique ID
-                ).first()
-                
-                
-
-                if source_tag and target_note:
-                    # Remove the tag-note relationship
-                    if source_tag in target_note.tags:
-                        target_note.tags.remove(source_tag)
+                try:
+                    source_tag = dbsession.query(Tag).join(Entity).filter(
+                        Entity.user_id == userId,
+                        Entity.user_specific_id == source_tag_id
+                    ).first()
+                    
+                    target_note = dbsession.query(Note).join(Entity).filter(
+                        Entity.user_id == userId,
+                        Entity.user_specific_id == target_note_id
+                    ).first()
+                    
+                    if source_tag and target_note:
+                        # More robust approach - delete directly from the association table
+                        stmt = note_tag_association.delete().where(
+                            and_(
+                                note_tag_association.c.note_id == target_note.id,
+                                note_tag_association.c.tag_id == source_tag.id
+                            )
+                        )
+                        dbsession.execute(stmt)
                         dbsession.commit()
-                        dbsession.flush()  # Ensure relationships are cleared
                         return jsonify({'status': 'success', 'message': 'Tag-Note link deleted.'})
                     else:
-                        return jsonify({'status': 'error', 'message': 'Link does not exist.'}), 400
-                else:
-                    return jsonify({'status': 'error', 'message': 'Tag or Note not found.'}), 404
-
+                        return jsonify({'status': 'error', 'message': 'Tag or Note not found.'}), 404
+                except Exception as e:
+                    dbsession.rollback()
+                    print(f"Error deleting link: {e}")
+                    return jsonify({'status': 'error', 'message': str(e)}), 500
             else:
                 return jsonify({'status': 'error', 'message': 'Invalid link type.'}), 400
 
@@ -706,25 +710,7 @@ def update():
         note = dbsession.query(Note).join(Entity).filter(
             Entity.user_id == int(user),  # Ensure it belongs to the logged-in user
             Entity.user_specific_id == note_id  # Find using per-user unique ID
-        ).first()
-        
-       
-        
-        
-        # Add new tag relationships
-         # tags = data.get('tags', [])          UNCOMMENT FOR TAGS
-         # note.tags = []
-        # print("------- note", note_id, "has had all tag relationships cleared")
-        # print("recieved tags:", tags)
-        # if tags:
-        #     for tag_id in tags:
-        #         tag = dbsession.query(Tag).join(Entity).filter(
-        #             Entity.user_id == int(user),
-        #             Entity.id == tag_id
-        #         ).first()
-        #         if tag:
-        #             note.tags.append(tag)
-                    
+        ).first()        
                     
         name = data.get('name')
         
