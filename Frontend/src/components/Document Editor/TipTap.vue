@@ -133,6 +133,8 @@ const props = defineProps({
   tabId: Number || 0,
 });
 
+const saveInterval = ref(null);
+
 const focusEditor = (event) => {
   if (editor) {
     editor.chain().focus().run();
@@ -435,7 +437,7 @@ onMounted(async () => {
     });
 
     // Full save every minute
-    setInterval(async () => {
+    saveInterval.value = setInterval(async () => {
       await SaveToBackend();
     }, 60000);
     isLoading.value = false;
@@ -445,6 +447,13 @@ onMounted(async () => {
 
 onBeforeUnmount(async () => {
   // Wait for save to complete before destroying editor
+
+  if (saveInterval.value) {
+    clearInterval(saveInterval.value);
+    saveInterval.value = null;
+    console.error("Save interval cleared");
+  }
+
   // Only save if loading is complete
   if (!isLoading.value) {
     try {

@@ -214,30 +214,31 @@ async function addTag(e) {
 async function createNewTag(tagName) {
   try {
     isCreatingTag.value = true;
-    const response = await axios.post("/create", {
-      type: "tag",
-      name: tagName,
-    });
 
-    
+    axios
+      .post("/create", {
+        type: "tag",
+        name: tagName,
+      })
+      .then((response) => {
+        graphStore.addNode(response.data);
+        console.error("Tag created:", response.data);
 
-    // Add new tag to the store
-    graphStore.addNode(response.data);
+        // Find the newly created tag in the updated store
+        const newTag = graphStore.elements
+          .filter((el) => el.type === "tag" && el.name === tagName)
+          .map((tag) => ({
+            id: tag.id,
+            label: tag.name,
+          }))[0];
 
-    // Find the newly created tag in the updated store
-    const newTag = graphStore.elements
-      .filter((el) => el.type === "tag" && el.name === tagName)
-      .map((tag) => ({
-        id: tag.id,
-        label: tag.name,
-      }))[0];
+        // Select the newly created tag
+        if (newTag) {
+          selectTag(newTag);
+        }
 
-    // Select the newly created tag
-    if (newTag) {
-      selectTag(newTag);
-    }
-
-    tagInput.value = "";
+        tagInput.value = "";
+      });
   } catch (error) {
     console.error("Error creating new tag:", error);
     // Could add error handling/notification here
@@ -268,8 +269,12 @@ function handleClickOutside(event) {
   <div class="top-0 z-10 bg-white dark:bg-slate-900 pb-2" @click.stop>
     <!-- Title input with improved placeholder behavior -->
     <div class="mb-3 py-2 relative">
-      <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-700 to-purple-300/30 rounded"></div>
-      <h1 class="m-0 text-3xl font-semibold text-purple-800 dark:text-purple-300">
+      <div
+        class="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-purple-700 to-purple-300/30 rounded"
+      ></div>
+      <h1
+        class="m-0 text-3xl font-semibold text-purple-800 dark:text-purple-300"
+      >
         <input
           ref="titleInputRef"
           type="text"
@@ -290,10 +295,12 @@ function handleClickOutside(event) {
       :class="{ 'py-2 px-3': showAllTags || selectedTags.length > 5 }"
     >
       <div class="flex justify-between items-center mb-0.5">
-        <div class="text-[0.65rem] font-medium text-purple-800/60 dark:text-purple-300/60 uppercase tracking-wider flex items-center">
+        <div
+          class="text-[0.65rem] font-medium text-purple-800/60 dark:text-purple-300/60 uppercase tracking-wider flex items-center"
+        >
           Tags
-          <span 
-            v-if="selectedTags.length > 0" 
+          <span
+            v-if="selectedTags.length > 0"
             class="inline-flex items-center justify-center bg-purple-800/10 dark:bg-purple-300/10 text-purple-800 dark:text-purple-300 rounded-full py-0.5 px-1.5 text-[0.6rem] ml-1.5"
           >
             {{ selectedTags.length }}
@@ -314,14 +321,19 @@ function handleClickOutside(event) {
       >
         <div class="flex flex-wrap gap-1 items-center">
           <!-- Selected tags with compact styling -->
-          <div v-if="selectedTags.length" class="flex flex-wrap gap-1 items-center">
+          <div
+            v-if="selectedTags.length"
+            class="flex flex-wrap gap-1 items-center"
+          >
             <span
               v-for="(tag, index) in selectedTags"
               :key="tag.id"
               v-show="showAllTags || index < 5"
               class="rounded-md py-0.5 px-1.5 bg-purple-800 dark:bg-purple-700 text-slate-100 inline-flex items-center gap-0.5 text-xs leading-tight transition-all duration-200 max-w-[180px] h-5 hover:bg-purple-900 dark:hover:bg-purple-800 hover:-translate-y-px"
             >
-              <span class="whitespace-nowrap overflow-hidden text-ellipsis">{{ tag.label }}</span>
+              <span class="whitespace-nowrap overflow-hidden text-ellipsis">{{
+                tag.label
+              }}</span>
               <button
                 @click.stop="removeTag(tag)"
                 class="flex items-center justify-center border-0 bg-transparent text-inherit opacity-70 cursor-pointer p-0 w-3 h-3 rounded-full transition-opacity duration-200 hover:opacity-100"
@@ -365,18 +377,25 @@ function handleClickOutside(event) {
               @blur="handleTagInputBlur"
               placeholder="Add tag..."
               class="bg-transparent border-0 py-0.5 px-0 text-xs w-full h-5 placeholder:text-purple-800/30 dark:placeholder:text-purple-300/30 placeholder:italic focus:outline-none focus:text-purple-800 dark:focus:text-purple-300 focus:placeholder:opacity-20"
-              :class="{ 'text-purple-800 dark:text-purple-300': tagInputFocused }"
+              :class="{
+                'text-purple-800 dark:text-purple-300': tagInputFocused,
+              }"
             />
-            <div v-if="isCreatingTag" class="absolute right-2 top-1/2 -translate-y-1/2">
-              <span class="inline-block w-3 h-3 border-2 border-purple-300/30 dark:border-purple-600/30 border-t-purple-600 dark:border-t-purple-300 rounded-full animate-spin"></span>
+            <div
+              v-if="isCreatingTag"
+              class="absolute right-2 top-1/2 -translate-y-1/2"
+            >
+              <span
+                class="inline-block w-3 h-3 border-2 border-purple-300/30 dark:border-purple-600/30 border-t-purple-600 dark:border-t-purple-300 rounded-full animate-spin"
+              ></span>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Tag suggestions dropdown -->
-      <div 
-        v-if="showSuggestions" 
+      <div
+        v-if="showSuggestions"
         class="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-white dark:bg-slate-800 border border-purple-300/20 dark:border-purple-600/20 rounded-lg shadow-lg animate-fadeIn overflow-hidden"
       >
         <ScrollArea className="h-[180px]">
@@ -393,7 +412,10 @@ function handleClickOutside(event) {
             @click="selectTag(tag)"
             @mouseover="selectedSuggestionIndex = index"
             class="py-2 px-2.5 cursor-pointer transition-colors duration-150 text-xs rounded mx-1 my-0.5"
-            :class="{ 'bg-purple-100/15 dark:bg-purple-800/25': index === selectedSuggestionIndex }"
+            :class="{
+              'bg-purple-100/15 dark:bg-purple-800/25':
+                index === selectedSuggestionIndex,
+            }"
           >
             <div class="flex flex-col">
               <div class="font-medium">{{ tag.label }}</div>
@@ -405,14 +427,17 @@ function handleClickOutside(event) {
               </div>
             </div>
           </div>
-          
+
           <!-- Create tag button always shows when text is entered -->
           <div
             v-if="tagInput.trim().length > 0"
             @click="handleCreateNewTag"
             @mouseover="selectedSuggestionIndex = enhancedTagSuggestions.length"
             class="py-2 px-2.5 cursor-pointer transition-colors duration-150 text-xs rounded mx-1 my-0.5 flex items-center text-purple-800 dark:text-purple-300 font-medium"
-            :class="{ 'bg-purple-100/15 dark:bg-purple-800/25': selectedSuggestionIndex === enhancedTagSuggestions.length }"
+            :class="{
+              'bg-purple-100/15 dark:bg-purple-800/25':
+                selectedSuggestionIndex === enhancedTagSuggestions.length,
+            }"
           >
             <span class="mr-1.5 font-bold">+</span> Create tag "{{ tagInput }}"
           </div>
@@ -424,8 +449,14 @@ function handleClickOutside(event) {
 
 <style scoped>
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .animate-fadeIn {
