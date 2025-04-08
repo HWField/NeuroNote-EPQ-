@@ -227,6 +227,27 @@ export const useTabStore = defineStore("tabStore", () => {
     activeTab.value = 1;
   }
 
+  function reorderTabs(newOrder) {
+    // Create a map of the existing tabs by id for easy lookup
+    const tabMap = tabs.value.reduce((acc, tab) => {
+      acc[tab.id] = tab;
+      return acc;
+    }, {});
+
+    // Get the locked tabs (0, 1, 2) which should remain at the start
+    const lockedTabs = tabs.value.filter(
+      (tab) => tab.id === 0 || tab.id === 1 || tab.id === 2
+    );
+
+    // Ensure all filtered tabs (non-locked ones) are in the new order
+    const reorderedTabs = newOrder.map((tab) => tabMap[tab.id]);
+
+    // Combine the locked tabs with the reordered ones
+    tabs.value = [...lockedTabs, ...reorderedTabs];
+
+    // Save the new order
+    useUserStore().saveUser({ tabs: Array.from(tabs.value) });
+  }
   return {
     tabs,
     activeTab,
@@ -240,5 +261,6 @@ export const useTabStore = defineStore("tabStore", () => {
     // SendTabs,
     RenameTab,
     loadTabsFromPreferences,
+    reorderTabs,
   };
 });

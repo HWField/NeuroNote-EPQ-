@@ -136,237 +136,236 @@ const stats = computed(() => {
 <template>
   <div class="h-full w-full">
     <!-- Desktop layout -->
-<div
-  v-if="screenSize === 'large'"
-  class="flex w-full h-full flex-col p-6"
->
-  <div class="flex flex-col h-full w-full">
-    <!-- Welcome banner - fixed height -->
     <div
-      class="relative rounded-xl overflow-hidden fade-in flex-shrink-0 min-h-[120px] mb-4"
+      v-if="screenSize === 'large'"
+      class="flex w-full h-full flex-col p-6 space-y-4"
     >
-      <!-- Glass background with purple gradient -->
-      <div
-        class="absolute inset-0 bg-gradient-to-r from-purple-600/80 via-purple-500/70 to-indigo-600/60 backdrop-blur-sm"
-      ></div>
+      
 
-      <!-- Decorative elements (adjusted positioning) -->
-      <div
-        class="absolute -top-10 -right-10 w-32 h-32 bg-purple-300/20 rounded-full blur-xl"
-      ></div>
-      <div
-        class="absolute bottom-0 left-1/3 w-40 h-40 bg-indigo-300/20 rounded-full blur-xl"
-      ></div>
-      <div
-        class="absolute top-1/2 left-1/4 w-16 h-16 bg-pink-200/30 rounded-full blur-lg"
-      ></div>
+      <div class="h-[calc(100vh-100px)] flex flex-col relative w-full">
 
-      <!-- Glass particles -->
-      <div class="absolute inset-0 overflow-visible">
-        <div
-          class="absolute top-5 right-1/4 w-3 h-3 bg-white/40 rounded-full"
-        ></div>
-        <div
-          class="absolute top-12 right-1/3 w-2 h-2 bg-white/30 rounded-full"
-        ></div>
-        <div
-          class="absolute bottom-10 left-1/4 w-2 h-2 bg-white/30 rounded-full"
-        ></div>
-        <div
-          class="absolute bottom-16 right-1/2 w-3 h-3 bg-white/20 rounded-full"
-        ></div>
-      </div>
+        <!-- Welcome banner -->
 
-      <!-- Content with improved spacing -->
-      <div class="relative z-10 px-8 py-7 flex items-center">
-        <!-- Left side -->
-        <div class="flex-1">
-          <h1 class="text-3xl font-bold text-white flex items-center">
-            Welcome, {{ userStore.username }}
-            <span class="inline-block ml-2 animate-bounce">👋</span>
-          </h1>
-          <p class="text-white/80 mt-2 mb-1 max-w-md">
-            Your knowledge awaits exploration
-          </p>
-        </div>
-
-        <!-- Right side - decorative icon -->
-        <div
-          class="hidden md:flex items-center justify-center w-14 h-14 bg-white/10 backdrop-blur-md rounded-xl rotate-3 shadow-lg border border-white/20"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="text-white"
-          >
-            <circle cx="18" cy="5" r="3"></circle>
-            <circle cx="6" cy="12" r="3"></circle>
-            <circle cx="18" cy="19" r="3"></circle>
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
-          </svg>
-        </div>
-      </div>
-
-      <!-- Bottom glass border -->
       <div
-        class="absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-300/50 via-white/30 to-indigo-300/50 backdrop-blur-md"
-      ></div>
-    </div>
-    
-    <!-- Stats row - minimal height with flex-shrink-0 to prevent shrinking -->
-    <div
-      class="flex flex-row w-full space-x-4 justify-evenly mb-4 fade-in-delay-200 flex-shrink-0"
-    >
-      <div class="rounded-xl p-4 w-full flex flex-col bg-primary/10">
-        <span class="text-xs uppercase text-muted-foreground font-medium"
-          >Notes</span
-        >
-        <span class="text-2xl font-bold text-primary">{{
-          stats.notes
-        }}</span>
-      </div>
-      <div class="rounded-xl p-4 w-full flex flex-col bg-purple-500/10">
-        <span class="text-xs uppercase text-muted-foreground font-medium"
-          >Tags</span
-        >
-        <span class="text-2xl font-bold text-purple-500">{{
-          stats.tags
-        }}</span>
-      </div>
-      <div class="rounded-xl p-4 w-full flex flex-col bg-green-500/10">
-        <span class="text-xs uppercase text-muted-foreground font-medium"
-          >Connections</span
-        >
-        <span class="text-2xl font-bold text-green-500">{{
-          stats.edges
-        }}</span>
-      </div>
-    </div>
-
-    <!-- Main content area - flex-grow-1 to fill remaining space -->
-    <div
-      class="flex flex-row space-x-4 flex-1 min-h-0 fade-in-delay-300"
-    >
-      <!-- Left Column (Tall) - adding overflow handling -->
-      <div
-        class="w-2/3 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden h-full"
+        class="relative mb-4 rounded-xl overflow-hidden fade-in h-auto min-h-[120px]"
       >
-        <Cytoscape
-          v-if="active"
-          @note-selected="OpenNote"
-          :hasControls="true"
-          :tabId="1"
-          class="h-full w-full"
-        />
-      </div>
-
-      <!-- Right Column - fixed ratio, with proper overflow handling -->
-      <div class="flex w-1/3 flex-col h-full space-y-4 min-h-0">
-        <!-- Recent Notes - flex-1 to share space -->
+        <!-- Glass background with purple gradient -->
         <div
-          class="bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex-1 flex flex-col min-h-0"
-        >
-          <div class="flex items-center px-5 py-4">
-            <div class="w-1.5 h-6 bg-primary rounded-full mr-2"></div>
-            <h2 class="text-xl font-bold flex-grow">Recent Notes</h2>
+          class="absolute inset-0 bg-gradient-to-r from-purple-600/80 via-purple-500/70 to-indigo-600/60 backdrop-blur-sm"
+        ></div>
+
+        <!-- Decorative elements (adjusted positioning) -->
+        <div
+          class="absolute -top-10 -right-10 w-32 h-32 bg-purple-300/20 rounded-full blur-xl"
+        ></div>
+        <div
+          class="absolute bottom-0 left-1/3 w-40 h-40 bg-indigo-300/20 rounded-full blur-xl"
+        ></div>
+        <div
+          class="absolute top-1/2 left-1/4 w-16 h-16 bg-pink-200/30 rounded-full blur-lg"
+        ></div>
+
+        <!-- Glass particles -->
+        <div class="absolute inset-0 overflow-visible">
+          <div
+            class="absolute top-5 right-1/4 w-3 h-3 bg-white/40 rounded-full"
+          ></div>
+          <div
+            class="absolute top-12 right-1/3 w-2 h-2 bg-white/30 rounded-full"
+          ></div>
+          <div
+            class="absolute bottom-10 left-1/4 w-2 h-2 bg-white/30 rounded-full"
+          ></div>
+          <div
+            class="absolute bottom-16 right-1/2 w-3 h-3 bg-white/20 rounded-full"
+          ></div>
+        </div>
+
+        <!-- Content with improved spacing -->
+        <div class="relative z-10 px-8 py-7 flex items-center">
+          <!-- Left side -->
+          <div class="flex-1">
+            <h1 class="text-3xl font-bold text-white flex items-center">
+              Welcome, {{ userStore.username }}
+              <span class="inline-block ml-2 animate-bounce">👋</span>
+            </h1>
+            <p class="text-white/80 mt-2 mb-1 max-w-md">
+              Your knowledge awaits :)
+            </p>
           </div>
 
-          <div class="flex-1 overflow-hidden px-5 pb-5">
-            <ScrollArea
-              className="h-full"
-              style="
-                --scrollbar-size: 5px;
-                --scrollbar-thumb: rgb(var(--primary));
-                --scrollbar-track: transparent;
-              "
+          <!-- Right side - decorative icon -->
+          <div
+            class="hidden md:flex items-center justify-center w-14 h-14 bg-white/10 backdrop-blur-md rounded-xl rotate-3 shadow-lg border border-white/20"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="text-white"
             >
-              <ul class="pr-4 space-y-2">
-                <li
-                  v-for="(note, index) in recentNotes"
-                  :key="note.id"
-                  @click="OpenNote(`note_${note.id}`)"
-                  class="p-3 rounded-lg bg-background/80 backdrop-blur-sm shadow-sm border border-border/20 cursor-pointer transition-all duration-200 hover:bg-background hover:shadow-md hover:-translate-y-[2px] flex items-center group"
-                >
-                  <div
-                    class="mr-3 flex-shrink-0 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-semibold transition-transform group-hover:scale-110"
-                  >
-                    {{ index + 1 }}
-                  </div>
-                  <div
-                    class="mr-3 flex-shrink-0 text-primary transition-transform group-hover:rotate-12"
-                  >
-                    <FileText class="w-4 h-4" />
-                  </div>
-                  <div class="truncate font-medium">{{ note.title }}</div>
-                </li>
-              </ul>
-            </ScrollArea>
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
           </div>
         </div>
-        
-        <!-- Shortcuts - flex-1 to share space -->
+
+        <!-- Bottom glass border -->
         <div
-          class="bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex-1 flex flex-col min-h-0"
+          class="absolute bottom-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-300/50 via-white/30 to-indigo-300/50 backdrop-blur-md"
+        ></div>
+      </div>
+        <!-- Stats row -->
+        <div
+          class="flex flex-row w-full h-1/7 space-x-4 justify-evenly mb-4 fade-in-delay-200 opacity-0"
         >
-          <div class="flex items-center px-5 py-4">
-            <div class="w-1.5 h-6 bg-primary rounded-full mr-2"></div>
-            <h2 class="text-xl font-bold flex-grow">Shortcuts</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              class="rounded-full hover:bg-primary/10"
+          <div class="rounded-xl p-4 w-full flex flex-col bg-primary/10">
+            <span class="text-xs uppercase text-muted-foreground font-medium"
+              >Notes</span
             >
-              <Settings class="h-5 w-5" />
-            </Button>
+            <span class="text-2xl font-bold text-primary">{{
+              stats.notes
+            }}</span>
+          </div>
+          <div class="rounded-xl p-4 w-full flex flex-col bg-purple-500/10">
+            <span class="text-xs uppercase text-muted-foreground font-medium"
+              >Tags</span
+            >
+            <span class="text-2xl font-bold text-purple-500">{{
+              stats.tags
+            }}</span>
+          </div>
+          <div class="rounded-xl p-4 w-full flex flex-col bg-green-500/10">
+            <span class="text-xs uppercase text-muted-foreground font-medium"
+              >Connections</span
+            >
+            <span class="text-2xl font-bold text-green-500">{{
+              stats.edges
+            }}</span>
+          </div>
+        </div>
+
+        <div
+          class="flex flex-row space-x-4 h-full fade-in-delay-300 "
+        >
+          <!-- Left Column (Tall) -->
+          <div
+            class="w-2/3 h-full mb-4 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden"
+          >
+            <Cytoscape
+              v-if="active"
+              @note-selected="OpenNote"
+              :hasControls="true"
+              :tabId="1"
+            />
           </div>
 
-          <div class="grid grid-cols-2 gap-3 p-5">
-            <Button
-              class="flex items-center justify-start p-3 h-auto border-border/30 hover:border-primary/50 group"
+          <!-- Right Column (Two Short Divs) -->
+          <div class="flex w-1/3 flex-col h-full space-y-4">
+            <div
+              class="bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex-1 flex flex-col"
             >
-              <Home
-                class="mr-2 p-1 rounded-full bg-primary/10 transition-colors shortcut-icon"
-              />
-              <span>Home</span>
-            </Button>
-            <Button
-              class="flex items-center justify-start p-3 h-auto border-border/30 hover:border-primary/50 group"
+              <div class="flex items-center px-5 py-4">
+                <div class="w-1.5 h-6 bg-primary rounded-full mr-2"></div>
+                <h2 class="text-xl font-bold flex-grow">Recent Notes</h2>
+              </div>
+
+              <div class="flex-1 overflow-hidden px-5 pb-5">
+                <ScrollArea
+                  className="h-full"
+                  style="
+                    --scrollbar-size: 5px;
+                    --scrollbar-thumb: rgb(var(--primary));
+                    --scrollbar-track: transparent;
+                  "
+                >
+                  <ul class="pr-4 space-y-2">
+                    <li
+                      v-for="(note, index) in recentNotes"
+                      :key="note.id"
+                      @click="OpenNote(`note_${note.id}`)"
+                      class="p-3 rounded-lg bg-background/80 backdrop-blur-sm shadow-sm border border-border/20 cursor-pointer transition-all duration-200 hover:bg-background hover:shadow-md hover:-translate-y-[2px] flex items-center group"
+                    >
+                      <div
+                        class="mr-3 flex-shrink-0 w-7 h-7 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-semibold transition-transform group-hover:scale-110"
+                      >
+                        {{ index + 1 }}
+                      </div>
+                      <div
+                        class="mr-3 flex-shrink-0 text-primary transition-transform group-hover:rotate-12"
+                      >
+                        <FileText class="w-4 h-4" />
+                      </div>
+                      <div class="truncate font-medium">{{ note.title }}</div>
+                    </li>
+                  </ul>
+                </ScrollArea>
+              </div>
+            </div>
+<!-- Shortcuts -->
+            <div
+              class="bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex-1 flex flex-col"
             >
-              <Search
-                class="mr-2 p-1 rounded-full bg-primary/10 transition-colors shortcut-icon"
-              />
-              <span>Search</span>
-            </Button>
-            <Button
-              class="flex items-center justify-start p-3 h-auto border-border/30 hover:border-primary/50 group"
-            >
-              <Book
-                class="mr-2 p-1 rounded-full bg-primary/10 transition-colors shortcut-icon"
-              />
-              <span>Notes</span>
-            </Button>
-            <Button
-              class="flex items-center justify-start p-3 h-auto border-border/30 hover:border-primary/50 group"
-            >
-              <Tag
-                class="mr-2 p-1 rounded-full bg-primary/10 transition-colors shortcut-icon"
-              />
-              <span>Tags</span>
-            </Button>
+              <div class="flex items-center px-5 py-4">
+                <div class="w-1.5 h-6 bg-primary rounded-full mr-2"></div>
+                <h2 class="text-xl font-bold flex-grow">Shortcuts</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="rounded-full hover:bg-primary/10"
+                >
+                  <Settings class="h-5 w-5" />
+                </Button>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 p-5">
+                <Button
+                  class="flex items-center justify-start p-3 h-auto border-border/30 hover:border-primary/50 group"
+                >
+                  <Home
+                    class="mr-2 p-1 rounded-full bg-primary/10 transition-colors shortcut-icon"
+                  />
+                  <span>Home</span>
+                </Button>
+                <Button
+                  class="flex items-center justify-start p-3 h-auto border-border/30 hover:border-primary/50 group"
+                >
+                  <Search
+                    class="mr-2 p-1 rounded-full bg-primary/10 transition-colors shortcut-icon"
+                  />
+                  <span>Search</span>
+                </Button>
+                <Button
+                  class="flex items-center justify-start p-3 h-auto border-border/30 hover:border-primary/50 group"
+                >
+                  <Book
+                    class="mr-2 p-1 rounded-full bg-primary/10 transition-colors shortcut-icon"
+                  />
+                  <span>Notes</span>
+                </Button>
+                <Button
+                  class="flex items-center justify-start p-3 h-auto border-border/30 hover:border-primary/50 group"
+                >
+                  <Tag
+                    class="mr-2 p-1 rounded-full bg-primary/10 transition-colors shortcut-icon"
+                  />
+                  <span>Tags</span>
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
     <!-- Medium layout -->
     <div
@@ -529,7 +528,7 @@ const stats = computed(() => {
               <span class="inline-block ml-2 animate-bounce">👋</span>
             </h1>
             <p class="text-white/80 mt-2 mb-1 max-w-md">
-              Your knowledge graph awaits exploration
+              Your knowledge graph awaits :)
             </p>
           </div>
 

@@ -27,8 +27,6 @@ export const useUserStore = defineStore(
 
     const router = useRouter(); // Router instance for programmatic navigation
 
-  
-
     function UpdateUser(data) {
       username.value = data.username;
       email.value = data.email;
@@ -46,26 +44,22 @@ export const useUserStore = defineStore(
         // Load recent notes if available
         if (data.preferences?.recentNotes) {
           recentNotes.value = data.preferences.recentNotes;
-
         }
 
         if (data.preferences?.tabs) {
           const tabStore = useTabStore();
           tabStore.loadTabsFromPreferences(data.preferences.tabs);
-       
         }
       }
     }
 
     async function saveUser(updates = {}) {
-     
-
       try {
         const response = await axios.post("/update", {
           operation: "user",
           ...updates, // This spreads all updates directly into the request body
         });
-    
+
         // Update local state with any returned values
         if (response.data.status === "success") {
           // Update local state for each field that was updated
@@ -91,7 +85,6 @@ export const useUserStore = defineStore(
       }
     }
 
-    
     async function FetchUser() {
       try {
         const response = await axios.post("/load", {
@@ -124,8 +117,8 @@ export const useUserStore = defineStore(
       }
     }
 
-    async function InstantLogout() // used for quick wiping of data
-     { 
+    async function InstantLogout() {
+      // used for quick wiping of data
       isAuthenticated.value = false;
       username.value = "";
       email.value = "";

@@ -1443,55 +1443,79 @@ function applyFilters() {
         }
       });
     } else if (filter.type === "tag") {
-      // Find tags matching the filter
-      const matchingTags = filteredElements.filter(
-        (element) =>
-          element.type === "tag" &&
-          element.name &&
-          element.name.toLowerCase().includes(filter.value)
-      );
+  // Find tags matching the filter
+  const matchingTags = filteredElements.filter(
+    (element) =>
+      element.type === "tag" &&
+      element.name &&
+      element.name.toLowerCase().includes(filter.value)
+  );
 
-      // Highlight matching tags
-      matchingTags.forEach((tag) => {
-        highlightedNodeIds.add(`tag_${tag.id}`);
-      });
+  // Highlight matching tags
+  matchingTags.forEach((tag) => {
+    highlightedNodeIds.add(`tag_${tag.id}`);
+  });
 
-      // Get all tag IDs that match
-      const matchingTagIds = new Set(matchingTags.map((tag) => tag.id));
+  // Get all tag IDs that match
+  const matchingTagIds = new Set(matchingTags.map((tag) => tag.id));
 
-      // Include notes that have these tags
-      const relatedNotes = allElements.filter(
-        (element) =>
-          element.type === "note" &&
-          element.tags &&
-          element.tags.some((tagId) => matchingTagIds.has(tagId))
-      );
+  // Include notes that have these tags
+  const relatedNotes = allElements.filter(
+    (element) =>
+      element.type === "note" &&
+      element.tags &&
+      element.tags.some((tagId) => matchingTagIds.has(tagId))
+  );
 
-      // Include the matching tags, their descendants, and related notes
-      const includedTags = new Set();
-      matchingTags.forEach((tag) => {
-        includedTags.add(tag.id);
+  // Helper function to get parent tags
+  function getParents(tagId, allTags) {
+    const parents = [];
+    allTags.forEach(potentialParent => {
+      if (potentialParent.type === "tag" && 
+          potentialParent.children && 
+          potentialParent.children.includes(tagId)) {
+        parents.push(potentialParent);
+        // Recursively get parents of parents
+        const grandparents = getParents(potentialParent.id, allTags);
+        parents.push(...grandparents);
+      }
+    });
+    return parents;
+  }
 
-        // Add all descendants
-        getDescendants(tag).forEach((descendant) => {
-          includedTags.add(descendant.id);
-        });
-      });
+  // Include the matching tags, their ancestors, descendants, and related notes
+  const includedTags = new Set();
+  matchingTags.forEach((tag) => {
+    includedTags.add(tag.id);
 
-      // Create new filtered set with matching tags, their descendants, and related notes
-      filteredElements = [
-        ...matchingTags,
-        ...allElements.filter(
-          (element) => element.type === "tag" && includedTags.has(element.id)
-        ),
-        ...relatedNotes,
-      ];
-    } else if (filter.type === "nodeType") {
-      // Filter by node type
-      filteredElements = filteredElements.filter(
-        (element) => element.type === filter.value
-      );
-    }
+    // Add all descendants
+    getDescendants(tag).forEach((descendant) => {
+      includedTags.add(descendant.id);
+    });
+
+    // Add all parents/ancestors
+    const parents = getParents(tag.id, allElements);
+    parents.forEach(parent => {
+      includedTags.add(parent.id);
+    });
+  });
+
+  // Get all notes connected to any tag in the hierarchy
+  const allHierarchyNotes = allElements.filter(
+    (element) =>
+      element.type === "note" &&
+      element.tags &&
+      element.tags.some((tagId) => includedTags.has(tagId))
+  );
+
+  // Create new filtered set with matching tags, their ancestors, descendants, and related notes
+  filteredElements = [
+    ...allElements.filter(
+      (element) => element.type === "tag" && includedTags.has(element.id)
+    ),
+    ...allHierarchyNotes
+  ];
+}
   });
 
   // Now prepare elements for Cytoscape, ensuring all nodes needed for edges are included

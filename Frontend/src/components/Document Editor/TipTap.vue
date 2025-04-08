@@ -294,7 +294,7 @@ function extractTagsFromDocument(document) {
   return Array.from(uniqueTagIds);
 }
 
-function SaveToBackend() {
+async function SaveToBackend() {
   let noteContent = editor.getJSON();
   // Use the noteTitle ref instead of extracting from content
   const title = noteTitle.value || "Untitled Note";
@@ -304,55 +304,66 @@ function SaveToBackend() {
   const graphStore = useGraphStore();
   graphStore.updateNoteName(props.noteId, title);
   graphStore.replaceNoteTags(props.noteId, tags);
-  axios
-    .post("/update", {
+
+  try {
+    await axios.post("/update", {
       operation: "content",
       name: title,
       content: noteContent,
       tags: tags,
       id: props.noteId,
-    })
-    .catch((error) => {
-      console.error("Error fetching data:", error);
     });
+    return true; // Successful save
+  } catch (error) {
+    console.error("Error saving note:", error);
+    // Show error toast
+    toast({
+      title: "Save error",
+      description: "Failed to save your note. Please try again.",
+      variant: "destructive",
+    });
+    return false; // Failed save
+  }
 }
 
 async function LoadFromBackend() {
-  axios
-    .post("/load", {
+  try {
+    const response = await axios.post("/load", {
       id: props.noteId,
       operation: "content",
-    })
-    .then((response) => {
-      // Set the title in our ref
-      noteTitle.value = response.data.name || "Untitled Note";
-
-      // Extract tags if they exist in the response
-      if (response.data.tags) {
-        noteTags.value = response.data.tags;
-      } else {
-        // If no tags in response, extract them from content
-        noteTags.value = extractTagsFromDocument(response.data.content);
-      }
-
-      // Set content
-      if (response.data.content) {
-        editor.commands.setContent(response.data.content);
-      }
-    })
-    .catch((error) => {
-      // Display error toast
-      toast({
-        title: "Note not found",
-        description: "The requested note could not be loaded.",
-        variant: "destructive",
-      });
-      
-      // Close the note view
-      emit("note-closed");
-      
-      console.error("Error loading note:", error);
     });
+    
+    // Set the title in our ref
+    noteTitle.value = response.data.name || "Untitled Note";
+
+    // Extract tags if they exist in the response
+    if (response.data.tags) {
+      noteTags.value = response.data.tags;
+    } else {
+      // If no tags in response, extract them from content
+      noteTags.value = extractTagsFromDocument(response.data.content);
+    }
+
+    // Set content
+    if (response.data.content) {
+      editor.commands.setContent(response.data.content);
+    }
+    
+    return true; // Successfully loaded
+  } catch (error) {
+    // Display error toast
+    toast({
+      title: "Note not found",
+      description: "The requested note could not be loaded.",
+      variant: "destructive",
+    });
+
+    // Close the note view
+    emit("note-closed");
+
+    console.error("Error loading note:", error);
+    return false; // Failed to load
+  }
 }
 
 // Update title from the header component
@@ -367,28 +378,41 @@ function updateNoteTags(newTags) {
 }
 
 onMounted(async () => {
-  await LoadFromBackend();
-  useUserStore().addToRecentNotes(props.noteId);
-  editor.chain().focus().run();
-  // Add event listener for tag updates
-
-  // event listener for the image modal
-  eventBus.on("open-image-modal", openImageModal);
-  window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
-      emit("note-closed");
-    }
-  });
-  //full save every minute
-  setInterval(SaveToBackend(), 60000);
+  // Wait for content to load before proceeding
+  const loaded = await LoadFromBackend();
+  
+  // Only proceed with the rest if loading was successful
+  if (loaded) {
+    useUserStore().addToRecentNotes(props.noteId);
+    editor.chain().focus().run();
+    
+    // Add event listener for tag updates
+    eventBus.on("open-image-modal", openImageModal);
+    
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        emit("note-closed");
+      }
+    });
+    
+    // Full save every minute
+    setInterval(async () => {
+      await SaveToBackend();
+    }, 60000);
+  }
 });
 
-onBeforeUnmount(() => {
-  eventBus.off("open-image-modal", openImageModal);
-
-  SaveToBackend();
-  if (editor) {
-    editor.destroy();
+onBeforeUnmount(async () => {
+  // Wait for save to complete before destroying editor
+  try {
+    await SaveToBackend();
+    console.log("Note saved successfully before unmount");
+    eventBus.off("open-image-modal", openImageModal);
+    if (editor) {
+      editor.destroy();
+    }
+  } catch (error) {
+    console.error("Failed to save note before unmount:", error);
   }
 });
 
@@ -398,9 +422,9 @@ const CustomDocument = Document.extend({
 
 let editor = new Editor({
   //save every 5seconds to backend on modification
-  onUpdate: debounce(() => {
-    SaveToBackend();
-  }, 1000),
+  onUpdate: debounce(async () => {
+  await SaveToBackend();
+}, 1000),
   extensions: [
     Document,
     Details.configure({

@@ -192,6 +192,21 @@ function logOut() {
   userStore.Logout(); // Clear user store
   // router.replace("/login"); // Or redirect to login page using Vue Router
 }
+
+const orderedTabs = computed({
+  get: () => filteredTabs.value,
+  set: (newTabsOrder) => {
+    // This is called when the tabs are reordered
+    tabStore.reorderTabs(newTabsOrder);
+  }
+});
+
+// Add this method to handle drag end
+function onDragEnd() {
+  // Additional logic after drag ends if needed
+  // For example, save the tabs to user preferences
+  useUserStore().saveUser({ tabs: Array.from(tabStore.tabs) });
+}
 // This is sample data.
 const data = {
   user: {
@@ -426,28 +441,43 @@ function handleOpenChange() {
           </SidebarGroupAction>
 
           <!-- Tab List -->
-          <ScrollArea class="flex-1 min-h-0 overflow-y-auto">
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem
-                  v-for="tab in filteredTabs"
-                  :key="tab.id"
-                  @click="switchTab(tab.id)"
-                  :class="{ 'bg-secondary': tab.id === activeTab }"
-                >
-                  <SidebarMenuButton>
-                    <component :is="getTabIcon(tab)" class="w-4 h-4" />
-                    <span class="truncate">{{ tab.title }}</span>
-                  </SidebarMenuButton>
+          <!-- Tab List -->
+<ScrollArea class="flex-1 min-h-0 overflow-y-auto">
+  <SidebarGroupContent>
+    <SidebarMenu>
+      <draggable 
+        v-model="orderedTabs" 
+        group="tabs"
+        item-key="id"
+        handle=".tab-drag-handle"
+        @end="onDragEnd"
+      >
+        <template #item="{element: tab}">
+          <SidebarMenuItem
+            :key="tab.id"
+            @click="switchTab(tab.id)"
+            :class="{ 'bg-secondary': tab.id === activeTab }"
+          >
+            <div class="flex items-center w-full">
+              <div class="tab-drag-handle cursor-move mr-1">
+                <GripVertical class="w-3 h-3 text-muted-foreground" />
+              </div>
+              <SidebarMenuButton>
+                <component :is="getTabIcon(tab)" class="w-4 h-4" />
+                <span class="truncate">{{ tab.title }}</span>
+              </SidebarMenuButton>
+            </div>
 
-                  <SidebarMenuAction @click.stop="closeTab(tab.id)">
-                    <X class="w-4 h-4 hover:text-red-700" />
-                    <span class="sr-only">Close Tab</span>
-                  </SidebarMenuAction>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </ScrollArea>
+            <SidebarMenuAction @click.stop="closeTab(tab.id)">
+              <X class="w-4 h-4 hover:text-red-700" />
+              <span class="sr-only">Close Tab</span>
+            </SidebarMenuAction>
+          </SidebarMenuItem>
+        </template>
+      </draggable>
+    </SidebarMenu>
+  </SidebarGroupContent>
+</ScrollArea>
         </SidebarGroup>
         <!-- 
         <SidebarSeparator />
