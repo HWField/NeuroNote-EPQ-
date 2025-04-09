@@ -35,7 +35,19 @@ const enhancedTagSuggestions = computed(() => {
     };
   });
 });
-
+function scrollToSelected() {
+  nextTick(() => {
+    const selectedElement = document.getElementById(
+      `tag-suggestion-${selectedSuggestionIndex.value}`
+    );
+    if (selectedElement) {
+      selectedElement.scrollIntoView({
+        block: "nearest",
+        behavior: "smooth",
+      });
+    }
+  });
+}
 function handleTagInputKeydown(e) {
   if (!showSuggestions.value) return;
 
@@ -44,12 +56,14 @@ function handleTagInputKeydown(e) {
     selectedSuggestionIndex.value =
       (selectedSuggestionIndex.value + 1) %
       (enhancedTagSuggestions.value.length + (tagInput.value.trim() ? 1 : 0));
+    scrollToSelected(); // Add this to scroll to selection
   } else if (e.key === "ArrowUp") {
     e.preventDefault();
     const totalOptions =
       enhancedTagSuggestions.value.length + (tagInput.value.trim() ? 1 : 0);
     selectedSuggestionIndex.value =
       (selectedSuggestionIndex.value - 1 + totalOptions) % totalOptions;
+    scrollToSelected(); // Add this to scroll to selection
   } else if (e.key === "Enter") {
     e.preventDefault();
 
@@ -109,7 +123,23 @@ watch(
   },
   { immediate: true }
 );
-
+const suggestionHeight = computed(() => {
+  // Base height for empty results or single item
+  if (enhancedTagSuggestions.value.length === 0) {
+    return '50px'; // Just enough for add new tag
+  }
+  
+  // Calculate height based on number of items
+  const itemCount = enhancedTagSuggestions.value.length + (tagInput.value.trim().length > 0 ? 1 : 0);
+  
+  if (itemCount <= 5) {
+    // For 1-3 items, use content height (approximately 40px per item)
+    return `${itemCount * 40}px`;
+  } else {
+    // For more items, cap at a reasonable maximum height
+    return '250px';
+  }
+});
 async function loadTags() {
   // Use tags from GraphStore instead of separate API call
   selectedTags.value = props.initialTags.map((tagId) => {
@@ -266,7 +296,10 @@ function handleClickOutside(event) {
 </script>
 
 <template>
-  <div class="top-0 z-10 bg-white dark:bg-slate-900 pb-2" @click.stop>
+  <div
+    class="top-0 z-10 bg-primary-foreground dark:bg-slate-900 pb-2"
+    @click.stop
+  >
     <!-- Title input with improved placeholder behavior -->
     <div class="mb-3 py-2 relative">
       <div
@@ -372,7 +405,6 @@ function handleClickOutside(event) {
               v-model="tagInput"
               @input="searchTags"
               @keydown="handleTagInputKeydown"
-              @keydown.enter="addTag"
               @focus="handleTagInputFocus"
               @blur="handleTagInputBlur"
               placeholder="Add tag..."
@@ -398,17 +430,21 @@ function handleClickOutside(event) {
         v-if="showSuggestions"
         class="absolute top-[calc(100%+4px)] left-0 w-full z-20 bg-white dark:bg-slate-800 border border-purple-300/20 dark:border-purple-600/20 rounded-lg shadow-lg animate-fadeIn overflow-hidden"
       >
-        <ScrollArea className="h-[180px]">
+      <ScrollArea
+      :style="{ height: suggestionHeight }"
+      class="tag-suggestions"
+    >
           <div
             v-if="enhancedTagSuggestions.length === 0"
             class="py-1.5 px-2.5 text-xs text-purple-800/50 dark:text-purple-300/50 italic text-center"
           >
-            No matching tags
+           
           </div>
 
           <div
             v-for="(tag, index) in enhancedTagSuggestions"
             :key="tag.id"
+            :id="`tag-suggestion-${index}`"
             @click="selectTag(tag)"
             @mouseover="selectedSuggestionIndex = index"
             class="py-2 px-2.5 cursor-pointer transition-colors duration-150 text-xs rounded mx-1 my-0.5"
@@ -431,6 +467,7 @@ function handleClickOutside(event) {
           <!-- Create tag button always shows when text is entered -->
           <div
             v-if="tagInput.trim().length > 0"
+            :id="`tag-suggestion-${enhancedTagSuggestions.length}`"
             @click="handleCreateNewTag"
             @mouseover="selectedSuggestionIndex = enhancedTagSuggestions.length"
             class="py-2 px-2.5 cursor-pointer transition-colors duration-150 text-xs rounded mx-1 my-0.5 flex items-center text-purple-800 dark:text-purple-300 font-medium"
@@ -458,7 +495,9 @@ function handleClickOutside(event) {
     transform: translateY(0);
   }
 }
-
+:deep(.tag-suggestions) {
+  transition: height 0.2s ease;
+}
 .animate-fadeIn {
   animation: fadeIn 0.2s ease;
 }

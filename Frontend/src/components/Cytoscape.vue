@@ -15,6 +15,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "./ui/input";
 import { onMounted, onBeforeUnmount, onUnmounted, ref, watch } from "vue";
@@ -65,14 +74,6 @@ const props = defineProps({
 
 const emit = defineEmits(["note-selected", "filters-changed"]);
 const activeFilters = ref([]);
-
-// Add this watch to react to external filter changes
-// watch(() => props.externalFilters, (newFilters) => {
-//   if (newFilters && JSON.stringify(newFilters) !== JSON.stringify(activeFilters.value)) {
-//     activeFilters.value = [...newFilters];
-//     applyFilters();
-//   }
-// }, { deep: true });
 
 const loadState = () => {
   const tab = tabStore.getTab(props.tabId);
@@ -1494,10 +1495,10 @@ function applyFilters() {
     });
 
     // Add all parents/ancestors
-    const parents = getParents(tag.id, allElements);
-    parents.forEach(parent => {
-      includedTags.add(parent.id);
-    });
+    // const parents = getParents(tag.id, allElements);
+    // parents.forEach(parent => {
+    //   includedTags.add(parent.id);
+    // });
   });
 
   // Get all notes connected to any tag in the hierarchy

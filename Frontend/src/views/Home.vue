@@ -61,6 +61,7 @@ import {
   SidebarGroupContent,
   SidebarMenuBadge,
 } from "@/components/ui/sidebar";
+
 import {
   Command,
   CommandDialog,
@@ -113,6 +114,7 @@ const { toast } = useToast();
 
 const tabStore = useTabStore();
 const userStore = useUserStore();
+
 
 watch(
   () => userStore.authenticated,
@@ -198,7 +200,7 @@ const orderedTabs = computed({
   set: (newTabsOrder) => {
     // This is called when the tabs are reordered
     tabStore.reorderTabs(newTabsOrder);
-  }
+  },
 });
 
 // Add this method to handle drag end
@@ -442,42 +444,42 @@ function handleOpenChange() {
 
           <!-- Tab List -->
           <!-- Tab List -->
-<ScrollArea class="flex-1 min-h-0 overflow-y-auto">
-  <SidebarGroupContent>
-    <SidebarMenu>
-      <draggable 
-        v-model="orderedTabs" 
-        group="tabs"
-        item-key="id"
-        handle=".tab-drag-handle"
-        @end="onDragEnd"
-      >
-        <template #item="{element: tab}">
-          <SidebarMenuItem
-            :key="tab.id"
-            @click="switchTab(tab.id)"
-            :class="{ 'bg-secondary': tab.id === activeTab }"
-          >
-            <div class="flex items-center w-full">
-              <div class="tab-drag-handle cursor-move mr-1">
-                <GripVertical class="w-3 h-3 text-muted-foreground" />
-              </div>
-              <SidebarMenuButton>
-                <component :is="getTabIcon(tab)" class="w-4 h-4" />
-                <span class="truncate">{{ tab.title }}</span>
-              </SidebarMenuButton>
-            </div>
+          <ScrollArea class="flex-1 min-h-0 overflow-y-auto">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <draggable
+                  v-model="orderedTabs"
+                  group="tabs"
+                  item-key="id"
+                  handle=".tab-drag-handle"
+                  @end="onDragEnd"
+                >
+                  <template #item="{ element: tab }">
+                    <SidebarMenuItem
+                      :key="tab.id"
+                      @click="switchTab(tab.id)"
+                      :class="{ 'bg-secondary': tab.id === activeTab }"
+                    >
+                      <div class="flex items-center w-full">
+                        <!-- <div v-if="!collapsed" class="tab-drag-handle cursor-move mr-1">
+                          <GripVertical class="w-3 h-3 text-muted-foreground" />
+                        </div> -->
+                        <SidebarMenuButton class="tab-drag-handle">
+                          <component :is="getTabIcon(tab)" class="w-4 h-4" />
+                          <span class="truncate">{{ tab.title }}</span>
+                        </SidebarMenuButton>
+                      </div>
 
-            <SidebarMenuAction @click.stop="closeTab(tab.id)">
-              <X class="w-4 h-4 hover:text-red-700" />
-              <span class="sr-only">Close Tab</span>
-            </SidebarMenuAction>
-          </SidebarMenuItem>
-        </template>
-      </draggable>
-    </SidebarMenu>
-  </SidebarGroupContent>
-</ScrollArea>
+                      <SidebarMenuAction @click.stop="closeTab(tab.id)">
+                        <X class="w-4 h-4 hover:text-red-700" />
+                        <span class="sr-only">Close Tab</span>
+                      </SidebarMenuAction>
+                    </SidebarMenuItem>
+                  </template>
+                </draggable>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </ScrollArea>
         </SidebarGroup>
         <!-- 
         <SidebarSeparator />
@@ -593,7 +595,7 @@ function handleOpenChange() {
       <!-- <SidebarRail /> -->
     </Sidebar>
 
-    <SidebarInset class="overflow-hidden h-screen flex flex-col">
+    <SidebarInset class="overflow-none h-screen flex flex-col">
       <!-- Header -->
       <header class="flex h-16 shrink-0 items-center gap-2 border-b">
         <div class="flex items-center">
@@ -618,7 +620,7 @@ function handleOpenChange() {
 
       <!-- Tab Content -->
       <!-- mx auto relative  -->
-      <div class="flex-1 w-full overflow-auto">
+      <div class="flex-1 w-full overflow-hidden">
         <!-- <TransitionGroup name="tab-change" mode="out-in"> -->
         <component
           :is="getActiveComponent"

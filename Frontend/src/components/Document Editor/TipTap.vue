@@ -418,6 +418,11 @@ async function closeNote() {
   
   }
 }
+const handleEscapeKey = (event) => {
+  if (event.key === "Escape") {
+    closeNote();
+  }
+};
 onMounted(async () => {
   // Wait for content to load before proceeding
   const loaded = await LoadFromBackend();
@@ -430,11 +435,7 @@ onMounted(async () => {
     // Add event listener for tag updates
     eventBus.on("open-image-modal", openImageModal);
 
-    window.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        closeNote();
-      }
-    });
+    window.addEventListener("keydown", handleEscapeKey);
 
     // Full save every minute
     saveInterval.value = setInterval(async () => {
@@ -447,7 +448,7 @@ onMounted(async () => {
 
 onBeforeUnmount(async () => {
   // Wait for save to complete before destroying editor
-
+  window.removeEventListener("keydown", handleEscapeKey);
   if (saveInterval.value) {
     clearInterval(saveInterval.value);
     saveInterval.value = null;
@@ -842,7 +843,7 @@ let editor = new Editor({
               </TooltipProvider>
 
               <Separator orientation="vertical" class="h-6 mx-1" />
-              <Separator orientation="vertical" class="h-6 mx-1" />
+         
 
               <!-- Heading Dropdown -->
               <DropdownMenu>

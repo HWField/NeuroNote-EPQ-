@@ -96,6 +96,15 @@ class Entity(Base):
 
     def _generate_user_specific_id(self):
         """Find the next available user-specific ID for this user."""
+        # Add a row-level lock to prevent race conditions
+        from sqlalchemy import text
+        
+        # First lock the rows for this user to prevent concurrent ID generation
+        dbsession.execute(
+            text("LOCK TABLE entities IN SHARE ROW EXCLUSIVE MODE")
+        )
+        
+        # Now get the highest ID with the lock in place
         last_entity = dbsession.query(Entity)\
             .filter_by(user_id=self.user_id)\
             .order_by(Entity.user_specific_id.desc())\
@@ -115,7 +124,8 @@ class Tag(Base):
         secondaryjoin=id == tag_parent_association.c.parent_id,
         backref=backref('children', lazy='dynamic')
     )
-    entity = relationship('Entity', backref='tag', uselist=False)
+    entity = relationship('Entity', backref='tag', uselist=False, single_parent=True, 
+                     cascade="all, delete-orphan")
     
     def __init__(self, user_id, name, parents=None):
         entity = Entity(user_id, "tag")
@@ -141,7 +151,8 @@ class Note(Base):
     viewport = Column(String, default="")
     background = Column(String, default="")
     tags = relationship('Tag', secondary=note_tag_association, backref=backref('notes', lazy='dynamic'))
-    entity = relationship('Entity', backref='note', uselist=False)
+    entity = relationship('Entity', backref='note', uselist=False, single_parent=True,
+                     cascade="all, delete-orphan") 
      
     def __init__(self, user_id, name, format=None, tags=None):
         entity = Entity(user_id, "note")
@@ -198,10 +209,10 @@ Base.metadata.create_all(engine)
 
 
 def populate_sample_data():
+    print("Populating sample data...")
     user = User(email="admin@admin", password=generate_password_hash("admin", method='pbkdf2:sha256'), username="admin", user_status="admin")
     dbsession.add(user)
     dbsession.commit()  # Save the user to generate an ID
-
     tags = {}
     tag_names = [
         "Physics", "Homework", "Classwork", "Mechanics", "Electricity", "Waves", "Thermodynamics",
@@ -256,10 +267,10 @@ def populate_sample_data():
     dbsession.commit()
 
     # Commit the changes to the database
-    # dbsession.commit()
+    dbsession.commit()
 
 # Populate sample data if not already present
-if dbsession.query(Tag).count() == 0:
+if dbsession.query(User).count() == 0:
     populate_sample_data()
 
 
@@ -272,7 +283,7 @@ if dbsession.query(Tag).count() == 0:
 def login():
     # Expecting JSON data, not form data
     data = request.get_json()  # Use .get_json() to parse JSON
-    print(data)
+    # print(data)
     email = data.get('email').lower()
     password = data.get('password')
     terms = data.get('terms')
@@ -281,7 +292,7 @@ def login():
     user = dbsession.query(User).filter_by(email=email).first()
     
     if terms == False:
-        print("didnt accept terms")
+        # print("didnt accept terms")
         return jsonify({"message": "Please accept the terms and conditions"}), 400
     # Check if user exists and passwords match
     if user is None:    
@@ -291,7 +302,7 @@ def login():
     # if user.password == password:
         # Create JWT token on successful login
         access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
-        print("logged in") 
+        # print("logged in") 
         return jsonify(access_token=access_token, username = user.username, email = user.email, userStatus = user.user_status, preferences = user.preferences), 200
         
     else:
@@ -311,16 +322,16 @@ def login():
 
 @app.route('/register', methods=['POST'])
 def register():
-    print("recieved request for registration")
+    # print("recieved request for registration")
     data = request.get_json()  # Use .get_json() to parse JSON
-    print(data)
+    # print(data)
     email = data.get('email')
     password = data.get('password')
     username = data.get('username')
     terms = data.get('terms')
     
     if terms == False:
-        print("didnt accept terms")
+        # print("didnt accept terms")
         return jsonify({"message": "Please accept the terms and conditions"}), 400
     existing_user = dbsession.query(User).filter_by(email=email).first()
     if existing_user:
@@ -332,7 +343,7 @@ def register():
         
         user = dbsession.query(User).filter_by(email=email).first()
         access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
-        print("logged in")
+        # print("logged in")
         return jsonify(access_token=access_token , username = user.username, email = user.email, userStatus = user.user_status, preferences = user.preferences), 200
        
         
@@ -364,7 +375,7 @@ def create():
     if type == 'edge':
         source_id = data.get('source')
         target_id = data.get('target')
-        print(source_id, target_id)
+        # print(source_id, target_id)
         # Validate the input
         if not source_id or not target_id:
             return jsonify({'status': 'error', 'message': 'Source or target ID is missing.'}), 400
@@ -399,7 +410,7 @@ def create():
                 return jsonify({'status': 'error', 'message': 'Tag(s) not found.'}), 404
 
         elif source_id.startswith('tag_') and target_id.startswith('note_'):
-            print("########################tag-note tag source", source_id, "note target", target_id)
+            # print("########################tag-note tag source", source_id, "note target", target_id)
             source_tag_id = int(source_id.split('_')[1])
             target_note_id = int(target_id.split('_')[1])
 
@@ -438,7 +449,7 @@ def create():
         dbsession.add(tag)
         try:
             dbsession.commit()
-            print(f"Created tag {tag.entity.user_specific_id}")
+            # print(f"Created tag {tag.entity.user_specific_id}")
             elements = []
             element = {
                 'id': tag.entity.user_specific_id,
@@ -454,11 +465,11 @@ def create():
             }
             }
             elements.append(element)
-            return  jsonify(elements = elements)
+            return jsonify(elements = elements)
         
         except Exception as e:
             dbsession.rollback()
-            print(f"Error creating tag: {e}")
+            # print(f"Error creating tag: {e}")
             return jsonify({'status': 'error', 'message': 'Failed to create tag}'}), 500
         
     elif type == 'note':
@@ -473,7 +484,7 @@ def create():
         dbsession.add(note)
         try:
             dbsession.commit()
-            print(f"#####################Created note {note.entity.user_specific_id}#####################")
+            # print(f"#####################Created note {note.entity.user_specific_id}#####################")
             elements = []
             element = {
                     'id': note.entity.user_specific_id,
@@ -492,7 +503,7 @@ def create():
             return jsonify(elements = elements)
         except Exception as e:
             dbsession.rollback()
-            print(f"Error creating note: {e}")
+            # print(f"Error creating note: {e}")
             return jsonify({'status': 'error', 'message': 'Failed to create note}'}), 500
         
  
@@ -508,7 +519,7 @@ def  delete():
     if type == "edge":
         source_id = data.get('source')
         target_id = data.get('target')
-        print(source_id, target_id)
+        # print(source_id, target_id)
         # Validate the input
         if not source_id or not target_id:
             return jsonify({'status': 'error', 'message': 'Source or target ID is missing.'}), 400
@@ -573,14 +584,14 @@ def  delete():
                         return jsonify({'status': 'error', 'message': 'Tag or Note not found.'}), 404
                 except Exception as e:
                     dbsession.rollback()
-                    print(f"Error deleting link: {e}")
+                    # print(f"Error deleting link: {e}")
                     return jsonify({'status': 'error', 'message': str(e)}), 500
             else:
                 return jsonify({'status': 'error', 'message': 'Invalid link type.'}), 400
 
         except Exception as e:
             dbsession.rollback()
-            print(f"Error deleting link: {e}")
+            # print(f"Error deleting link: {e}")
             return jsonify({'status': 'error', 'message': 'Failed to delete link.'}), 500
    
     elif type == "node":    
@@ -604,7 +615,7 @@ def  delete():
             
             except Exception as e:
                 dbsession.rollback()
-                print(f"Error deleting tag {id}: {e}")
+                # print(f"Error deleting tag {id}: {e}")
                 return jsonify({'status': 'error', 'message': 'Failed to delete tag'}), 500
             
         elif id.startswith('note_'):
@@ -621,7 +632,7 @@ def  delete():
                 return jsonify({'status': 'success', 'message': f'Note {id} deleted.'})
             except Exception as e:
                 dbsession.rollback()
-                print(f"Error deleting note {id}: {e}")
+                # print(f"Error deleting note {id}: {e}")
                 return jsonify({'status': 'error', 'message': 'Failed to delete note'}), 500
         
     
@@ -662,11 +673,11 @@ def update():
 
         try:
             dbsession.commit()
-            print(f"Updated node {node_id}: x={x}, y={y}")
+            # print(f"Updated node {node_id}: x={x}, y={y}")
             return jsonify({'status': 'success', 'message': f'Node {node_id} updated.'})
         except Exception as e:
             dbsession.rollback()
-            print(f"Error updating node {node_id}: {e}")
+            # print(f"Error updating node {node_id}: {e}")
             return jsonify({'status': 'error', 'message': 'Failed to update node position'}), 500
      
     elif operation == "unlock":  
@@ -699,7 +710,7 @@ def update():
     elif operation == "content":
         data = request.json
         note_id = data.get('id')
-        print("########################## saving", note_id)
+        # print("########################## saving", note_id)
         # note_id = int(note_id.split('_')[1])
         # viewport = data.get('viewport')
         content = (data.get('content'))
@@ -715,7 +726,7 @@ def update():
 
         # Validate input
         if note_id is None:
-            print("------- note", note_id, "has invalid input data")
+            # print("------- note", note_id, "has invalid input data")
             return jsonify({'status': 'error', 'message': 'Invalid input data'}), 400
 
         # Query the note
@@ -724,7 +735,7 @@ def update():
             Entity.user_specific_id == note_id  # Find using per-user unique ID
             ).first()
         if note is None:
-            print("------- user tried to access", int(user), "user and note", note_id, "has not been found")
+            # print("------- user tried to access", int(user), "user and note", note_id, "has not been found")
             return jsonify({'status': 'error', 'message': 'Note not found'}), 404
         else:
             print("------- note", note.name, "has been found")
@@ -734,7 +745,7 @@ def update():
         note.content = content
         # note.background = background
         note.name = name
-        print("------- note: ", note.name, ", has had content, viewport and background set")
+        # print("------- note: ", note.name, ", has had content, viewport and background set")
 
         
         # Get all Tag objects for the provided IDs
@@ -753,12 +764,12 @@ def update():
         # Replace all tag associations in one operation
         # SQLAlchemy handles adding new ones and removing old ones automatically
         note.tags = new_tags
-        print(f"------- set {len(new_tags)} tags on note {note_id}")
+        # print(f"------- set {len(new_tags)} tags on note {note_id}")
         
         dbsession.commit()
           # IMPORTANT: Explicitly refresh the object from DB to ensure latest state
         dbsession.refresh(note)
-        print(f"Updated note {note_id} to database")
+        # print(f"Updated note {note_id} to database")
         return jsonify({'status': 'success', 'message': 'Note content updated successfully.'})
             
         # except Exception as e:
@@ -792,14 +803,14 @@ def update():
         
    
     elif operation == "user":
-        print("########################## updating user data")
+        # print("########################## updating user data")
 
         try:
             # Get the current user
             user_id = get_jwt_identity()
             user = dbsession.query(User).filter_by(id=user_id).first()
 
-            print("########################## REQUEST JSON:", request.json)
+            # print("########################## REQUEST JSON:", request.json)
 
             if not user:
                 return jsonify({'status': 'error', 'message': 'User not found'}), 404
@@ -817,7 +828,7 @@ def update():
                 
             # Check for preferences update
             if 'preferences' in request.json:
-                print(f"Updating preferences with: {request.json['preferences']}")
+                # print(f"Updating preferences with: {request.json['preferences']}")
                 preferences.update(request.json['preferences'])
                 
             
@@ -832,7 +843,7 @@ def update():
                 
             # Check for recent notes update
             if 'recentNotes' in request.json:
-                print(f"Updating recent notes with: {request.json['recentNotes']}")
+                # print(f"Updating recent notes with: {request.json['recentNotes']}")
                 preferences['recentNotes'] = request.json['recentNotes']
                 # print(f"Updated user preferences: {preferences}")
                 
@@ -853,7 +864,7 @@ def update():
 
         except Exception as e:
             dbsession.rollback()
-            print(f"Error updating user data: {e}")
+            # print(f"Error updating user data: {e}")
             import traceback
             traceback.print_exc()
             return jsonify({'status': 'error', 'message': f'Failed to update user data: {str(e)}'}), 500
@@ -885,8 +896,8 @@ def load():
             element = {
                 'id': tag.entity.user_specific_id,
                 'name': tag.name,
-                'children': [child.id for child in tag.children],
-                'notes': [note.id for note in tag.notes],
+             'children': [child.entity.user_specific_id for child in tag.children],
+                'notes': [note.entity.user_specific_id for note in tag.notes],
                 'type': "tag",  # Add type property
                 'data': 
             {
@@ -901,7 +912,7 @@ def load():
             element = {
                 'id': note.entity.user_specific_id,
                 'name': note.name,
-                'tags': [tag.id for tag in note.tags],
+                     'tags': [tag.entity.user_specific_id for tag in note.tags],
                 'type': "note",  # Add type property
                 'format': note.format,
                 'data': 
@@ -920,7 +931,7 @@ def load():
     elif operation == "content":
         note_id = data.get('id')
         # note_id = int(note_id.split('_')[1])    
-        print("#######################################",note_id, "is being sent")
+        # print("#######################################",note_id, "is being sent")
 
         # Validate input
         if note_id is None:
@@ -934,9 +945,15 @@ def load():
         if note is None:
             return jsonify({'status': 'error', 'message': 'Note not found'}), 404
         
-      
-
-        return jsonify({'status': 'success', 'content': note.content, 'viewport': note.viewport, 'background': note.background, 'name': note.name, 'tags': [tag.id for tag in note.tags]})
+        return jsonify({
+            'status': 'success', 
+            'content': note.content, 
+            'viewport': note.viewport, 
+            'background': note.background, 
+            'name': note.name, 
+            # Change this line to use user_specific_id
+            'tags': [tag.entity.user_specific_id for tag in note.tags]
+        })
     
     elif operation == "user":
         user = dbsession.query(User).filter_by(id=current_user).first()
@@ -945,7 +962,7 @@ def load():
     elif operation == "tabs":
         user = dbsession.query(User).filter_by(id=current_user).first()
         tabs = user.preferences.get('tabs', []) if user and user.preferences else []
-        print("sent tabs", tabs)
+        # print("sent tabs", tabs)
         return jsonify(tabs)
     
     
@@ -1037,7 +1054,7 @@ def feedback():
         
     except Exception as e:
         dbsession.rollback()
-        print(f"Error saving feedback: {e}")
+        # print(f"Error saving feedback: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'status': 'error', 'message': 'Failed to save feedback'}), 500

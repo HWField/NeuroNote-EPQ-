@@ -1,6 +1,9 @@
 <template>
-  <div class="dropdown-menu">
-    <ScrollArea class="command-scroll-area flex flex-col overflow-y-auto">
+  <div class="commands-dropdown">
+    <ScrollArea 
+      :style="{ height: commandsHeight }"
+      class="commands-scroll-area"
+    >
       <div class="py-1">
         <template v-if="items.length">
           <button
@@ -12,19 +15,21 @@
             :id="`command-item-${index}`"
           >
             <div class="command-icon">
-              <component :is="item.icon" size="20" />
+              <component :is="item.icon" size="18" />
             </div>
             <span>{{ item.title }}</span>
           </button>
         </template>
-        <div class="item" v-else>No result</div>
+        <div class="empty-item" v-else>No commands found</div>
       </div>
     </ScrollArea>
   </div>
 </template>
+
 <script>
 import { eventBus } from '@/components/Document Editor/EventBus.js'; // Import the event
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { computed } from 'vue';
 import {
   Heading1,
   Heading2,
@@ -228,7 +233,25 @@ export default {
       selectedIndex: 0,
     };
   },
-
+  computed: {
+    commandsHeight() {
+      // Base height for empty results or single item
+      if (this.items.length === 0) {
+        return '50px';
+      }
+      
+      // Calculate height based on number of items
+      const itemCount = this.items.length;
+      
+      if (itemCount <= 5) {
+        // For 1-5 items, use content height (approximately 40px per item)
+        return `${itemCount * 40}px`;
+      } else {
+        // For more items, cap at a reasonable maximum height
+        return '250px';
+      }
+    }
+  },
   watch: {
     items() {
       this.selectedIndex = 0;
@@ -294,52 +317,49 @@ export default {
 };
 </script>
 
-<style lang="scss">
-/* Dropdown menu */
-.dropdown-menu {
-  background: var(--white);
-  border: 1px solid var(--gray-1);
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  padding: 0.25rem;
-  position: relative;
-  @apply bg-slate-700 border border-slate-600 text-white;
+<style scoped>
+.commands-dropdown {
+  /* Base styling */
+  @apply bg-white dark:bg-slate-800 
+         border border-slate-200 dark:border-slate-700
+         rounded-xl shadow-lg p-1;
+         
+  /* Animation */
+  animation: fadeIn 0.2s ease-out;
+}
 
-  .command-scroll-area {
-    @apply max-h-52; /* Slightly taller to show more items */
+.commands-scroll-area {
+  transition: height 0.2s ease;
+}
+
+.command-item {
+  @apply flex items-center gap-2 w-full text-left
+         py-2 px-2.5 rounded-md mx-1 my-0.5
+         text-sm font-medium
+         text-slate-700 dark:text-slate-200
+         transition-colors duration-150;
+}
+
+.command-icon {
+  @apply text-slate-500 dark:text-slate-400 flex-shrink-0;
+}
+
+.command-item:hover, .command-item.is-selected {
+  @apply bg-slate-100 dark:bg-slate-700;
+}
+
+.empty-item {
+  @apply py-3 text-center text-sm text-slate-400 dark:text-slate-500 italic;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
   }
-
-  button.command-item {
-    align-items: center;
-    background-color: transparent;
-    display: flex;
-    gap: 0.5rem;
-    text-align: left;
-    width: 100%;
-    @apply py-2 px-3 rounded-md my-0.5 transition-colors duration-150;
-
-    .command-icon {
-      @apply flex items-center justify-center text-slate-300 min-w-[24px];
-    }
-
-    span {
-      @apply font-medium;
-    }
-
-    &:hover,
-    &:hover.is-selected {
-      @apply bg-slate-600;
-    }
-
-    &.is-selected {
-      @apply bg-slate-500;
-    }
-  }
-
-  .item {
-    @apply py-3 text-center text-sm text-slate-400;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>
