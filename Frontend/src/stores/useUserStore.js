@@ -13,6 +13,7 @@ export const useUserStore = defineStore(
     const username = ref("");
     const email = ref("");
     const role = ref("");
+    const avatar = ref("");
     const token = ref("");
     const preferences = ref({}); // User preferences
     const recentNotes = ref([]); // Array to store recent note IDs
@@ -31,6 +32,7 @@ export const useUserStore = defineStore(
       username.value = data.username;
       email.value = data.email;
       role.value = data.userStatus;
+      
 
       // Set preferences and extract important values
       if (data.preferences) {
@@ -50,6 +52,11 @@ export const useUserStore = defineStore(
           const tabStore = useTabStore();
           tabStore.loadTabsFromPreferences(data.preferences.tabs);
         }
+
+        // Load avatar if available
+        if (data.preferences?.avatar) {
+          avatar.value = data.preferences.avatar;
+        }
       }
     }
 
@@ -59,7 +66,7 @@ export const useUserStore = defineStore(
           operation: "user",
           ...updates, // This spreads all updates directly into the request body
         });
-
+        console.error("in useUserStore response:", response.data);
         // Update local state with any returned values
         if (response.data.status === "success") {
           // Update local state for each field that was updated
@@ -68,16 +75,21 @@ export const useUserStore = defineStore(
               username.value = updates.username;
             } else if (key === "email" && updates.email) {
               email.value = updates.email;
+            } else if (key === "avatar" && updates.avatar) {
+              console.error("in useUserStore avatar: changed", updates.avatar);
+              avatar.value = updates.avatar.avatar; //no not a mistake intentional
             } else if (key === "preferences" && updates.preferences) {
               // preferences.value = {...preferences.value, ...updates.preferences};
             } else if (key === "recentNotes" && updates.recentNotes) {
               // recentNotes.value = updates.recentNotes;
-            }
+            } 
+            //do nothing for password
           });
 
           console.log("User data updated successfully");
           return true;
         }
+        console.error("Failed to update user data:", response.data.message);
         return false;
       } catch (error) {
         console.error("Error saving user data:", error);
@@ -173,6 +185,7 @@ export const useUserStore = defineStore(
       role,
       token,
       recentNotes,
+      avatar,
       Login,
       Logout,
       InstantLogout,

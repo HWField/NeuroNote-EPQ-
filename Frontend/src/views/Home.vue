@@ -5,6 +5,7 @@ export const containerClass = "w-full h-full";
 </script>
 
 <script setup lang="ts">
+import axios, { getBaseUrl } from "../axios.js";
 import Cytoscape from "@/components/Cytoscape.vue";
 import tabview from "@/components/GenericTab.vue";
 import Note from "@/components/Note.vue";
@@ -511,8 +512,8 @@ function handleOpenChange() {
                 >
                   <Avatar class="h-8 w-8 rounded-lg">
                     <AvatarImage
-                      :src="data.user.avatar"
-                      :alt="userStore.username"
+                      :src="getBaseUrl() + userStore.avatar"
+                      :alt="userStore.username + ' avatar'"
                     />
                     <AvatarFallback class="rounded-lg">
                       {{ userStore.username[0] }}

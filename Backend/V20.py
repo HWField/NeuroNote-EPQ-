@@ -826,8 +826,32 @@ def update():
             if 'email' in request.json:
                 user.email = request.json['email']
                 
+            # Check for password update
+            if 'newPassword' in request.json:
+                print("########################## new password found")
+                try:
+                    currentPassword = request.json['currentPassword']
+                    newPassword = request.json['newPassword']
+                    print("current password", currentPassword)
+                    if check_password_hash(user.password, currentPassword):
+                        
+                        user.password = generate_password_hash(newPassword, method='pbkdf2:sha256')
+                        print("########################## password updated")
+                    else:
+                        print("########################## error1")
+                        return jsonify({'status': 'error', 'message': 'Current password is incorrect'})
+                except:
+                    print("########################## error2")
+                    return jsonify({'status': 'error', 'message': 'Current password is required'})
+                    
+            # check for avatar
+            if 'avatar' in request.json:
+                print("########################## avatar found")
+                preferences.update(request.json['avatar'])
+                
             # Check for preferences update
             if 'preferences' in request.json:
+                # print("########################## preferences found")
                 # print(f"Updating preferences with: {request.json['preferences']}")
                 preferences.update(request.json['preferences'])
                 
