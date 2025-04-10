@@ -41,22 +41,48 @@
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div class="space-y-4">
-                    <div class="flex items-center space-x-4">
-                      <div class="flex items-center space-x-4">
-                        <Avatar class="h-20 w-20 rounded-md border">
-                          <AvatarImage :src="getBaseUrl() + userStore.avatar" alt="Profile" />
-                          <AvatarFallback class="text-lg">{{
-                            userStore.username[0]
-                          }}</AvatarFallback>
-                        </Avatar>
-                        <div>
+                  <div class="space-y-6">
+                    <!-- Profile section with improved layout -->
+                    <div class="flex flex-col md:flex-row md:items-start gap-8">
+                      <!-- Avatar section - now larger and centered -->
+                      <div
+                        class="flex flex-col items-center space-y-4 md:w-1/3"
+                      >
+                        <div class="relative">
+                          <Avatar class="h-32 w-32 rounded-md border">
+                            <!-- Show preview if available, otherwise show stored avatar -->
+                            <AvatarImage
+                              :src="
+                                avatarPreviewUrl ||
+                                getBaseUrl() + userStore.avatar
+                              "
+                              alt="Profile"
+                            />
+                            <AvatarFallback class="text-2xl">
+                              {{
+                                userStore.username
+                                  ? userStore.username[0].toUpperCase()
+                                  : ""
+                              }}
+                            </AvatarFallback>
+                          </Avatar>
+                          <!-- Show a "Preview" badge when using local preview -->
+                          <Badge
+                            v-if="avatarPreviewUrl"
+                            class="absolute -top-2 -right-2 bg-primary"
+                          >
+                            Preview
+                          </Badge>
+                        </div>
+
+                        <!-- Image controls - centered under avatar -->
+                        <div class="flex flex-wrap justify-center gap-2">
                           <!-- Hidden file input -->
                           <input
                             type="file"
                             id="avatar-upload"
                             ref="fileInput"
-                            @change="uploadAvatar"
+                            @change="previewAvatar"
                             accept="image/*"
                             class="hidden"
                           />
@@ -65,22 +91,48 @@
                             size="sm"
                             variant="outline"
                             @click="$refs.fileInput.click()"
-                            :disabled="isUploading"
                           >
-                            {{ isUploading ? "Uploading..." : "Change Avatar" }}
+                            Select New Image
+                          </Button>
+
+                          <!-- Clear preview button, only shown when preview exists -->
+                          <Button
+                            v-if="avatarPreviewUrl"
+                            size="sm"
+                            variant="ghost"
+                            @click="clearAvatarPreview"
+                            class="text-muted-foreground"
+                          >
+                            Clear
                           </Button>
                         </div>
                       </div>
-                    </div>
 
-                    <div class="space-y-4 pt-4">
-                      <div class="space-y-2">
-                        <Label for="username">Username</Label>
-                        <Input id="username" v-model="username" />
-                      </div>
-                      <div class="space-y-2">
-                        <Label for="email">Email</Label>
-                        <Input id="email" v-model="email" type="email" />
+                      <!-- Profile information - takes remaining space -->
+                      <div class="space-y-4 md:w-2/3">
+                        <div class="space-y-2">
+                          <Label for="username" class="text-base"
+                            >Username</Label
+                          >
+                          <Input
+                            id="username"
+                            v-model="username"
+                            class="max-w-md"
+                          />
+                        </div>
+                        <div class="space-y-2">
+                          <Label for="email" class="text-base">Email</Label>
+                          <Input
+                            id="email"
+                            v-model="email"
+                            type="email"
+                            class="max-w-md"
+                          />
+                        </div>
+                        <p class="text-sm text-muted-foreground mt-4">
+                          Your profile information is visible to other users
+                          when you collaborate on notes.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -264,35 +316,25 @@
                     <Separator />
 
                     <div class="space-y-3">
-                      <h3 class="text-sm font-medium">Interface Options</h3>
+                      <h3 class="text-sm font-medium">Interface Options:</h3>
+                    
                       <div class="flex items-center justify-between">
                         <div>
                           <Label class="text-sm font-medium"
-                            >Animation Effects</Label
+                            >Streamer Mode</Label
                           >
                           <p class="text-sm text-muted-foreground">
-                            Enable fluid animations throughout the interface
+                            Hide Identifying information from the interface
                           </p>
                         </div>
-                        <Switch v-model="animationsEnabled" />
-                      </div>
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <Label class="text-sm font-medium"
-                            >Compact Mode</Label
-                          >
-                          <p class="text-sm text-muted-foreground">
-                            Use less space in the interface
-                          </p>
-                        </div>
-                        <Switch v-model="compactMode" />
+                        <Switch v-model="streamerMode" />
                       </div>
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter class="flex justify-end space-x-2">
-                  <Button variant="outline">Reset to Defaults</Button>
-                  <Button @click="saveInterfaceSettings">Save Changes</Button>
+                  <Button @click="resetInterfaceSettings" variant="outline">Reset to Defaults</Button>
+
                 </CardFooter>
               </Card>
             </div>
@@ -510,7 +552,7 @@ const tabs = [
   { id: "advanced", name: "Advanced", icon: SettingsIcon },
 ];
 
-// Account settings
+// -----------Account settings
 const fileInput = ref(null);
 const isUploading = ref(false);
 const username = ref("");
@@ -563,13 +605,160 @@ const passwordStrength = computed(() => {
   return { score, text, color, textColor };
 });
 const avatar = ref(""); // Default avatar path
+const avatarPreviewUrl = ref(null);
+const selectedAvatarFile = ref(null);
+// Save functions
+async function SaveAccount() {
+  try {
+    // If we have a new avatar file, upload it first
+    let newAvatarUrl = null;
 
-// Interface settings
-const selectedTheme = ref("system");
-const colorMode = ref("system");
-const animationsEnabled = ref(true);
-const compactMode = ref(false);
-const autoSaveEnabled = ref(true);
+    if (selectedAvatarFile.value) {
+      isUploading.value = true;
+
+      try {
+        // Create form data
+        const formData = new FormData();
+        formData.append("file", selectedAvatarFile.value);
+
+        // Send to server
+        const response = await axios.post("/upload-file", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${userStore.token}`,
+          },
+        });
+
+        newAvatarUrl = response.data.url;
+      } catch (error) {
+        console.error("Error uploading avatar:", error);
+        toast({
+          title: "Avatar upload failed",
+          description:
+            "There was a problem uploading your image. Other settings were saved.",
+          variant: "destructive",
+        });
+      } finally {
+        isUploading.value = false;
+      }
+    }
+
+    // Now save all account information
+    const success = await useUserStore().saveUser({
+      username: username.value,
+      email: email.value,
+      ...(newAvatarUrl ? { preferences: { avatar: newAvatarUrl } } : {}),
+    });
+
+    if (success) {
+      // Clear the preview since we've saved
+      if (newAvatarUrl) {
+        clearAvatarPreview();
+        // Update the user store avatar so it shows correctly
+        userStore.avatar = newAvatarUrl;
+      }
+
+      toast({
+        title: "Account updated",
+        description: "Your account information has been updated.",
+        variant: "success",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description:
+          "There was an error updating your account, please try again later",
+        variant: "destructive",
+      });
+    }
+  } catch (error) {
+    console.error("Account save error:", error);
+    toast({
+      title: "Error",
+      description: "An unexpected error occurred. Please try again.",
+      variant: "destructive",
+    });
+  }
+}
+
+function ResetAccount() {
+  // Reset to original values
+  username.value = userStore.username;
+  email.value = userStore.email;
+  clearAvatarPreview();
+}
+// Preview avatar without uploading
+function previewAvatar(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Store the file for later upload
+  selectedAvatarFile.value = file;
+
+  // Create a local preview URL
+  avatarPreviewUrl.value = URL.createObjectURL(file);
+}
+
+// Clear the preview
+function clearAvatarPreview() {
+  // Release object URL to prevent memory leaks
+  if (avatarPreviewUrl.value) {
+    URL.revokeObjectURL(avatarPreviewUrl.value);
+  }
+
+  avatarPreviewUrl.value = null;
+  selectedAvatarFile.value = null;
+
+  // Clear the file input
+  if (fileInput.value) {
+    fileInput.value.value = "";
+  }
+}
+async function SavePassword() {
+  if (newPassword.value !== confirmPassword.value) {
+    toast({
+      title: "Error",
+      description: "New password and confirmation do not match.",
+      variant: "destructive",
+    });
+    ResetPassword();
+    return;
+  }
+  try {
+    const success = await useUserStore().saveUser({
+      currentPassword: currentPassword.value,
+      newPassword: newPassword.value,
+    });
+
+    if (success) {
+      toast({
+        title: "Password updated",
+        description: "Your password has been changed successfully.",
+        variant: "success",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description:
+          "Failed to update password. Please check your current password.",
+        variant: "destructive",
+      });
+    }
+  } catch (error) {
+    toast({
+      title: "Error",
+      description: "An unexpected error occurred. Please try again.",
+      variant: "destructive",
+    });
+  }
+  ResetPassword();
+}
+function ResetPassword() {
+  // Reset password fields
+  currentPassword.value = "";
+  newPassword.value = "";
+  confirmPassword.value = "";
+}
 // Extension settings
 const extensions = ref([
   {
@@ -624,6 +813,15 @@ const extensions = ref([
   },
 ]);
 
+// Interface settings
+const selectedTheme = ref("system");
+const colorMode = ref("system");
+const streamerMode = ref(true);
+import { watch } from 'vue';
+
+watch(streamerMode, (newValue, oldValue) => {
+  console.error(`streamerMode changed from ${oldValue} to ${newValue}`);
+});
 // Theme options
 const themes = [
   {
@@ -651,147 +849,15 @@ onMounted(() => {
   username.value = userStore.username || "";
   email.value = userStore.email || "";
   avatar.value = userStore.avatar || ""; // Load avatar from user store
+
+    // Force streamerMode to true explicitly
+    console.error("Initial streamerMode value:", streamerMode.value);
+  streamerMode.value = true;
+  
+  // Use setTimeout to ensure the UI has time to update
+  setTimeout(() => {
+    console.error("After timeout streamerMode value:", streamerMode.value);
+    streamerMode.value = true;
+  }, 0);
 });
-
-// Save functions
-async function SaveAccount() {
-  try {
-    const success = await useUserStore().saveUser({
-      username: username.value,
-      email: email.value,
-    });
-
-    if (success) {
-      toast({
-        title: "Account updated",
-        description: "Your account information has been updated.",
-        variant: "success",
-      });
-    } else {
-      toast({
-        title: "Error",
-        description:
-          "oops there was an error updating your account, please try again later",
-        variant: "destructive",
-      });
-    }
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: "An unexpected error occurred. Please try again.",
-      variant: "destructive",
-    });
-  }
-}
-
-function ResetAccount() {
-  // Reset to original values
-  username.value = userStore.username;
-  email.value = userStore.email;
-}
-async function uploadAvatar(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  isUploading.value = true;
-
-  try {
-    // Create form data
-    const formData = new FormData();
-    formData.append("file", file);
-
-    // Send to server
-    const response = await axios.post("/upload-file", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${userStore.token}`, // Assuming token is stored in userStore
-      },
-    });
-
-    // Update avatar with new URL
-    avatar.value = response.data.url;
-    console.error("Avatar URL:", avatar.value);
-    // Save to user profile
-    await userStore.saveUser({
-      avatar: { avatar: avatar.value },
-    });
-
-    toast({
-      title: "Avatar updated",
-      description: "Your profile picture has been changed successfully.",
-      variant: "success",
-    });
-  } catch (error) {
-    console.error("Error uploading avatar:", error);
-    toast({
-      title: "Upload failed",
-      description:
-        "There was a problem uploading your image. Please try again.",
-      variant: "destructive",
-    });
-  } finally {
-    isUploading.value = false;
-    // Clear the file input so the same file can be selected again
-    event.target.value = "";
-  }
-}
-async function SavePassword() {
-  if (newPassword.value !== confirmPassword.value) {
-    toast({
-      title: "Error",
-      description: "New password and confirmation do not match.",
-      variant: "destructive",
-    });
-    ResetPassword();
-    return;
-  }
-  try {
-    const success = await useUserStore().saveUser({
-      currentPassword: currentPassword.value,
-      newPassword: newPassword.value,
-    });
-
-    if (success) {
-      toast({
-        title: "Password updated",
-        description: "Your password has been changed successfully.",
-        variant: "success",
-      });
-    } else {
-      toast({
-        title: "Error",
-        description:
-          "Failed to update password. Please check your current password.",
-        variant: "destructive",
-      });
-    }
-  } catch (error) {
-    toast({
-      title: "Error",
-      description: "An unexpected error occurred. Please try again.",
-      variant: "destructive",
-    });
-  }
-  ResetPassword();
-}
-function ResetPassword() {
-  // Reset password fields
-  currentPassword.value = "";
-  newPassword.value = "";
-  confirmPassword.value = "";
-}
-
-function saveInterfaceSettings() {
-  // In a real app, you'd save these preferences
-  localStorage.setItem("theme", selectedTheme.value);
-  localStorage.setItem("colorMode", colorMode.value);
-  localStorage.setItem("animations", animationsEnabled.value);
-  localStorage.setItem("compactMode", compactMode.value);
-
-  toast({
-    title: "Interface preferences saved",
-    description: "Your interface settings have been updated.",
-    variant: "success",
-  });
-}
 </script>
