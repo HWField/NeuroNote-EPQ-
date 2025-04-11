@@ -3,7 +3,7 @@
     <Loading v-if="!dataLoaded" />
   <div v-else>
     <!-- Render the main app UI once data is loaded -->
-    <RouterView />
+    <RouterView class="h-full"/>
   </div>
 </template>
 

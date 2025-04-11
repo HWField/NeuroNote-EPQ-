@@ -218,7 +218,7 @@
                 </CardHeader>
                 <CardContent>
                   <div class="space-y-6">
-                    <div>
+                    <!-- <div>
                       <h3 class="text-sm font-medium mb-3">Color Theme</h3>
                       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div
@@ -249,14 +249,14 @@
                           </div>
                         </div>
                       </div>
-                    </div>
+                    </div> -->
 
                     <Separator />
 
                     <div>
                       <h3 class="text-sm font-medium mb-3">Appearance Mode</h3>
                       <RadioGroup
-                        v-model="colorMode"
+                        v-model="colorMode" 
                         class="grid grid-cols-1 sm:grid-cols-3 gap-4"
                       >
                         <div>
@@ -295,7 +295,7 @@
                         </div>
                         <div>
                           <RadioGroupItem
-                            value="system"
+                            value="auto"
                             id="system"
                             class="peer sr-only"
                           />
@@ -317,7 +317,7 @@
 
                     <div class="space-y-3">
                       <h3 class="text-sm font-medium">Interface Options:</h3>
-                    
+
                       <div class="flex items-center justify-between">
                         <div>
                           <Label class="text-sm font-medium"
@@ -327,14 +327,15 @@
                             Hide Identifying information from the interface
                           </p>
                         </div>
-                        <Switch v-model="streamerMode" />
+                        <Switch v-model:checked="streamerMode" />
                       </div>
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter class="flex justify-end space-x-2">
-                  <Button @click="resetInterfaceSettings" variant="outline">Reset to Defaults</Button>
-
+                  <Button @click="resetInterfaceSettings" variant="outline"
+                    >Reset to Defaults</Button
+                  >
                 </CardFooter>
               </Card>
             </div>
@@ -499,7 +500,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import axios, { getBaseUrl } from "../axios.js";
 import { useToast } from "@/components/ui/toast/use-toast";
 import { useGraphStore } from "@/stores/useGraphStore";
@@ -815,13 +816,34 @@ const extensions = ref([
 
 // Interface settings
 const selectedTheme = ref("system");
-const colorMode = ref("system");
-const streamerMode = ref(true);
-import { watch } from 'vue';
+const colorMode = ref(userStore.theme || "light");
+const streamerMode = ref(false);
 
-watch(streamerMode, (newValue, oldValue) => {
-  console.error(`streamerMode changed from ${oldValue} to ${newValue}`);
+
+ watch(streamerMode, async (newValue, oldValue) => {
+  const success = await useUserStore().saveUser({
+    preferences: { streamerMode: newValue }});
+  if (success) {
+    userStore.streamerMode = newValue;
+  }
 });
+
+watch(
+  selectedTheme,
+  (newValue, oldValue) => {
+    console.error(`selectedTheme changed from ${oldValue} to ${newValue}`);
+  },
+
+);
+watch(
+  colorMode,
+  (newValue, oldValue) => {
+    console.error(`colorMode changed from ${oldValue} to ${newValue}`);
+    userStore.saveUser({ theme: newValue });
+    userStore.theme = newValue;
+  },
+
+);
 // Theme options
 const themes = [
   {
@@ -849,15 +871,9 @@ onMounted(() => {
   username.value = userStore.username || "";
   email.value = userStore.email || "";
   avatar.value = userStore.avatar || ""; // Load avatar from user store
-
+  streamerMode.value = userStore.streamerMode || false; // Load streamer mode from user store
     // Force streamerMode to true explicitly
     console.error("Initial streamerMode value:", streamerMode.value);
-  streamerMode.value = true;
-  
-  // Use setTimeout to ensure the UI has time to update
-  setTimeout(() => {
-    console.error("After timeout streamerMode value:", streamerMode.value);
-    streamerMode.value = true;
-  }, 0);
+
 });
 </script>

@@ -147,7 +147,7 @@ const stats = computed(() => {
       v-if="screenSize === 'large'"
       class="flex w-full h-full flex-col p-6 space-y-4"
     >
-      <div class="h-[calc(100vh-100px)] flex flex-col relative w-full">
+      <div class="h-full flex flex-col relative w-full">
         <!-- Welcome banner -->
 
         <div

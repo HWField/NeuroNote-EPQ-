@@ -845,13 +845,17 @@ def update():
                     return jsonify({'status': 'error', 'message': 'Current password is required'})
                     
             # check for avatar
-            if 'avatar' in request.json:
-                print("########################## avatar found")
-                preferences.update(request.json['avatar'])
+            # if 'avatar' in request.json:
+            #     print("########################## avatar found")
+            #     preferences.update(request.json['avatar'])
+                
+            # if 'streamerMode' in request.json:
+            #     print("########################## streamer mode found")
+            #     preferences.update(request.json['streamerMode'])
                 
             # Check for preferences update
             if 'preferences' in request.json:
-                # print("########################## preferences found")
+                print("########################## preferences found", request.json['preferences'])
                 # print(f"Updating preferences with: {request.json['preferences']}")
                 preferences.update(request.json['preferences'])
                 

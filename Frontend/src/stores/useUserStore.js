@@ -17,10 +17,14 @@ export const useUserStore = defineStore(
     const token = ref("");
     const preferences = ref({}); // User preferences
     const recentNotes = ref([]); // Array to store recent note IDs
-    const theme = useColorMode();
+    const theme = useColorMode({emitAuto: true});
+    const streamerMode = ref("");
     theme.value = "auto";
+    // const theme = ref("auto"); // Default theme is "auto"
+    
 
     watch(theme, (newTheme) => {
+      console.error("Theme changed:", newTheme);
       if (isAuthenticated.value) {
         saveUser({ theme: newTheme });
       }
@@ -32,8 +36,6 @@ export const useUserStore = defineStore(
       username.value = data.username;
       email.value = data.email;
       role.value = data.userStatus;
-      
-
       // Set preferences and extract important values
       if (data.preferences) {
         preferences.value = data.preferences || {};
@@ -41,6 +43,7 @@ export const useUserStore = defineStore(
         // Load theme if available
         if (data.preferences?.theme) {
           theme.value = data.preferences.theme;
+          console.error("Theme found on load:", data.preferences.theme);
         }
 
         // Load recent notes if available
@@ -57,6 +60,12 @@ export const useUserStore = defineStore(
         if (data.preferences?.avatar) {
           avatar.value = data.preferences.avatar;
         }
+
+        // Load streamer mode if available
+        if (data.preferences?.streamerMode) {
+          console.error("streamermode found on load:", data.preferences.streamerMode);
+          streamerMode.value = data.preferences.streamerMode;
+        }
       }
     }
 
@@ -66,7 +75,6 @@ export const useUserStore = defineStore(
           operation: "user",
           ...updates, // This spreads all updates directly into the request body
         });
-        console.error("in useUserStore response:", response.data);
         // Update local state with any returned values
         if (response.data.status === "success") {
           // Update local state for each field that was updated
@@ -75,14 +83,17 @@ export const useUserStore = defineStore(
               username.value = updates.username;
             } else if (key === "email" && updates.email) {
               email.value = updates.email;
-            } else if (key === "avatar" && updates.avatar) {
-              console.error("in useUserStore avatar: changed", updates.avatar);
-              avatar.value = updates.avatar.avatar; //no not a mistake intentional
+            // } else if (key === "avatar" && updates.avatar) {
+            //   console.error("Avatar update acknowledged:", updates.avatar);
+            //   avatar.value = updates.avatar.avatar; //no not a mistake intentional
             } else if (key === "preferences" && updates.preferences) {
               // preferences.value = {...preferences.value, ...updates.preferences};
             } else if (key === "recentNotes" && updates.recentNotes) {
               // recentNotes.value = updates.recentNotes;
-            } 
+            // } else if (key === "streamerMode" && updates.streamerMode) {
+            //   console.error("streamermodeupdate update: acknowledged", updates.streamerMode);
+            //   streamerMode.value = updates.streamerMode;
+            }
             //do nothing for password
           });
 
@@ -186,6 +197,8 @@ export const useUserStore = defineStore(
       token,
       recentNotes,
       avatar,
+      theme,
+      streamerMode,
       Login,
       Logout,
       InstantLogout,

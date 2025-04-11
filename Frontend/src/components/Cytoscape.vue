@@ -16,6 +16,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -63,7 +72,7 @@ let cy = null; // Reference for Cytoscape instance
 const props = defineProps({
   tabId: Number,
   hasControls: {
-    type: Boolean,  
+    type: Boolean,
     default: true,
   },
   externalFilters: {
@@ -89,6 +98,68 @@ const loadState = () => {
   return state;
 };
 
+const dialogueOpen = ref(false);
+const dialogueType = ref("");
+const dialogueData = ref({});
+let dialogueResolve = null;
+let dialogueReject = null;
+function openDialogue(type, options = {}) {
+  // Reset data object for fresh input
+  dialogueData.value = { ...options }; // Start with any provided default values
+  // Set dialog properties
+  dialogueType.value = type;
+  dialogueOpen.value = true;
+
+
+  if (type === "newNote") {
+    setTimeout(() => {
+    const inputElement = document.querySelector('#name');
+    if (inputElement) inputElement.focus();
+  }, 50);
+  }
+ 
+
+  // Return a promise that will resolve when dialog is submitted
+  return new Promise((resolve, reject) => {
+    dialogueResolve = resolve;
+    dialogueReject = reject;
+  });
+}
+function submitDialogue() {
+
+
+  if (dialogueType.value === 'newNote') {
+    // Set default name if empty
+    if (!dialogueData.value.name || dialogueData.value.name.trim() === '') {
+      dialogueData.value.name = 'Untitled note';
+    }
+    
+    // Set default type if not selected
+    if (!dialogueData.value.type) {
+      dialogueData.value.type = 'Document';
+    }
+  }
+  
+  // Resolve the promise with the current dialogueData
+  if (dialogueResolve) {
+    dialogueResolve(dialogueData.value);
+  }
+  closeDialogue();
+}
+
+function cancelDialogue() {
+  // Reject the promise
+  if (dialogueReject) {
+    dialogueReject("Dialog cancelled");
+  }
+  closeDialogue();
+}
+
+function closeDialogue() {
+  dialogueOpen.value = false;
+  dialogueResolve = null;
+  dialogueReject = null;
+}
 // Make sure your saveState function emits the filter changes
 const saveState = () => {
   // Save filters to tab store
@@ -961,7 +1032,7 @@ function HandlecyClick(event) {
 
     // No nodes selected - nothing to do
     if (nodeCount === 0) return;
-    
+
     if (nodeCount === 1) {
       const node = selectedElements[0];
       if (confirm(`Are you sure you want to delete "${node.data("label")}"?`)) {
@@ -998,32 +1069,30 @@ function HandlecyClick(event) {
           // Process nodes in sequence to avoid backend conflicts
           selectedElements.forEach((ele) => {
             if (ele.isNode()) {
-             
-                // Show loading indicator
-                const loadingNode = ele;
-                loadingNode.data(
-                  "originalColor",
-                  loadingNode.style("background-color")
-                );
-                loadingNode.style("background-color", "#ff8080"); // Light red to indicate deletion in progress
+              // Show loading indicator
+              const loadingNode = ele;
+              loadingNode.data(
+                "originalColor",
+                loadingNode.style("background-color")
+              );
+              loadingNode.style("background-color", "#ff8080"); // Light red to indicate deletion in progress
 
-                graphStore
-                  .DeleteNode(ele.id())
-                  .then(() => {
-                    ele.remove();
-                    UpdateNodes();
-                  })
-                  .catch((error) => {
-                    console.error("Failed to delete node:", error);
-                    // Reset color on error
-                    loadingNode.style(
-                      "background-color",
-                      loadingNode.data("originalColor")
-                    );
-                    alert("Error deleting node. Please try again.");
-                  });
-              }
-              
+              graphStore
+                .DeleteNode(ele.id())
+                .then(() => {
+                  ele.remove();
+                  UpdateNodes();
+                })
+                .catch((error) => {
+                  console.error("Failed to delete node:", error);
+                  // Reset color on error
+                  loadingNode.style(
+                    "background-color",
+                    loadingNode.data("originalColor")
+                  );
+                  alert("Error deleting node. Please try again.");
+                });
+            }
           });
         }
       }
@@ -1033,7 +1102,7 @@ function HandlecyClick(event) {
     if (selectedTag.length > 0) {
       CreateNote("document");
     } else {
-      CreateNote("document");
+      CreateNote();
     }
   } else if (event.key === "t") {
     const selectedTag = cy.$('node[type="tag"]:selected');
@@ -1125,12 +1194,13 @@ function HandlecyClick(event) {
       ele.removeClass("greyed-out");
     });
   } else if (event.key === "r") {
+    event.preventDefault(); // Stop default action
     const selectedNode = cy.$("node:selected");
     if (selectedNode.length === 1) {
       const currentName = selectedNode.data("label");
       let ele = selectedNode[0];
-          const node = ele;
-          RenameNode(node);
+      const node = ele;
+      RenameNode(selectedNode);
       // const newName = prompt("Enter new name for the node:", currentName);
       // if (newName !== null && newName.trim() !== "") {
       //   fetch("/update", {
@@ -1184,9 +1254,15 @@ function ShuffleGraph() {
     }
   }
 }
-function RenameNode(Node) {
+async function RenameNode(Node) {
+  // Remove the handle if it's currently set
+  removeHandle();
   const currentName = Node.data("label");
-  const newName = prompt("Enter new name for the node:", currentName);
+  const newName = (
+    await openDialogue("rename", {
+      name: currentName,
+    })
+  ).name;
   if (newName !== null && newName.trim() !== "") {
     graphStore
       .RenameNode(Node.id(), newName)
@@ -1204,8 +1280,16 @@ function RenameNode(Node) {
   }
 }
 
-function CreateNote(format) {
-  const noteName = prompt("Enter the name for the new Note:");
+async function CreateNote(format) {
+  let noteName =""
+  if (!format) {
+    console.error("No format provided for CreateNote");
+     noteName = (await openDialogue("newNote")).name;
+  }
+  else {
+    console.error(" format provided for CreateNote");
+   noteName = (await openDialogue("newNote", {type: format})).name;
+  }
   if (!noteName || noteName.trim() === "") return;
 
   // Get all currently selected tags before creating the note
@@ -1271,8 +1355,9 @@ function CreateNote(format) {
     });
 }
 
-function CreateTag() {
-  const tagName = prompt("Enter the name for the new Tag:");
+async function CreateTag() {
+  const tagName = (await openDialogue("newTag")).name;
+  
   if (!tagName || tagName.trim() === "") return;
 
   // Get all currently selected tags before creating the new tag
@@ -1444,79 +1529,81 @@ function applyFilters() {
         }
       });
     } else if (filter.type === "tag") {
-  // Find tags matching the filter
-  const matchingTags = filteredElements.filter(
-    (element) =>
-      element.type === "tag" &&
-      element.name &&
-      element.name.toLowerCase().includes(filter.value)
-  );
+      // Find tags matching the filter
+      const matchingTags = filteredElements.filter(
+        (element) =>
+          element.type === "tag" &&
+          element.name &&
+          element.name.toLowerCase().includes(filter.value)
+      );
 
-  // Highlight matching tags
-  matchingTags.forEach((tag) => {
-    highlightedNodeIds.add(`tag_${tag.id}`);
-  });
+      // Highlight matching tags
+      matchingTags.forEach((tag) => {
+        highlightedNodeIds.add(`tag_${tag.id}`);
+      });
 
-  // Get all tag IDs that match
-  const matchingTagIds = new Set(matchingTags.map((tag) => tag.id));
+      // Get all tag IDs that match
+      const matchingTagIds = new Set(matchingTags.map((tag) => tag.id));
 
-  // Include notes that have these tags
-  const relatedNotes = allElements.filter(
-    (element) =>
-      element.type === "note" &&
-      element.tags &&
-      element.tags.some((tagId) => matchingTagIds.has(tagId))
-  );
+      // Include notes that have these tags
+      const relatedNotes = allElements.filter(
+        (element) =>
+          element.type === "note" &&
+          element.tags &&
+          element.tags.some((tagId) => matchingTagIds.has(tagId))
+      );
 
-  // Helper function to get parent tags
-  function getParents(tagId, allTags) {
-    const parents = [];
-    allTags.forEach(potentialParent => {
-      if (potentialParent.type === "tag" && 
-          potentialParent.children && 
-          potentialParent.children.includes(tagId)) {
-        parents.push(potentialParent);
-        // Recursively get parents of parents
-        const grandparents = getParents(potentialParent.id, allTags);
-        parents.push(...grandparents);
+      // Helper function to get parent tags
+      function getParents(tagId, allTags) {
+        const parents = [];
+        allTags.forEach((potentialParent) => {
+          if (
+            potentialParent.type === "tag" &&
+            potentialParent.children &&
+            potentialParent.children.includes(tagId)
+          ) {
+            parents.push(potentialParent);
+            // Recursively get parents of parents
+            const grandparents = getParents(potentialParent.id, allTags);
+            parents.push(...grandparents);
+          }
+        });
+        return parents;
       }
-    });
-    return parents;
-  }
 
-  // Include the matching tags, their ancestors, descendants, and related notes
-  const includedTags = new Set();
-  matchingTags.forEach((tag) => {
-    includedTags.add(tag.id);
+      // Include the matching tags, their ancestors, descendants, and related notes
+      const includedTags = new Set();
+      matchingTags.forEach((tag) => {
+        includedTags.add(tag.id);
 
-    // Add all descendants
-    getDescendants(tag).forEach((descendant) => {
-      includedTags.add(descendant.id);
-    });
+        // Add all descendants
+        getDescendants(tag).forEach((descendant) => {
+          includedTags.add(descendant.id);
+        });
 
-    // Add all parents/ancestors
-    // const parents = getParents(tag.id, allElements);
-    // parents.forEach(parent => {
-    //   includedTags.add(parent.id);
-    // });
-  });
+        // Add all parents/ancestors
+        // const parents = getParents(tag.id, allElements);
+        // parents.forEach(parent => {
+        //   includedTags.add(parent.id);
+        // });
+      });
 
-  // Get all notes connected to any tag in the hierarchy
-  const allHierarchyNotes = allElements.filter(
-    (element) =>
-      element.type === "note" &&
-      element.tags &&
-      element.tags.some((tagId) => includedTags.has(tagId))
-  );
+      // Get all notes connected to any tag in the hierarchy
+      const allHierarchyNotes = allElements.filter(
+        (element) =>
+          element.type === "note" &&
+          element.tags &&
+          element.tags.some((tagId) => includedTags.has(tagId))
+      );
 
-  // Create new filtered set with matching tags, their ancestors, descendants, and related notes
-  filteredElements = [
-    ...allElements.filter(
-      (element) => element.type === "tag" && includedTags.has(element.id)
-    ),
-    ...allHierarchyNotes
-  ];
-}
+      // Create new filtered set with matching tags, their ancestors, descendants, and related notes
+      filteredElements = [
+        ...allElements.filter(
+          (element) => element.type === "tag" && includedTags.has(element.id)
+        ),
+        ...allHierarchyNotes,
+      ];
+    }
   });
 
   // Now prepare elements for Cytoscape, ensuring all nodes needed for edges are included
@@ -1827,237 +1914,365 @@ onBeforeUnmount(() => {
 }
 </style>
 <template>
-   <!-- <div class="w-full h-full p-6"> -->
-    <div
-      class="editor w-full h-full overflow-y-auto "
-    >
-  <div ref="navbarContainer" class="h-full w-full relative">
-    <!-- Large toolbar -->
+  <Dialog :open="dialogueOpen" @update:open="(val) => !val && cancelDialogue()">
+    <DialogContent>
+      <!-- Rename dialog -->
+      <div v-if="dialogueType === 'rename'">
+        <DialogHeader>
+          <DialogTitle>Rename Node</DialogTitle>
+          <DialogDescription>Enter a new name for this node</DialogDescription>
+        </DialogHeader>
 
-    <div
-      v-if="hasControls && isLargeNavbarVisible"
-      class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
-    >
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Button class="flex items-center">
-            <Filter class="" />
-            <span>Filter</span>
-          </Button>
-        </DropdownMenuTrigger>
+        <div class="grid gap-4 py-4">
+          <div class="grid grid-cols-4 items-center gap-4">
+            <label for="name" class="text-right text-sm font-medium"
+              >Name:</label
+            >
+            <Input
+              id="name"
+              v-model="dialogueData.name"
+              class="col-span-3"
+              autofocus
+              @keyup.enter="submitDialogue"
+            />
+          </div>
+        </div>
+      </div>
 
-        <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            @click="stackableSearch()"
-          >
-            <CaseSensitive class="w-5 h-5 text-gray-600" />
-            <span>Filter by Name</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            @click="searchByTag()"
-          >
-            <Tag class="w-5 h-5 text-gray-600" />
-            <span>Filter by Tag</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            @click="filterByNodeType()"
-          >
-            <FileText class="w-5 h-5 text-gray-600" />
-            <span>Filter by Type</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            @click="clearAllFilters()"
-          >
-            <Eye class="w-5 h-5 text-gray-600" />
-            <span>Show All</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
 
-      <Button class="flex items-center">
-        <Search class="" />
-        <span>Spotlight</span>
-      </Button>
-      <!-- <Separator orientation="vertical"></Separator> -->
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Button class="">
-            <Plus></Plus>
-            <span>New</span>
-          </Button>
-        </DropdownMenuTrigger>
+      <div v-if="dialogueType === 'newTag'">
+        <DialogHeader>
+          <DialogTitle>New Tag</DialogTitle>
+          <DialogDescription>Enter a name for the Tag</DialogDescription>
+        </DialogHeader>
 
-        <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            @click="CreateTag()"
-          >
-            <Tag class="w-5 h-5 text-gray-600" />
-            <span>Tag</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            @click="CreateNote('document')"
-          >
-            <FileText class="w-5 h-5 text-gray-600" />
-            <span>Document</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            @click="CreateNote('whiteboard')"
-          >
-            <LayoutGrid class="w-5 h-5 text-gray-600" />
-            <span>Whiteboard</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        <div class="grid gap-4 py-4">
+          <div class="grid grid-cols-4 items-center gap-4">
+            <label for="name" class="text-right text-sm font-medium"
+              >Name:</label
+            >
+            <Input
+              id="name"
+              v-model="dialogueData.name"
+              class="col-span-3"
+              autofocus
+              @keyup.enter="submitDialogue"
+            />
+          </div>
+        </div>
+      </div>
 
-      <!-- <Separator orientation="vertical"></Separator> -->
+      <div v-if="dialogueType === 'newNote'">
+        <DialogHeader>
+          <DialogTitle>Name Note</DialogTitle>
+          <DialogDescription>Enter a name for the note</DialogDescription>
+        </DialogHeader>
 
-      <Button @click="centerGraph()"> <House></House> Center </Button>
+        <div class="grid gap-4 py-4">
+          <div class="grid grid-cols-4 items-center gap-4">
+            <label for="name" class="text-right text-sm font-medium"
+              >Name:</label
+            >
+            <Input
+              id="name"
+              v-model="dialogueData.name"
+              class="col-span-3"
+              autofocus
+              placeholder="Untitled note"
+              @keyup.enter="submitDialogue"
+            />
+            <label for="type" class="text-right text-sm font-medium"
+              >Type:</label
+            >
+            <Select id="type" v-model="dialogueData.type">
+              <SelectTrigger class="col-span-3">
+                <SelectValue placeholder="Default" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <!-- <SelectLabel>Fruits</SelectLabel> -->
+                  <SelectItem value="document"> Document </SelectItem>
+                  <SelectItem value="whiteboard"> Whiteboard </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
 
-      <Button variant="destructive" @click="ShuffleGraph()">
-        <Shuffle></Shuffle> Shuffle
-      </Button>
-    </div>
+      <div v-if="dialogueType === 'filter'">
+        <DialogHeader>
+          <DialogTitle>New Filter</DialogTitle>
+          <DialogDescription>Select Filter type</DialogDescription>
+        </DialogHeader>
 
-    <!-- Small toolbar -->
-    <div
-      v-else
-      v-if="hasControls"
-      class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
-    >
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Button class="">
-            <Eye></Eye>
-            <span>View</span>
-          </Button>
-        </DropdownMenuTrigger>
+        <div class="grid gap-4 py-4">
+          <div class="grid grid-cols-4 items-center gap-4">
+            <label for="type" class="text-right text-sm font-medium"
+              >Type:</label
+            >
+            <Select id="type" v-model="dialogueData.type">
+              <SelectTrigger class="col-span-3">
+                <SelectValue placeholder="Default" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <!-- <SelectLabel>Fruits</SelectLabel> -->
+                  <SelectItem value="document"> Document </SelectItem>
+                  <SelectItem value="whiteboard"> Whiteboard </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <label for="name" class="text-right text-sm font-medium"
+              >Name:</label
+            >
+            <Input
+              id="name"
+              v-model="dialogueData.name"
+              class="col-span-3"
+              autofocus
+              @keyup.enter="submitDialogue"
+            />
+          </div>
+        </div>
+      </div>
 
-        <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-          >
-            <Shuffle class="w-5 h-5 text-gray-600" />
-            <span>Shuffle</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-          >
-            <ChevronsDown class="w-5 h-5 text-gray-600" />
-            <span>Drill</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-          >
-            <Home class="w-5 h-5 text-gray-600" />
-            <span>Centre</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <DialogFooter>
+        <Button variant="outline" @click="cancelDialogue">Cancel</Button>
+        <Button type="submit" @click="submitDialogue">Submit</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Button class="">
-            <Plus></Plus>
-            <span>New</span>
-          </Button>
-        </DropdownMenuTrigger>
+  <!-- <div class="w-full h-full p-6"> -->
+  <div class="editor w-full h-full overflow-y-auto">
+    <div ref="navbarContainer" class="h-full w-full relative">
+      <!-- Large toolbar -->
 
-        <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-          >
-            <Tag class="w-5 h-5 text-gray-600" />
-            <span>Tag</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-          >
-            <FileText class="w-5 h-5 text-gray-600" />
-            <span>Docuement</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-          >
-            <LayoutGrid class="w-5 h-5 text-gray-600" />
-            <span>Whiteboard</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Button class="">
-            <Ellipsis></Ellipsis>
-            <span>Options</span>
-          </Button>
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-          >
-            <Search class="w-5 h-5 text-gray-600" />
-            <span>Spotlight</span>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-          >
-            <Search class="w-5 h-5 text-gray-600" />
-            <span>Search</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-
-    <!-- tagbar -->
-    <div
-      v-if="activeFilters.length > 0"
-      class="flex flex-wrap gap-2 absolute top-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground/80 backdrop-blur-sm p-3 shadow-lg rounded-lg max-w-max"
-    >
       <div
-        v-for="filter in activeFilters"
-        :key="filter.id"
-        class="flex items-center gap-1 px-2 py-1 rounded-md text-sm"
-        :class="
-          filter.type === 'tag'
-            ? 'bg-blue-100 text-blue-800'
-            : filter.type === 'text'
-              ? 'bg-green-100 text-green-800'
-              : filter.type === 'nodeType'
-                ? 'bg-purple-100 text-purple-800'
-                : 'bg-gray-100'
-        "
+        v-if="hasControls && isLargeNavbarVisible"
+        class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
       >
-        <span v-if="filter.type === 'tag'">🏷️</span>
-        <span v-else-if="filter.type === 'text'">🔍</span>
-        <span v-else-if="filter.type === 'nodeType'">📌</span>
-        <span>{{ filter.label }}</span>
-        <button
-          @click="removeFilter(filter.id)"
-          class="ml-1 text-gray-500 hover:text-gray-700"
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button class="flex items-center">
+              <Filter class="" />
+              <span>Filter</span>
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="stackableSearch()"
+            >
+              <CaseSensitive class="w-5 h-5 text-gray-600" />
+              <span>Filter by Name</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="searchByTag()"
+            >
+              <Tag class="w-5 h-5 text-gray-600" />
+              <span>Filter by Tag</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="filterByNodeType()"
+            >
+              <FileText class="w-5 h-5 text-gray-600" />
+              <span>Filter by Type</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="clearAllFilters()"
+            >
+              <Eye class="w-5 h-5 text-gray-600" />
+              <span>Show All</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <Button class="flex items-center">
+          <Search class="" />
+          <span>Spotlight</span>
+        </Button>
+        <!-- <Separator orientation="vertical"></Separator> -->
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button class="">
+              <Plus></Plus>
+              <span>New</span>
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="CreateTag()"
+            >
+              <Tag class="w-5 h-5 text-gray-600" />
+              <span>Tag</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="CreateNote('document')"
+            >
+              <FileText class="w-5 h-5 text-gray-600" />
+              <span>Document</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="CreateNote('whiteboard')"
+            >
+              <LayoutGrid class="w-5 h-5 text-gray-600" />
+              <span>Whiteboard</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <!-- <Separator orientation="vertical"></Separator> -->
+
+        <Button @click="centerGraph()"> <House></House> Center </Button>
+
+        <Button variant="destructive" @click="ShuffleGraph()">
+          <Shuffle></Shuffle> Shuffle
+        </Button>
+      </div>
+
+      <!-- Small toolbar -->
+      <div
+        v-else
+        v-if="hasControls"
+        class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
+      >
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button class="">
+              <Eye></Eye>
+              <span>View</span>
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            >
+              <Shuffle class="w-5 h-5 text-gray-600" />
+              <span>Shuffle</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            >
+              <ChevronsDown class="w-5 h-5 text-gray-600" />
+              <span>Drill</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            >
+              <Home class="w-5 h-5 text-gray-600" />
+              <span>Centre</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button class="">
+              <Plus></Plus>
+              <span>New</span>
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            >
+              <Tag class="w-5 h-5 text-gray-600" />
+              <span>Tag</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            >
+              <FileText class="w-5 h-5 text-gray-600" />
+              <span>Docuement</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            >
+              <LayoutGrid class="w-5 h-5 text-gray-600" />
+              <span>Whiteboard</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button class="">
+              <Ellipsis></Ellipsis>
+              <span>Options</span>
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            >
+              <Search class="w-5 h-5 text-gray-600" />
+              <span>Spotlight</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+            >
+              <Search class="w-5 h-5 text-gray-600" />
+              <span>Search</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <!-- tagbar -->
+      <div
+        v-if="activeFilters.length > 0"
+        class="flex flex-wrap gap-2 absolute top-20 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground/80 backdrop-blur-sm p-3 shadow-lg rounded-lg max-w-max"
+      >
+        <div
+          v-for="filter in activeFilters"
+          :key="filter.id"
+          class="flex items-center gap-1 px-2 py-1 rounded-md text-sm"
+          :class="
+            filter.type === 'tag'
+              ? 'bg-blue-100 text-blue-800'
+              : filter.type === 'text'
+                ? 'bg-green-100 text-green-800'
+                : filter.type === 'nodeType'
+                  ? 'bg-purple-100 text-purple-800'
+                  : 'bg-gray-100'
+          "
         >
-          ×
+          <span v-if="filter.type === 'tag'">🏷️</span>
+          <span v-else-if="filter.type === 'text'">🔍</span>
+          <span v-else-if="filter.type === 'nodeType'">📌</span>
+          <span>{{ filter.label }}</span>
+          <button
+            @click="removeFilter(filter.id)"
+            class="ml-1 text-gray-500 hover:text-gray-700"
+          >
+            ×
+          </button>
+        </div>
+        <button
+          @click="clearAllFilters"
+          class="text-xs text-gray-600 hover:text-gray-800 flex items-center"
+        >
+          Clear all
         </button>
       </div>
-      <button
-        @click="clearAllFilters"
-        class="text-xs text-gray-600 hover:text-gray-800 flex items-center"
-      >
-        Clear all
-      </button>
-    </div>
 
-    <div id="cy" class="w-full h-full absolute"></div>
-  </div>
+      <div id="cy" class="w-full h-full absolute"></div>
     </div>
-<!-- </div> -->
+  </div>
+  <!-- </div> -->
 </template>

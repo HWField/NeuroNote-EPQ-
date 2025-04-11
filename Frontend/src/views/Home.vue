@@ -116,7 +116,6 @@ const { toast } = useToast();
 const tabStore = useTabStore();
 const userStore = useUserStore();
 
-
 watch(
   () => userStore.authenticated,
   (isAuthenticated) => {
@@ -523,7 +522,11 @@ function handleOpenChange() {
                     <span class="truncate font-semibold">{{
                       userStore.username
                     }}</span>
-                    <span class="truncate text-xs">{{ userStore.email }}</span>
+                    <span
+                      v-if="!userStore.streamerMode"
+                      class="truncate text-xs"
+                      >{{ userStore.email }}</span
+                    >
                   </div>
                   <ChevronsUpDown class="ml-auto size-4" />
                 </SidebarMenuButton>
@@ -540,8 +543,8 @@ function handleOpenChange() {
                   >
                     <Avatar class="h-8 w-8 rounded-lg">
                       <AvatarImage
-                        :src="data.user.avatar"
-                        :alt="data.user.name"
+                        :src="getBaseUrl() + userStore.avatar"
+                        :alt="userStore.username + ' avatar'"
                       />
                       <AvatarFallback class="rounded-lg">
                         {{ userStore.username[0] }}
@@ -551,9 +554,11 @@ function handleOpenChange() {
                       <span class="truncate font-semibold">{{
                         userStore.username
                       }}</span>
-                      <span class="truncate text-xs">{{
-                        userStore.email
-                      }}</span>
+                      <span
+                        v-if="!userStore.streamerMode"
+                        class="truncate text-xs"
+                        >{{ userStore.email }}</span
+                      >
                     </div>
                   </div>
                 </DropdownMenuLabel>
@@ -621,7 +626,7 @@ function handleOpenChange() {
 
       <!-- Tab Content -->
       <!-- mx auto relative  -->
-      <div class="flex-1 w-full overflow-hidden">
+      <div class="flex-1 w-full overflow-auto">
         <!-- <TransitionGroup name="tab-change" mode="out-in"> -->
         <component
           :is="getActiveComponent"
