@@ -16,7 +16,31 @@ const api = axios.create({
 
 // Function to get the base URL
 export const getBaseUrl = () => BASE_URL; 
-
+// Function to refresh token
+const refreshAccessToken = async () => {
+  console.error('Refreshing token...');
+  const userStore = useUserStore();
+  
+  try {
+    // Create a separate axios instance to avoid interceptor loops
+    const response = await axios.post(`${BASE_URL}/refresh`, {}, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${userStore.refreshToken}`
+      }
+    });
+    
+    // Update token in store
+    userStore.token = response.data.access_token;
+    
+    return response.data.access_token;
+  } catch (error) {
+    // If refresh token is invalid or expired, log the user out
+    await userStore.InstantLogout();
+    router.push('/login');
+    return null;
+  }
+};
 // Interceptor to add JWT token to request headers
 api.interceptors.request.use(
   (config) => {
@@ -49,34 +73,48 @@ api.interceptors.request.use(
 
 
 api.interceptors.response.use(
-  response => response, // Pass the successful response through
+  response => response,
   async (error) => {
-    if (error.response && error.response.status === 401) {
+    const originalRequest = error.config;
+    
+    // If the error is 401 and we haven't tried refreshing the token yet
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      const userStore = useUserStore();
+      
+      // Check if we have a refresh token
+      if (userStore.refreshToken) {
+        try {
+          // Try to get a new access token
+          const newToken = await refreshAccessToken();
+          
+          if (newToken) {
+            // Update the Authorization header
+            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+            // Retry the original request
+            return axios(originalRequest);
+          }
+        } catch (refreshError) {
+          console.error('Error refreshing token:', refreshError);
+          // Continue to logout handling
+        }
+      }
+      
       console.error('Session expired, please log in again.');
-
-      // Remove expired token
-      await useUserStore().InstantLogout(); //logout without saving as cant save
-
+      // If token refresh failed or no refresh token, proceed with logout
+      await userStore.InstantLogout();
+      
       // Save the original route in the query parameters
       const currentRoute = window.location.pathname;
-      // window.location.replace(`login?redirect=${encodeURIComponent(currentRoute)}`);
       router.push({ 
         path: '/login', 
         query: { redirect: currentRoute }
       });
-      
     }
     else if (!error.response) {
       console.error('Cannot connect to the server');
-
-    
-      
-
-      // Redirect to login page
       const errorMessage = encodeURIComponent('Cannot connect to the server');
-      // window.location.href = `/error?message=${errorMessage}`;
-      //this method stops user retunring to the page which caused error message
-      // window.location.replace(`/error?message=${errorMessage}`);
       router.push({ 
         path: '/error', 
         query: { message: errorMessage }
@@ -85,5 +123,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 
 export default api;

@@ -8,7 +8,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker, relationship, backref, scoped_session, declarative_base
 # from sqlalchemy.ext.declarative import declarative_base
 from flask_jwt_extended import (
-    JWTManager, create_access_token, jwt_required, get_jwt_identity
+    JWTManager, create_access_token, jwt_required, get_jwt_identity, create_refresh_token
 )
 from datetime import datetime
 from sqlalchemy import DateTime
@@ -54,6 +54,8 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
     
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=30)  # Short-lived access token (30seconds)
+app.config['JWT_REFRESH_TOKEN_EXPIRES'] = False   # Long-lived refresh token
 # Configure a secret key for JWT
 app.config['JWT_SECRET_KEY'] = 'testing'
 jwt = JWTManager(app)
@@ -290,6 +292,17 @@ if dbsession.query(User).count() == 0:
 # @app.route('/')
 # def home():
 #     return redirect('/app')
+@app.route('/refresh', methods=['POST'])
+@jwt_required(refresh=True)
+def refresh():
+    """Endpoint for refreshing an access token using a refresh token"""
+    current_user = get_jwt_identity()
+    
+    # Create new access token
+    access_token = create_access_token(identity=current_user)
+    print("################### refreshed access token")
+    
+    return jsonify(access_token=access_token), 200
 
 
 @app.route('/login', methods=['POST'])
@@ -314,9 +327,10 @@ def login():
     if check_password_hash(user.password, password):
     # if user.password == password:
         # Create JWT token on successful login
-        access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))
         # print("logged in") 
-        return jsonify(access_token=access_token, username = user.username, email = user.email, userStatus = user.user_status, preferences = user.preferences), 200
+        return jsonify(access_token=access_token, refresh_token=refresh_token, username = user.username, email = user.email, userStatus = user.user_status, preferences = user.preferences), 200
         
     else:
         return jsonify({"message": "Invalid password"}), 400
@@ -355,9 +369,10 @@ def register():
         dbsession.commit()
         
         user = dbsession.query(User).filter_by(email=email).first()
-        access_token = create_access_token(identity=str(user.id), expires_delta=timedelta(days=1))
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))
         # print("logged in")
-        return jsonify(access_token=access_token , username = user.username, email = user.email, userStatus = user.user_status, preferences = user.preferences), 200
+        return jsonify(access_token=access_token, refresh_token = refresh_token, username = user.username, email = user.email, userStatus = user.user_status, preferences = user.preferences), 200
        
         
     

@@ -15,6 +15,7 @@ export const useUserStore = defineStore(
     const role = ref("");
     const avatar = ref("");
     const token = ref("");
+    const refreshToken = ref("");
     const preferences = ref({}); // User preferences
     const recentNotes = ref([]); // Array to store recent note IDs
     const theme = useColorMode({emitAuto: true});
@@ -126,7 +127,8 @@ export const useUserStore = defineStore(
     }
 
     async function Login(userData, redirect = null) {
-      token.value = userData.token;
+      token.value = userData.access_token;
+      refreshToken.value = userData.refresh_token;
       isAuthenticated.value = true;
 
       const graphStore = useGraphStore();
@@ -147,6 +149,7 @@ export const useUserStore = defineStore(
       email.value = "";
       role.value = "";
       token.value = "";
+      refreshToken.value = "";
       preferences.value = {};
       recentNotes.value = [];
       avatar.value = "";
@@ -169,6 +172,7 @@ export const useUserStore = defineStore(
       email.value = "";
       role.value = "";
       token.value = "";
+      refreshToken.value = "";
       isAuthenticated.value = false;
       recentNotes.value = [];
       avatar.value = "";
@@ -201,6 +205,7 @@ export const useUserStore = defineStore(
       email,
       role,
       token,
+      refreshToken,
       recentNotes,
       avatar,
       theme,
@@ -223,7 +228,7 @@ export const useUserStore = defineStore(
           key: "userStore", // LocalStorage key
           storage: localStorage, // Change to localStorage if you want it to persist after closing the browser
           // path : ["isAuthenticated", "username", "email", "role", "token", "preferences", "recentNotes"], // Only save these properties
-          paths: ["token"], // Only persist the token, not the entire state
+          paths: ["token", "refreshToken"], // Only persist the tokens, not the entire state
         },
       ],
     },
