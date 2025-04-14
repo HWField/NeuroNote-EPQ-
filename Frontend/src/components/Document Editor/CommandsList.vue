@@ -51,6 +51,8 @@ import {
   AlignJustify,
   FoldVertical,
   Link,
+  TestTube2,
+  Diff
 } from "lucide-vue-next";
 
 export const commands = [
@@ -67,6 +69,40 @@ export const commands = [
         .run();
     },
   },
+  {
+    title: "Math Formula",
+    icon: Diff, // You can import a math icon if available
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent("$  $") // Insert the math formula template
+        .run();
+        
+      // Calculate position for cursor (3 chars back from current position)
+      const { from } = editor.state.selection;
+      editor.chain().focus().setTextSelection(from - 2).run();
+    },
+  },
+  
+  {
+    title: "Chemistry Formula",
+    icon: TestTube2, // Import this icon if available
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent("$\\ce{  }$") // Insert the chemistry formula template
+        .run();
+        
+      // Calculate position for cursor (6 chars back from current position)
+      const { from } = editor.state.selection;
+      editor.chain().focus().setTextSelection(from - 3).run();
+    },
+  },
+
   {
     title: "Heading 2",
     icon: Heading2,

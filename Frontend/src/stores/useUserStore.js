@@ -148,6 +148,10 @@ export const useUserStore = defineStore(
       role.value = "";
       token.value = "";
       preferences.value = {};
+      recentNotes.value = [];
+      avatar.value = "";
+      streamerMode.value = "";
+
       theme.value = "auto";
       router.replace("/login");
     }
@@ -166,7 +170,9 @@ export const useUserStore = defineStore(
       role.value = "";
       token.value = "";
       isAuthenticated.value = false;
-      // Router instance for programmatic navigation
+      recentNotes.value = [];
+      avatar.value = "";
+      streamerMode.value = "";
 
       // const router = useRouter(); // Router instance for programmatic navigation
       router.replace("/login"); // Or redirect to login page using Vue Router

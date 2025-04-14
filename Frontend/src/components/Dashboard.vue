@@ -55,7 +55,7 @@ const OpenNote = (noteId) => {
     return;
   }
 
-  tabStore.addTab(note.name, "generic", { view: "note", noteId: Id });
+  tabStore.addTab(note.name, "note", {noteId: Id, creationTabId: 1});
 };
 
 const updateScreenSize = () => {

@@ -29,7 +29,20 @@ from werkzeug.utils import secure_filename
 from flask import send_from_directory
 
 app = Flask(__name__)
+
+# cors for production
+
+# CORS(app,
+#      origins=["https://note.henryfield.net" ],
+#      supports_credentials=True,
+#      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+#      allow_headers=["Content-Type", "Authorization"])
+
+# cors for local testing
 CORS(app, resources={r"/*": {"origins": "*"}})
+
+
+
 app.config['SECRET_KEY'] = 'Sjd($&^(£^$(*Whfoshfjnk)))'  # Change this to a secret key of your choice
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://Henry:Naseby2411@localhost:5432/BackendDb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # To disable modification tracking

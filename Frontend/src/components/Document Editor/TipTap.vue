@@ -3,6 +3,9 @@ import Gapcursor from "@tiptap/extension-gapcursor";
 import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
 import Mention from "@tiptap/extension-mention";
+import 'katex/dist/katex.min.css' //import base katex css
+import 'katex/contrib/mhchem'; // Import the further katex chemistry extension
+import Mathematics from '@tiptap-pro/extension-mathematics'
 import { Hyperlink } from "@docs.plus/extension-hyperlink";
 import { HyperMultimediaKit } from "@docs.plus/extension-hypermultimedia";
 import previewHyperlinkModal from "@/components/Document Editor/modals/previewHyperlink.ts";
@@ -485,6 +488,18 @@ let editor = new Editor({
   }, 1000),
   extensions: [
     Document,
+    Mathematics.configure({
+      // Add proper configuration
+      render: true,
+      katex: {
+        displayMode: false,
+        throwOnError: false,
+        output: 'html',
+      },
+      HTMLAttributes: {
+        class: 'math-node',
+      },
+    }),
     Details.configure({
       persist: true,
       HTMLAttributes: {
@@ -1473,7 +1488,7 @@ math-inline {
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  @apply bg-purple-600;
+  // @apply bg-purple-600;
 }
 
 math-inline.ProseMirror-selectednode {
@@ -1495,9 +1510,9 @@ math-display.ProseMirror-selectednode {
 }
 
 /* Additional KaTeX-related styles */
-.katex-html {
-  display: none;
-}
+// .katex-html {
+//   display: none;
+// }
 /* Basic editor styles */
 
 // .ProseMirror:focus {
@@ -1556,6 +1571,34 @@ math-display.ProseMirror-selectednode {
       width: 1em;
     }
   }
+  .math-node {
+  min-width: 1em;
+  min-height: 1em;
+  font-family: KaTeX_Main, 'Times New Roman', serif;
+  cursor: pointer;
+  display: inline-block;
+}
+
+/* Override any display:none that might be hiding the rendered output */
+.katex, 
+.katex-html, 
+.katex-mathml {
+  display: block !important;
+}
+
+.Tiptap-mathematics-editor {
+  background: #202020;
+  color: #fff;
+  font-family: monospace;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.Tiptap-mathematics-render {
+  display: inline-block !important;
+  cursor: pointer;
+  border-radius: 0.25rem;
+}
 
   // Note title container styling
   .note-title-container {

@@ -156,9 +156,9 @@ function switchTab(id) {
 
 function openNewTab(tabType) {
   // Example: Adding a new tab dynamically
-  if (tabType === "generic") {
+  if (tabType === "graph") {
     console.error("Generic tab type is not implemented yet.");
-    tabStore.addTab("Graph", "generic");
+    tabStore.addTab("Graph", "graph");
   } else if (tabType === "Settings") {
     tabStore.addTab("Settings", "settings");
     // tabStore.addTab("New Tab:", "generic");
@@ -288,12 +288,14 @@ const open = ref(false);
 function getTabIcon(tab) {
   // Default to BookOpenText if no mapping exists
 
-  if (tab.type === "generic") {
-    if (tab.state.view === "graph") {
+  if (tab.type === "graph") {
+    
       return Globe;
-    } else if (tab.state.view === "note") {
-      return NotepadText;
-    }
+ 
+    
+  } else if (tab.type === "note") {
+
+    return NotepadText;
   } else if (tab.type === "settings") {
     return Settings;
   } else if (tab.type === "feedback") {
@@ -438,7 +440,7 @@ function handleOpenChange() {
           <SidebarGroupLabel>Tabs:</SidebarGroupLabel>
 
           <!-- Add new tab button -->
-          <SidebarGroupAction title="Add Tab" @click="openNewTab('generic')">
+          <SidebarGroupAction title="Add Tab" @click="openNewTab('graph')">
             <Plus /> <span class="sr-only">Add Tab</span>
           </SidebarGroupAction>
 

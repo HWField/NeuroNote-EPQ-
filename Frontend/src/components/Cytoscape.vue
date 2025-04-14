@@ -35,7 +35,14 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "./ui/input";
-import { onMounted, onBeforeUnmount, onUnmounted, ref, watch } from "vue";
+import {
+  onMounted,
+  onBeforeUnmount,
+  onUnmounted,
+  ref,
+  watch,
+  computed,
+} from "vue";
 
 import { useGraphStore } from "@/stores/useGraphStore";
 import {
@@ -105,19 +112,31 @@ let dialogueResolve = null;
 let dialogueReject = null;
 function openDialogue(type, options = {}) {
   // Reset data object for fresh input
-  dialogueData.value = { ...options }; // Start with any provided default values
+  dialogueData.value = { ...options }; // insert any provided default values
   // Set dialog properties
   dialogueType.value = type;
   dialogueOpen.value = true;
 
-
   if (type === "newNote") {
     setTimeout(() => {
-    const inputElement = document.querySelector('#name');
-    if (inputElement) inputElement.focus();
-  }, 50);
+      const inputElement = document.querySelector("#name");
+      if (inputElement) inputElement.focus();
+    }, 50);
   }
- 
+
+  if (type === "filter") {
+    setTimeout(() => {
+      const inputElement = document.querySelector("#type");
+      if (inputElement) inputElement.focus();
+    }, 50);
+  }
+
+  if (type === "filter") {
+    setTimeout(() => {
+      const inputElement = document.querySelector("#value");
+      if (inputElement) inputElement.focus();
+    }, 50);
+  }
 
   // Return a promise that will resolve when dialog is submitted
   return new Promise((resolve, reject) => {
@@ -126,20 +145,18 @@ function openDialogue(type, options = {}) {
   });
 }
 function submitDialogue() {
-
-
-  if (dialogueType.value === 'newNote') {
+  if (dialogueType.value === "newNote") {
     // Set default name if empty
-    if (!dialogueData.value.name || dialogueData.value.name.trim() === '') {
-      dialogueData.value.name = 'Untitled note';
+    if (!dialogueData.value.name || dialogueData.value.name.trim() === "") {
+      dialogueData.value.name = "Untitled note";
     }
-    
+
     // Set default type if not selected
     if (!dialogueData.value.type) {
-      dialogueData.value.type = 'Document';
+      dialogueData.value.type = "Document";
     }
   }
-  
+
   // Resolve the promise with the current dialogueData
   if (dialogueResolve) {
     dialogueResolve(dialogueData.value);
@@ -585,7 +602,22 @@ function initializeCytoscape() {
       {
         content: "Add Filter",
         select: function (ele) {
-          searchByTag(ele.data("label"));
+          // searchByTag(ele.data("label"));
+          addFilter(
+            "tag",
+            true,
+            "tag",
+            ele.data("label").toLowerCase(),
+            ele.data("label")
+   
+          );
+          //           async function addFilter(
+          //   type,
+          //   prefilledValue = false,
+          //   preType,
+          //   preValue,
+          //   preLabel
+          // )
         },
       },
       {
@@ -1021,7 +1053,13 @@ function HandlecyClick(event) {
   if (
     //chcek if in a typing scenario (e.g. search bar)
     event.target.tagName === "INPUT" ||
-    event.target.tagName === "TEXTAREA"
+    event.target.tagName === "TEXTAREA" ||
+
+    dialogueOpen.value || // Don't trigger shortcuts when any dialog is open
+    
+    // If the SelectContent is open (search dropdown)
+    document.querySelector('.select-content-open')
+    
   ) {
     return;
   }
@@ -1227,14 +1265,20 @@ function HandlecyClick(event) {
       // }
     }
   } else if (event.key === "i") {
+    event.preventDefault();
     Spotlight();
-  } else if (event.key === "f") {
-    stackableSearch();
-  } else if (event.key === "t") {
-    searchByTag();
-  } else if (event.key === "g") {
-    filterByNodeType();
-  } else if (event.key === "d") {
+  }
+  else if (event.key === "f") {
+    // stackableSearch();
+    event.preventDefault();
+    addFilter();
+  } 
+  // else if (event.key === "t") {
+  //   searchByTag();
+  // } else if (event.key === "g") {
+  //   filterByNodeType();
+  // }
+  else if (event.key === "d") {
     const selectedNodes = cy.$("node:selected");
     searchByTag(selectedNodes.data("label"));
   }
@@ -1281,14 +1325,13 @@ async function RenameNode(Node) {
 }
 
 async function CreateNote(format) {
-  let noteName =""
+  let noteName = "";
   if (!format) {
     console.error("No format provided for CreateNote");
-     noteName = (await openDialogue("newNote")).name;
-  }
-  else {
+    noteName = (await openDialogue("newNote")).name;
+  } else {
     console.error(" format provided for CreateNote");
-   noteName = (await openDialogue("newNote", {type: format})).name;
+    noteName = (await openDialogue("newNote", { type: format })).name;
   }
   if (!noteName || noteName.trim() === "") return;
 
@@ -1357,7 +1400,7 @@ async function CreateNote(format) {
 
 async function CreateTag() {
   const tagName = (await openDialogue("newTag")).name;
-  
+
   if (!tagName || tagName.trim() === "") return;
 
   // Get all currently selected tags before creating the new tag
@@ -1422,18 +1465,78 @@ async function CreateTag() {
       console.error("Error creating tag:", error);
     });
 }
+const tags = computed(() => {
+  return graphStore.elements
+    .filter((item) => item.type === "tag")
+    .map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      value: `tag_${tag.id}`,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+});
 
-function addFilter(type, value, label) {
-  const newFilter = {
-    id: Date.now().toString(),
-    type,
-    value,
-    label,
-  };
+const tagSearchQuery = ref("");
+
+const filteredTags = computed(() => {
+  if (!tagSearchQuery.value) return tags.value;
+  const query = tagSearchQuery.value.toLowerCase();
+  return tags.value.filter((tag) => tag.name.toLowerCase().includes(query));
+});
+
+async function addFilter(
+  type,
+  prefilledValue = false,
+  preType,
+  preValue,
+  preLabel
+) {
+  let newFilter = {};
+
+  if (prefilledValue) {
+    console.error("prefilledValue is true", preType, preValue, preLabel);
+    newFilter = {
+      id: Date.now().toString(),
+      type: preType, // Fix: use standard property names
+      value: preValue,
+      label: preLabel,
+    };
+  } else {
+    const result = await openDialogue("filter", { type: type || null });
+    if (result.type === "tag" && result.value) {
+      // Extract the tag name from the selected value
+      const tagname = result.value;
+      console.error("detected tagname is", tagname);
+
+        newFilter = {
+          id: Date.now().toString(),
+          type: "tag",
+          value: tagname.toLowerCase(),
+          label: `Tag: ${tagname}`,
+        };
+      
+    } else if (result.type === "text" && result.value) {
+      // Handle text filter
+      newFilter = {
+        id: Date.now().toString(),
+        type: "text",
+        value: result.value.toLowerCase(),
+        label: `Contains: "${result.value}"`,
+      };
+    } else if (result.type === "type" && result.value) {
+      // Handle node type filter
+      newFilter = {
+        id: Date.now().toString(),
+        type: "nodeType",
+        value: result.value.toLowerCase(),
+        label: `Type: ${result.value}`,
+      };
+    }
+  }
 
   activeFilters.value.push(newFilter);
-  applyFilters(); // Apply all filters
-  saveState(); // Save to tab state
+  applyFilters();
+  saveState();
 }
 
 function removeFilter(filterId) {
@@ -1450,33 +1553,33 @@ function clearAllFilters() {
 }
 
 // Enhanced search that supports stacking
-function stackableSearch() {
-  const searchQuery = prompt("Enter search term:");
-  if (!searchQuery || searchQuery.trim() === "") return;
+// function stackableSearch() {
+//   const searchQuery = prompt("Enter search term:");
+//   if (!searchQuery || searchQuery.trim() === "") return;
 
-  // Add as a text filter
-  addFilter("text", searchQuery.toLowerCase(), `Contains "${searchQuery}"`);
-}
+//   // Add as a text filter
+//   addFilter("text", searchQuery.toLowerCase(), `Contains "${searchQuery}"`);
+// }
 
-// Search by tag
-function searchByTag(tagName = null) {
-  if (tagName == null) {
-    tagName = prompt("Enter tag name to filter by:");
-  }
-  if (!tagName || tagName.trim() === "") return;
+// // Search by tag
+// function searchByTag(tagName = null) {
+//   if (tagName == null) {
+//     tagName = prompt("Enter tag name to filter by:");
+//   }
+//   if (!tagName || tagName.trim() === "") return;
 
-  // Add as a tag filter
-  addFilter("tag", tagName.toLowerCase(), `Tag: ${tagName}`);
-}
+//   // Add as a tag filter
+//   addFilter("tag", tagName.toLowerCase(), `Tag: ${tagName}`);
+// }
 
-// Filter by node type
-function filterByNodeType() {
-  const nodeType = prompt("Enter node type (note/tag):");
-  if (!nodeType || !["note", "tag"].includes(nodeType.toLowerCase())) return;
+// // Filter by node type
+// function filterByNodeType() {
+//   const nodeType = prompt("Enter node type (note/tag):");
+//   if (!nodeType || !["note", "tag"].includes(nodeType.toLowerCase())) return;
 
-  // Add as a node type filter
-  addFilter("nodeType", nodeType.toLowerCase(), `Type: ${nodeType}`);
-}
+//   // Add as a node type filter
+//   addFilter("nodeType", nodeType.toLowerCase(), `Type: ${nodeType}`);
+// }
 
 function applyFilters() {
   // If no filters, show all data
@@ -1500,7 +1603,7 @@ function applyFilters() {
       tag.children.forEach((childId) => {
         const childTag = allElements.find(
           (el) => el.type === "tag" && el.id === childId
-        );
+        );  
         if (childTag) {
           descendants.push(childTag);
           descendants.push(...getDescendants(childTag));
@@ -1603,6 +1706,16 @@ function applyFilters() {
         ),
         ...allHierarchyNotes,
       ];
+    }else if (filter.type === "nodeType") {
+      // Node type filter - only show nodes of the specified type
+      filteredElements = filteredElements.filter(
+        (element) => element.type === filter.value
+      );
+      
+      // Highlight all nodes that match this type
+      filteredElements.forEach((element) => {
+        highlightedNodeIds.add(`${element.type}_${element.id}`);
+      });
     }
   });
 
@@ -1764,8 +1877,9 @@ function advancedSearch() {
   }
 }
 
-function Spotlight() {
-  const searchTerm = prompt("Enter a search term:");
+async function Spotlight() {
+  const searchTerm = (await openDialogue("spotlight")).value;
+  console.error("Spotlight search term:", searchTerm);
   if (!searchTerm || searchTerm.trim() === "") return;
 
   const lowerCaseSearchTerm = searchTerm.toLowerCase();
@@ -1916,6 +2030,8 @@ onBeforeUnmount(() => {
 <template>
   <Dialog :open="dialogueOpen" @update:open="(val) => !val && cancelDialogue()">
     <DialogContent>
+
+
       <!-- Rename dialog -->
       <div v-if="dialogueType === 'rename'">
         <DialogHeader>
@@ -1924,21 +2040,19 @@ onBeforeUnmount(() => {
         </DialogHeader>
 
         <div class="grid gap-4 py-4">
-          <div class="grid grid-cols-4 items-center gap-4">
-            <label for="name" class="text-right text-sm font-medium"
+          <div class="flex flex-col space-y-2">
+            <label for="name" class="text-sm font-medium"
               >Name:</label
             >
             <Input
               id="name"
               v-model="dialogueData.name"
-              class="col-span-3"
               autofocus
               @keyup.enter="submitDialogue"
             />
           </div>
         </div>
       </div>
-
 
       <div v-if="dialogueType === 'newTag'">
         <DialogHeader>
@@ -1947,13 +2061,35 @@ onBeforeUnmount(() => {
         </DialogHeader>
 
         <div class="grid gap-4 py-4">
-          <div class="grid grid-cols-4 items-center gap-4">
-            <label for="name" class="text-right text-sm font-medium"
+          <div class="flex flex-col space-y-2">
+            <label for="name" class=" text-sm font-medium"
               >Name:</label
             >
             <Input
               id="name"
               v-model="dialogueData.name"
+
+              autofocus
+              @keyup.enter="submitDialogue"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div v-if="dialogueType === 'spotlight'">
+        <DialogHeader>
+          <DialogTitle>Spotlight</DialogTitle>
+          <DialogDescription>Enter a search term</DialogDescription>
+        </DialogHeader>
+
+        <div class="grid gap-4 py-4">
+          <div class="flex flex-col space-y-2">
+            <label for="name" class=" text-sm font-medium"
+              >Keyword:</label
+            >
+            <Input
+              id="value"
+              v-model="dialogueData.value"
               class="col-span-3"
               autofocus
               @keyup.enter="submitDialogue"
@@ -1969,8 +2105,8 @@ onBeforeUnmount(() => {
         </DialogHeader>
 
         <div class="grid gap-4 py-4">
-          <div class="grid grid-cols-4 items-center gap-4">
-            <label for="name" class="text-right text-sm font-medium"
+          <div class="flex flex-col space-y-2">
+            <label for="name" class=" text-sm font-medium"
               >Name:</label
             >
             <Input
@@ -1981,7 +2117,7 @@ onBeforeUnmount(() => {
               placeholder="Untitled note"
               @keyup.enter="submitDialogue"
             />
-            <label for="type" class="text-right text-sm font-medium"
+            <label for="type" class=" text-sm font-medium"
               >Type:</label
             >
             <Select id="type" v-model="dialogueData.type">
@@ -2007,32 +2143,98 @@ onBeforeUnmount(() => {
         </DialogHeader>
 
         <div class="grid gap-4 py-4">
-          <div class="grid grid-cols-4 items-center gap-4">
-            <label for="type" class="text-right text-sm font-medium"
+          <!-- Row 1: Filter Type Selection -->
+          <div class="flex flex-col space-y-2">
+            <label for="type" class=" text-sm font-medium"
               >Type:</label
             >
-            <Select id="type" v-model="dialogueData.type">
+            <Select id="type" v-model="dialogueData.type" >
               <SelectTrigger class="col-span-3">
-                <SelectValue placeholder="Default" />
+                <SelectValue placeholder="Choose filter type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <!-- <SelectLabel>Fruits</SelectLabel> -->
-                  <SelectItem value="document"> Document </SelectItem>
-                  <SelectItem value="whiteboard"> Whiteboard </SelectItem>
+                  <SelectItem value="text">Text Filter</SelectItem>
+                  <SelectItem value="tag">Tag Filter</SelectItem>
+                  <SelectItem value="type">Type Filter</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>
-            <label for="name" class="text-right text-sm font-medium"
-              >Name:</label
+          </div>
+
+          <!-- Row 2: Text Filter Input (conditional) -->
+          <div
+            v-if="dialogueData.type === 'text'"
+            class="flex flex-col space-y-2"
+          >
+            <label for="textValue" class=" text-sm font-medium"
+              >Keyword:</label
             >
             <Input
-              id="name"
-              v-model="dialogueData.name"
+              id="textValue"
+              v-model="dialogueData.value"
               class="col-span-3"
               autofocus
               @keyup.enter="submitDialogue"
             />
+          </div>
+
+          <!-- Row 3: Type Filter Input (conditional) -->
+          <div
+            v-if="dialogueData.type === 'type'"
+            class="flex flex-col space-y-2"
+          >
+            <label for="value" class=" text-sm font-medium"
+              >Type:</label
+            >
+            <Select id="value" v-model="dialogueData.value">
+              <SelectTrigger class="col-span-3">
+                <SelectValue placeholder="..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <!-- <SelectLabel>Fruits</SelectLabel> -->
+                  <SelectItem value="tag"> Tag </SelectItem>
+                  <SelectItem value="note"> Note </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <!-- Row 4: Tag Filter Selector (conditional) -->
+          <div
+            v-if="dialogueData.type === 'tag'"
+            class="flex flex-col space-y-2"
+          >
+            <label for="tagSelector" class="text-sm font-medium"
+              >Tag:</label
+            >
+            <div class="col-span-3">
+              <Select id="tagSelector" v-model="dialogueData.value">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a tag" />
+                </SelectTrigger>
+                <SelectContent>
+                  <div class="p-2">
+                    <Input
+                      v-model="tagSearchQuery"
+                      placeholder="Search tags..."
+                      class="mb-2 w-full"
+                      @keydown.stop
+                    />
+                  </div>
+                  <SelectGroup>
+                    <SelectItem
+                      v-for="tag in filteredTags"
+                      :key="tag.id"
+                      :value="tag.name"
+                    >
+                      {{ tag.name }}
+                    </SelectItem>
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
       </div>
@@ -2064,21 +2266,22 @@ onBeforeUnmount(() => {
           <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
             <DropdownMenuItem
               class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-              @click="stackableSearch()"
+              @click="addFilter((type = 'text'))"
             >
               <CaseSensitive class="w-5 h-5 text-gray-600" />
               <span>Filter by Name</span>
             </DropdownMenuItem>
+
             <DropdownMenuItem
               class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-              @click="searchByTag()"
+              @click="addFilter((type = 'tag'))"
             >
               <Tag class="w-5 h-5 text-gray-600" />
               <span>Filter by Tag</span>
             </DropdownMenuItem>
             <DropdownMenuItem
               class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-              @click="filterByNodeType()"
+              @click="addFilter((type = 'type'))"
             >
               <FileText class="w-5 h-5 text-gray-600" />
               <span>Filter by Type</span>
@@ -2094,7 +2297,7 @@ onBeforeUnmount(() => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button class="flex items-center">
+        <Button @click="Spotlight()" class="flex items-center">
           <Search class="" />
           <span>Spotlight</span>
         </Button>

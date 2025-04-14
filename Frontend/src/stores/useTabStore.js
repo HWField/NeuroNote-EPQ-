@@ -10,7 +10,9 @@ import { cloneDeep } from "lodash"; // Install lodash first
 import GenericTab from "@/components/GenericTab.vue";
 import Settings from "@/components/Settings.vue";
 import Feedback from "@/components/Feedback.vue";
+import NoteTab from "@/components/NoteTab.vue";
 import axios from "../axios"; // Import the Axios instance
+import GraphTab from "@/components/GraphTab.vue"; // Import the GraphTab component
 import { useUserStore } from "@/stores/useUserStore";
 
 export const useTabStore = defineStore("tabStore", () => {
@@ -22,6 +24,8 @@ export const useTabStore = defineStore("tabStore", () => {
     GenericTab: markRaw(GenericTab),
     Settings: markRaw(Settings),
     Feedback: markRaw(Feedback),
+    NoteTab: markRaw(NoteTab),
+    GraphTab: markRaw(GraphTab),
   };
   const defaultTabs = [
     {
@@ -62,7 +66,7 @@ export const useTabStore = defineStore("tabStore", () => {
     let component;
     switch (type) {
       case "generic":
-      case "note":
+      
         if (state && state.noteId) {
           // Find any existing tab that has this noteId
           const existingTab = tabs.value.find(
@@ -88,6 +92,46 @@ export const useTabStore = defineStore("tabStore", () => {
           state: state || { view: "graph", noteId: null },
         });
         break;
+
+      case "note":
+        if (state && state.noteId) {
+          // Find any existing tab that has this noteId
+          const existingTab = tabs.value.find(
+            (tab) => tab.state && tab.state.noteId === state.noteId
+          );
+
+          // If found, just activate that tab instead of creating a new one
+          if (existingTab) {
+            console.log(
+              `Note ${state.noteId} already open in tab ${existingTab.id} - switching to it`
+            );
+            setActiveTab(existingTab.id);
+            return; // Exit early - no need to create a new tab
+          }
+        }
+
+        tabs.value.push({
+          id,
+          title,
+          componentName: "NoteTab", // Store name for serialization
+          component: componentMapping.NoteTab,
+          type: "note",
+          state: state || {noteId: null, creationTabId: null},
+        });
+        break;
+
+
+      case "graph":
+        tabs.value.push({
+          id,
+          title,
+          componentName: "GraphTab", // Store name for serialization
+          component: componentMapping.GraphTab,
+          type: "graph",
+          state: state || {},
+        });
+        break;
+
 
       case "settings":
         // Find any existing tab that is of type settings
@@ -189,10 +233,15 @@ export const useTabStore = defineStore("tabStore", () => {
     }
   }
   // Remove a tab
-  function removeTab(id) {
+  function removeTab(id, newTab = null) {
     tabs.value = tabs.value.filter((tab) => tab.id !== id);
     if (activeTab.value === id) {
+      if (newTab) {
+        activeTab.value = newTab;
+      }
+      else {
       activeTab.value = tabs.value.length ? tabs.value[1].id : null; // Set to first tab if available if not set to dashbaord
+      }
     }
     useUserStore().saveUser({ tabs: Array.from(tabs.value) });
   }

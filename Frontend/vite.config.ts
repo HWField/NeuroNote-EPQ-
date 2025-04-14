@@ -9,6 +9,14 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    host: true, // listen on all interfaces (0.0.0.0)
+    port: 5173,
+    hmr: {
+      protocol: 'ws',
+      host: 'note.henryfield.net', // your domain
+    },
+  },
   plugins: [
     vue(),
     vueDevTools(),
@@ -24,5 +32,8 @@ export default defineConfig({
     postcss: {
       plugins: [tailwind(), autoprefixer()],
     },
+  },
+  preview: {
+    allowedHosts: ['note.henryfield.net'],
   },
 })
