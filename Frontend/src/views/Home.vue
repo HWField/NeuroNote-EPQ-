@@ -95,6 +95,7 @@ import {
   BookOpenText,
   Globe,
   NotepadText,
+  Tag,
 } from "lucide-vue-next";
 import * as icons from "lucide-vue-next";
 
@@ -289,12 +290,8 @@ function getTabIcon(tab) {
   // Default to BookOpenText if no mapping exists
 
   if (tab.type === "graph") {
-    
-      return Globe;
- 
-    
+    return Globe;
   } else if (tab.type === "note") {
-
     return NotepadText;
   } else if (tab.type === "settings") {
     return Settings;
@@ -317,27 +314,129 @@ watch([Meta_J, Ctrl_J], (v) => {
 function handleOpenChange() {
   open.value = !open.value;
 }
+const searchQuery = ref("");
+const graphStore = useGraphStore();
+
+// Filtered notes based on search query
+const filteredNotes = computed(() => {
+  const query = searchQuery.value.toLowerCase();
+  return graphStore.elements
+    .filter(
+      (item) =>
+        item.type === "note" &&
+        (!query || item.name.toLowerCase().includes(query))
+    )
+   // Limit to first 10 results for performance
+});
+
+// Filtered tags based on search query
+const filteredTags = computed(() => {
+  const query = searchQuery.value.toLowerCase();
+  return graphStore.elements
+    .filter(
+      (item) =>
+        item.type === "tag" &&
+        (!query || item.name.toLowerCase().includes(query))
+    )
+ // Limit to first 10 results for performance
+});
+
+// Watch the command input for changes
+watch(
+  () => open.value,
+  (isOpen) => {
+    if (!isOpen) {
+      // Reset search query when dialog closes
+      searchQuery.value = "";
+    }
+  }
+);
+
+// Function to open a note tab
+function openNoteTab(noteId) {
+  // Find the note in the graph store
+  const note = graphStore.elements.find(
+    (item) => item.type === "note" && item.id === noteId
+  );
+  if (note) {
+    tabStore.addTab(note.name, "note", { noteId });
+    // Close the dialog
+    open.value = false;
+  }
+}
+
+// Function to open a graph tab focused on a tag
+function openTagGraph(tagId) {
+  // Find the tag in the graph store
+  const tag = graphStore.elements.find(
+    (item) => item.type === "tag" && item.id === tagId
+  );
+  if (tag) {
+    tabStore.addTab(`Graph`, "graph", {
+      filters: [
+        {
+          id: Date.now().toString(),
+          type: "tag",
+          value: tag.name.toLowerCase(),
+          label: `Tag: ${tag.name}`,
+        },
+      ],
+    });
+    // Close the dialog
+    open.value = false;
+  }
+}
+
+// Connect search query to command input
+function updateSearchQuery(event) {
+  searchQuery.value = event.target.value;
+}
 </script>
 
 <template>
   <Toaster />
 
   <CommandDialog v-model:open="open">
-    <CommandInput placeholder="Type a command or search..." />
-    <CommandList>
-      <CommandEmpty>No results found.</CommandEmpty>
-      <CommandGroup heading="Suggestions">
-        <CommandItem value="calendar"> Calendar </CommandItem>
-        <CommandItem value="search-emoji"> Search Emoji </CommandItem>
-        <CommandItem value="calculator"> Calculator </CommandItem>
-      </CommandGroup>
-      <CommandSeparator />
-      <CommandGroup heading="Settings">
-        <CommandItem value="profile"> Profile </CommandItem>
-        <CommandItem value="billing"> Billing </CommandItem>
-        <CommandItem value="settings"> Settings </CommandItem>
-      </CommandGroup>
-    </CommandList>
+    <CommandInput placeholder="Search notes and tags..." />
+    <ScrollArea class="max-h-[300px] overflow-auto">
+      <CommandList class="">
+        <CommandEmpty>No results found.</CommandEmpty>
+
+        <!-- Notes Group -->
+        <CommandGroup heading="Notes">
+          <CommandItem
+            v-for="note in filteredNotes"
+            :key="'note_' + note.id"
+            :value="note.name"
+            @select="openNoteTab(note.id)"
+          >
+            <NotepadText class="mr-2 h-4 w-4" />
+            {{ note.name }}
+          </CommandItem>
+        </CommandGroup>
+
+        <!-- Tags Group -->
+        <CommandGroup heading="Tags">
+          <CommandItem
+            v-for="tag in filteredTags"
+            :key="'tag_' + tag.id"
+            :value="tag.name"
+            @select="openTagGraph(tag.id)"
+          >
+            <Tag class="mr-2 h-4 w-4" />
+            {{ tag.name }}
+          </CommandItem>
+        </CommandGroup>
+
+        <!-- Settings Group (keep existing items) -->
+        <!-- <CommandSeparator />
+    <CommandGroup heading="Settings">
+      <CommandItem value="profile"> Profile </CommandItem>
+      <CommandItem value="billing"> Billing </CommandItem>
+      <CommandItem value="settings"> Settings </CommandItem>
+    </CommandGroup> -->
+      </CommandList>
+    </ScrollArea>
   </CommandDialog>
 
   <SidebarProvider>
@@ -409,9 +508,9 @@ function handleOpenChange() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton>
+                <SidebarMenuButton @click.prevent="handleOpenChange">
                   <Search />
-                  <a href="#"> Search </a>
+                  <span> Search</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem
