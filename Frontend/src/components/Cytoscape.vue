@@ -2251,9 +2251,7 @@ onBeforeUnmount(() => {
     <div ref="navbarContainer" class="h-full w-full relative">
       <!-- Large toolbar -->
 
-      <div
-        v-if="hasControls && isLargeNavbarVisible"
-        class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
+      <div  v-if="hasControls && isLargeNavbarVisible" class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
       >
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
@@ -2346,95 +2344,118 @@ onBeforeUnmount(() => {
 
       <!-- Small toolbar -->
       <div
-        v-else
-        v-if="hasControls"
-        class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
+  v-else
+  v-if="hasControls"
+  class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
+>
+  <DropdownMenu>
+    <DropdownMenuTrigger as-child>
+      <Button class="">
+        <Filter></Filter>
+        <span>Filter</span>
+      </Button>
+    </DropdownMenuTrigger>
+
+    <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+      <DropdownMenuItem
+        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+        @click="addFilter('text')"
       >
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <Button class="">
-              <Eye></Eye>
-              <span>View</span>
-            </Button>
-          </DropdownMenuTrigger>
+        <CaseSensitive class="w-5 h-5 text-gray-600" />
+        <span>Filter by Name</span>
+      </DropdownMenuItem>
 
-          <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-            <DropdownMenuItem
-              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            >
-              <Shuffle class="w-5 h-5 text-gray-600" />
-              <span>Shuffle</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            >
-              <ChevronsDown class="w-5 h-5 text-gray-600" />
-              <span>Drill</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            >
-              <Home class="w-5 h-5 text-gray-600" />
-              <span>Centre</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <DropdownMenuItem
+        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+        @click="addFilter('tag')"
+      >
+        <Tag class="w-5 h-5 text-gray-600" />
+        <span>Filter by Tag</span>
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+        @click="addFilter('type')"
+      >
+        <FileText class="w-5 h-5 text-gray-600" />
+        <span>Filter by Type</span>
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem
+        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+        @click="clearAllFilters()"
+      >
+        <Eye class="w-5 h-5 text-gray-600" />
+        <span>Show All</span>
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <Button class="">
-              <Plus></Plus>
-              <span>New</span>
-            </Button>
-          </DropdownMenuTrigger>
+  <DropdownMenu>
+    <DropdownMenuTrigger as-child>
+      <Button class="">
+        <Plus></Plus>
+        <span>New</span>
+      </Button>
+    </DropdownMenuTrigger>
 
-          <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-            <DropdownMenuItem
-              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            >
-              <Tag class="w-5 h-5 text-gray-600" />
-              <span>Tag</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            >
-              <FileText class="w-5 h-5 text-gray-600" />
-              <span>Docuement</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            >
-              <LayoutGrid class="w-5 h-5 text-gray-600" />
-              <span>Whiteboard</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+    <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+      <DropdownMenuItem
+        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+        @click="CreateTag()"
+      >
+        <Tag class="w-5 h-5 text-gray-600" />
+        <span>Tag</span>
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+        @click="CreateNote('document')"
+      >
+        <FileText class="w-5 h-5 text-gray-600" />
+        <span>Document</span>
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+        @click="CreateNote('whiteboard')"
+      >
+        <LayoutGrid class="w-5 h-5 text-gray-600" />
+        <span>Whiteboard</span>
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <Button class="">
-              <Ellipsis></Ellipsis>
-              <span>Options</span>
-            </Button>
-          </DropdownMenuTrigger>
+  <DropdownMenu>
+    <DropdownMenuTrigger as-child>
+      <Button class="">
+        <Ellipsis></Ellipsis>
+        <span>More</span>
+      </Button>
+    </DropdownMenuTrigger>
 
-          <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-            <DropdownMenuItem
-              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            >
-              <Search class="w-5 h-5 text-gray-600" />
-              <span>Spotlight</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuItem
-              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-            >
-              <Search class="w-5 h-5 text-gray-600" />
-              <span>Search</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+    <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+      <DropdownMenuItem
+        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+        @click="Spotlight()"
+      >
+        <Search class="w-5 h-5 text-gray-600" />
+        <span>Spotlight</span>
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+        @click="centerGraph()"
+      >
+        <House class="w-5 h-5 text-gray-600" />
+        <span>Center</span>
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+        @click="ShuffleGraph()"
+      >
+        <Shuffle class="w-5 h-5 text-gray-600" />
+        <span>Shuffle</span>
+      </DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+</div>
 
       <!-- tagbar -->
       <div
