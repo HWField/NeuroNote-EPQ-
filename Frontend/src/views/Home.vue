@@ -96,6 +96,8 @@ import {
   Globe,
   NotepadText,
   Tag,
+  FileText,
+  Presentation,
 } from "lucide-vue-next";
 import * as icons from "lucide-vue-next";
 
@@ -398,10 +400,10 @@ function updateSearchQuery(event) {
 
   <CommandDialog v-model:open="open">
     <CommandInput placeholder="Search notes and tags..." />
-    <ScrollArea class="max-h-[300px] overflow-auto">
-      <CommandList class="">
+    
+      <CommandList class="overflow-hidden">
         <CommandEmpty>No results found.</CommandEmpty>
-
+        <ScrollArea class="h-[300px] overflow-hidden">
         <!-- Notes Group -->
         <CommandGroup heading="Notes">
           <CommandItem
@@ -410,7 +412,8 @@ function updateSearchQuery(event) {
             :value="note.name"
             @select="openNoteTab(note.id)"
           >
-            <NotepadText class="mr-2 h-4 w-4" />
+            <FileText v-if="note.format === 'document'" class="mr-2 h-4 w-4" />
+            <Presentation v-else-if="note.format === 'whiteboard'" class="mr-2 h-4 w-4" />
             {{ note.name }}
           </CommandItem>
         </CommandGroup>
@@ -427,7 +430,7 @@ function updateSearchQuery(event) {
             {{ tag.name }}
           </CommandItem>
         </CommandGroup>
-
+      </ScrollArea>
         <!-- Settings Group (keep existing items) -->
         <!-- <CommandSeparator />
     <CommandGroup heading="Settings">
@@ -436,7 +439,7 @@ function updateSearchQuery(event) {
       <CommandItem value="settings"> Settings </CommandItem>
     </CommandGroup> -->
       </CommandList>
-    </ScrollArea>
+  
   </CommandDialog>
 
   <SidebarProvider>

@@ -332,11 +332,11 @@
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter class="flex justify-end space-x-2">
+                <!-- <CardFooter class="flex justify-end space-x-2">
                   <Button @click="resetInterfaceSettings" variant="outline"
                     >Reset to Defaults</Button
                   >
-                </CardFooter>
+                </CardFooter> -->
               </Card>
             </div>
 

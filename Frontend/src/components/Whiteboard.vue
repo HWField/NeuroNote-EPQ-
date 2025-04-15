@@ -1,59 +1,276 @@
+<template>
+  <div class="flex w-full h-full flex-col">
+    <!-- Floating Toolbar -->
+    <Loading v-if="isLoading" />
+    <div v-else>
+      <div class="h-24 w-full mb-0 relative">
+        <div class="absolute top-6 w-full z-50 px-4 flex justify-center">
+          <div
+            class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
+          >
+            <div class="flex items-center gap-1 flex-wrap">
+              <!-- Close button -->
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      @click="closeNote()"
+                      class="mr-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-800/30"
+                    >
+                      <X class="h-4 w-4 text-red-500 dark:text-red-400" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Close Whiteboard</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <Separator orientation="vertical" class="h-6 mx-1" />
+
+              <!-- Edit Mode -->
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="flex gap-1 items-center"
+                  >
+                    <TextIcon v-if="mode === 'type'" class="h-4 w-4" />
+                    <Pencil v-else-if="mode === 'draw'" class="h-4 w-4" />
+                    <Eraser v-else-if="mode === 'eraser'" class="h-4 w-4" />
+                    <span>Mode: {{ mode }}</span>
+                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem @click="mode = 'draw'">
+                    <Pencil class="h-4 w-4 mr-2" />
+                    <span>Draw</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="mode = 'type'">
+                    <Type class="h-4 w-4 mr-2" />
+                    <span>Type</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="mode = 'pan'">
+                    <Move class="h-4 w-4 mr-2" />
+                    <span>Move</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="mode = 'eraser'">
+                    <Eraser class="h-4 w-4 mr-2" />
+                    <span>Erase</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Separator orientation="vertical" class="h-6 mx-1" />
+
+              <!-- Add Shape -->
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="flex gap-1 items-center"
+                  >
+                    <PlusIcon class="h-4 w-4" />
+                    <span>Add</span>
+                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem @click="addShape('rectangle')">
+                    <Square class="h-4 w-4 mr-2" />
+                    <span>Rectangle</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="addShape('circle')">
+                    <Circle class="h-4 w-4 mr-2" />
+                    <span>Circle</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="addShape('triangle')">
+                    <Triangle class="h-4 w-4 mr-2" />
+                    <span>Triangle</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="addShape('line')">
+                    <Minus class="h-4 w-4 mr-2" />
+                    <span>Line</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem @click="addText()">
+                    <Type class="h-4 w-4 mr-2" />
+                    <span>Text</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Separator orientation="vertical" class="h-6 mx-1" />
+
+              <!-- Pen Color -->
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="flex gap-1 items-center"
+                  >
+                    <Palette class="h-4 w-4" />
+                    <span>Colour</span>
+                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem @click="penColour = 'black'">
+                    <Circle class="h-4 w-4 mr-2" fill="black" />
+                    <span>Black</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="penColour = 'white'">
+                    <Circle class="h-4 w-4 mr-2" fill="white" />
+                    <span>White</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="penColour = 'red'">
+                    <Circle class="h-4 w-4 mr-2" fill="red" />
+                    <span>Red</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="penColour = 'blue'">
+                    <Circle class="h-4 w-4 mr-2" fill="blue" />
+                    <span>Blue</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="penColour = 'green'">
+                    <Circle class="h-4 w-4 mr-2" fill="green" />
+                    <span>Green</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Separator orientation="vertical" class="h-6 mx-1" />
+
+              <!-- Pen Width -->
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="flex gap-1 items-center"
+                  >
+                    <Pencil class="h-4 w-4" />
+                    <span>Width</span>
+                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem @click="penWidth = 1">
+                    <Minus class="h-4 w-4 mr-2" :stroke-width="0.5" />
+                    <span>Fine</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="penWidth = 3">
+                    <Minus class="h-4 w-4 mr-2" :stroke-width="1" />
+                    <span>Medium</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="penWidth = 8">
+                    <Minus class="h-4 w-4 mr-2" :stroke-width="3" />
+                    <span>Bold</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="penWidth = 16">
+                    <Minus class="h-4 w-4 mr-2" :stroke-width="5" />
+                    <span>Thick</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Separator orientation="vertical" class="h-6 mx-1" />
+
+              <!-- Background/Grid -->
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="flex gap-1 items-center"
+                  >
+                    <Grid class="h-4 w-4" />
+                    <span>Background</span>
+                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem @click="background = 'line'">
+                    <Rows3Icon class="h-4 w-4 mr-2" />
+                    <span>Line</span>
+                  </DropdownMenuItem>
+                  <Separator />
+                  <DropdownMenuItem @click="background = 'sGrid'">
+                    <Grid class="h-4 w-4 mr-2" />
+                    <span>Small Grid</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="background = 'mGrid'">
+                    <Grid class="h-4 w-4 mr-2" />
+                    <span>Medium Grid</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="background = 'lGrid'">
+                    <Grid class="h-4 w-4 mr-2" />
+                    <span>Large Grid</span>
+                  </DropdownMenuItem>
+                  <Separator />
+                  <DropdownMenuItem @click="background = 'empty'">
+                    <Square class="h-4 w-4 mr-2" />
+                    <span>Blank</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Separator orientation="vertical" class="h-6 mx-1" />
+
+              <!-- Delete Selected -->
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      class="text-orange-600"
+                      @click="deleteSelected"
+                    >
+                      <Eraser class="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Delete Selected</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-center flex-1">
+        <div
+          id="canvas-container"
+          class="canvas-container w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-hidden bg-primary-foreground rounded-lg border border-input m-4 relative"
+        >
+          <!-- Grid canvas (bottom layer) -->
+          <canvas
+            id="grid-canvas"
+            class="absolute top-0 left-0 w-full h-full"
+          ></canvas>
+          <!-- Main canvas (top layer) -->
+          <canvas
+            id="fabricCanvas"
+            class="absolute top-0 left-0 w-full h-full"
+          ></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup>
-import Gapcursor from "@tiptap/extension-gapcursor";
-import Code from "@tiptap/extension-code";
-import Document from "@tiptap/extension-document";
-import Mention from "@tiptap/extension-mention";
-// import suggestion from "@/components/Document Editor/TagSuggestion.js";
-import Heading from "@tiptap/extension-heading";
-// import TagsList from "@/components/Document Editor/TagsList.vue";
-
-import { Commands } from "@/components/Document Editor/commands.js";
-import CommandsList, {
-  commands,
-} from "@/components/Document Editor/CommandsList.vue";
-
-import { Tags } from "@/components/Document Editor/Tags.js";
-import TagsList, { getTags } from "@/components/Document Editor/TagsList.vue";
-
-import { VueRenderer } from "@tiptap/vue-3";
-import tippy from "tippy.js";
-import Underline from "@tiptap/extension-underline";
-import Youtube from "@tiptap/extension-youtube";
-import { PluginKey } from "prosemirror-state";
-import OrderedList from "@tiptap/extension-ordered-list";
-import BulletList from "@tiptap/extension-bullet-list";
-import ListItem from "@tiptap/extension-list-item";
-import Highlight from "@tiptap/extension-highlight";
-import TextAlign from "@tiptap/extension-text-align";
-import Placeholder from "@tiptap/extension-placeholder";
-import Paragraph from "@tiptap/extension-paragraph";
-import Text from "@tiptap/extension-text";
-import TaskItem from "@tiptap/extension-task-item";
-import TaskList from "@tiptap/extension-task-list";
-import Typography from "@tiptap/extension-typography";
-import Image from "@tiptap/extension-image";
-import Details from "@tiptap-pro/extension-details";
-import DetailsContent from "@tiptap-pro/extension-details-content";
-import DetailsSummary from "@tiptap-pro/extension-details-summary";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import css from "highlight.js/lib/languages/css";
-import js from "highlight.js/lib/languages/javascript";
-import ts from "highlight.js/lib/languages/typescript";
-import html from "highlight.js/lib/languages/xml";
-import py from "highlight.js/lib/languages/python";
-import csharp from "highlight.js/lib/languages/csharp";
-import json from "highlight.js/lib/languages/json";
-import sql from "highlight.js/lib/languages/sql";
-import { createLowlight } from "lowlight";
-import { Editor, EditorContent } from "@tiptap/vue-3";
-import StarterKit from "@tiptap/starter-kit";
-import { ColorHighlighter } from "@/components/Document Editor/ColorHighlighter.ts";
-import { SmilieReplacer } from "@/components/Document Editor/SymbolReplacer.ts";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Extension } from "@tiptap/core";
-import { Node } from "@tiptap/core";
-import { Button } from "@/components/ui/Button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import * as fabric from "fabric";
+import Hammer from "hammerjs";
+import axios, { getBaseUrl } from "../axios.js";
+import { useTabStore } from "@/stores/useTabStore";
+import { useGraphStore } from "@/stores/useGraphStore";
+import { useUserStore } from "@/stores/useUserStore";
+import Loading from "@/components/Loading.vue";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,7 +278,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Switch } from '@/components/ui/switch'
 import {
   Tooltip,
   TooltipContent,
@@ -69,1322 +285,604 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import {
-  Bold as BoldIcon,
-  Italic as ItalicIcon,
-  Underline as UnderlineIcon,
-  Strikethrough as StrikethroughIcon,
-  Code as CodeIcon,
-  AlignLeft as AlignLeftIcon,
-  AlignCenter as AlignCenterIcon,
-  AlignRight as AlignRightIcon,
-  AlignJustify as AlignJustifyIcon,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  X,
+  Pencil,
+  Type,
+  Square,
+  Triangle,
+  PlusIcon,
+  Eraser,
+  Circle,
   ChevronDown as ChevronDownIcon,
-  Text as TextIcon,
-  X as XIcon,
-  Paintbrush as PaintbrushIcon,
+  TextIcon,
+  Palette,
+  Minus,
+  Undo,
+  Redo,
+  Download,
+  Trash2,
+  Image,
+  Grid,
+  LucideFileLineChart,
+  Rows3Icon,
+  Move,
 } from "lucide-vue-next";
-
-import { useGraphStore } from "@/stores/useGraphStore";
-import axios from "../axios.js";
-
-import { ref, onBeforeUnmount, watch } from "vue";
-import { onMounted } from "vue";
-const emit = defineEmits(['note-closed']);
-const externalTags = ref([]);
-const lowlight = createLowlight();
-
-// lowlight languages editor can use
-lowlight.register("html", html);
-lowlight.register("css", css);
-lowlight.register("js", js);
-lowlight.register("ts", ts);
-lowlight.register("py", py);
-lowlight.register("csharp", csharp);
-lowlight.register("json", json);
-lowlight.register("sql", sql);
+import { useToast } from "@/components/ui/toast/use-toast";
 
 const props = defineProps({
-  noteId: Number || 31,
+  noteId: Number || 0,
+  tabId: Number || 0,
 });
+const emit = defineEmits(["note-closed"]);
+const saveInterval = ref(null);
+const noteTitle = ref("Untitled Note");
+const noteTags = ref([]);
+const { toast } = useToast();
+const isLoading = ref(false);
+const viewport = ref({ x: 0, y: 0, zoom: 1 });
+const background = ref("Lgrid");
+const mode = ref("draw");
+const penColour = ref("");
 
-const focusEditor = (event) => {
-  if (editor) {
-    editor.chain().focus().run();
+if (useUserStore.theme == "dark") {
+  penColour.value = "white";
+} else {
+  penColour.value = "black";
+}
+const penWidth = ref(5);
+
+let modalContent = null;
+let fabricCanvasEl = null;
+let gridCanvas = null;
+let gridContext = null;
+let canvas = null;
+let gridSize = 20;
+let vertical = true;
+let horizontal = true;
+
+let isPanning = false;
+let lastPosX = 0;
+let lastPosY = 0;
+let width = 0;
+let height = 0;
+
+async function SaveToBackend() {
+  if (isLoading.value) {
+    console.error("Editor is still loading, skipping save.");
+    return false;
   }
-};
 
-function extractTagsFromDocument(document) {
-  // Debug the document structure
-  console.log(
-    "Document structure:",
-    JSON.stringify(document).slice(0, 200) + "..."
-  );
-
-  const uniqueTagIds = new Set();
-
-  // Improved traversal function
-  const traverse = (node) => {
-    // Check if this is a mention node
-    if (node.type === "mention" && node.attrs && node.attrs.id) {
-      console.log("Found mention node:", node);
-      uniqueTagIds.add(node.attrs.id); // Push only the ID
+  try {
+    if (!canvas) {
+      console.error("Canvas not initialized");
+      return false;
     }
 
-    // Process content array if it exists
-    if (node.content && Array.isArray(node.content)) {
-      node.content.forEach((childNode) => traverse(childNode));
+    // Get the data directly
+    const noteContent = canvas.toJSON();
+    const title = noteTitle.value || "Untitled Note";
+    const tags = noteTags.value;
+
+    // Update graph store
+    const graphStore = useGraphStore();
+    graphStore.updateNoteName(props.noteId, title);
+    graphStore.replaceNoteTags(props.noteId, tags);
+
+    // Make the request
+    await axios.post("/update", {
+      operation: "content",
+      name: title,
+      content: noteContent, // Already serialized by toJSON()
+      tags: tags, // Use the local constant
+      id: props.noteId,
+    });
+    console.error("Note saved  successfully:", props.noteId);
+    return true;
+  } catch (error) {
+    console.error("Error saving note:", error);
+    return false;
+  }
+}
+async function LoadFromBackend() {
+  console.error("Loading note:", props.noteId);
+  try {
+    // isLoading.value = true;
+
+    const response = await axios.post("/load", {
+      id: props.noteId,
+      operation: "content",
+    });
+    console.error("Note loaded successfully:", response.data);
+    // Set the title in our ref
+    noteTitle.value = response.data.name || "Untitled Note";
+    // Set the viewport
+
+    // Extract tags if they exist in the response
+    if (response.data.tags) {
+      noteTags.value = response.data.tags;
     }
 
-    // Also check marks for mentions (sometimes they're nested in marks)
-    if (node.marks && Array.isArray(node.marks)) {
-      node.marks.forEach((mark) => {
-        if (mark.type === "mention" && mark.attrs && mark.attrs.id) {
-          uniqueTagIds.add(mark.attrs.id); // Push only the ID
+    if (response.data.viewport) {
+      viewport.value = JSON.parse(response.data.viewport);
+      canvas.setViewportTransform(viewport.value);
+    }
+
+    if (response.data.background) {
+      background.value = response.data.background;
+    }
+    drawGrid(
+      canvas.viewportTransform[4],
+      canvas.viewportTransform[5],
+      canvas.getZoom()
+    );
+
+    if (response.data.content) {
+      return new Promise((resolve) => {
+        try {
+          canvas.loadFromJSON(response.data.content, function () {
+            // Force multiple render calls to ensure everything appears
+            setTimeout(() => {
+              canvas.renderAll();
+
+              // Force a second render after a brief delay
+              setTimeout(() => {
+                canvas.renderAll();
+
+                isLoading.value = false;
+                resolve(true);
+              }, 50);
+            }, 50);
+          });
+        } catch (err) {
+          console.error("Error loading canvas JSON:", err);
+          isLoading.value = false;
+          resolve(false);
         }
       });
     }
-  };
 
-  // Start traversal with the document
-  if (document && document.content) {
-    document.content.forEach((node) => traverse(node));
-  }
-
-  const tagIds = Array.from(uniqueTagIds);
-
-  console.log("Tag IDs extracted:", tagIds);
-  return tagIds; // Return array of IDs directly
-}
-
-function SaveToBackend() {
-  let noteContent = editor.getJSON();
-  let noteName = "Untitled Note";
-  const tags = extractTagsFromDocument(noteContent);
-  if (noteContent && noteContent.content && noteContent.content.length > 0) {
-    const titleNode = noteContent.content[0];
-
-    // Extract text content from title node without mentions
-    if (titleNode.content) {
-      noteName = titleNode.content
-        .filter((item) => item.type !== "mention")
-        .map((item) => item.text || "")
-        .join("")
-        .trim();
-
-      // Use default if title is empty after removing mentions
-      if (!noteName) {
-        noteName = "Untitled Note";
-      }
-    }
-  }
-  console.error("Note name:", noteName);
-  axios
-    .post("/update", {
-      operation: "content",
-      name: noteName,
-      content: noteContent,
-      tags: tags, // Send the extracted tags
-      id: props.noteId,
-    })
-    .catch((error) => {
-      console.error("Error fetching data:", error);
+    isLoading.value = false;
+    return true; // Successfully loaded
+  } catch (error) {
+    // Display error toast
+    toast({
+      title: "Note not found",
+      description: "The requested note could not be loaded.",
+      variant: "destructive",
     });
+
+    // Close the note view
+    emit("note-closed");
+
+    console.error("Error loading note:", error);
+    isLoading.value = false;
+    return false; // Failed to load
+  }
+}
+async function closeNote() {
+  if (isLoading.value) {
+    return;
+  }
+
+  try {
+    // Try to save before closing
+    const saveResult = await SaveToBackend();
+
+    if (saveResult) {
+      // Only close if save was successful
+      console.error("Note saved successfully before closing");
+      isLoading.value = false;
+      emit("note-closed");
+    } else {
+      // If save failed, show error and don't close
+      toast({
+        title: "Save error",
+        description: "Unable to save your note. Please try again.",
+        variant: "destructive",
+      });
+      isLoading.value = false;
+    }
+  } catch (error) {
+    console.error("Error saving note before close:", error);
+    toast({
+      title: "Save error",
+      description: "Failed to save your note. Please try again.",
+      variant: "destructive",
+    });
+  }
+}
+function initaliseCanvas() {
+  modalContent = document.getElementById("canvas-container");
+  fabricCanvasEl = document.getElementById("fabricCanvas");
+  gridCanvas = document.getElementById("grid-canvas");
+  gridContext = gridCanvas.getContext("2d");
+
+  canvas = new fabric.Canvas(fabricCanvasEl, {
+    width: modalContent.offsetWidth,
+    height: modalContent.offsetHeight,
+    backgroundColor: "transparent", // Ensure background is transparent
+  });
+  console.error("Canvas initialized:", canvas);
+  //might need changing in future but prevents blurry edges for now
+  // Disable object caching for better performance
+  fabric.Object.prototype.objectCaching = false;
+
+  // IMPORTANT: Create a drawing brush first
+  canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+  canvas.freeDrawingBrush.width = penWidth.value;
+  canvas.freeDrawingBrush.color = penColour.value;
+
+  // Set drawing mode based on your current mode
+  canvas.isDrawingMode = mode.value === "draw";
+
+  width = modalContent.offsetWidth;
+  height = modalContent.offsetHeight;
+
+  canvas.setWidth(width);
+  canvas.setHeight(height);
+
+  gridCanvas.width = width;
+  gridCanvas.height = height;
+
+  //drawgrid function here???
+  gridSize = 20;
+  vertical = true;
+  horizontal = true;
+
+  isPanning = false;
+  lastPosX = 0;
+  lastPosY = 0;
+// Sync grid with canvas after every render
+function syncGridWithCanvas() {
+  const vpt = canvas.viewportTransform;
+  drawGrid(vpt[4], vpt[5], canvas.getZoom());
 }
 
-function LoadFromBackend() {
-  axios
-    .post("/load", {
-      id: props.noteId,
-      operation: "content",
-    })
-    .then((response) => {
-      // Clone the content to avoid direct mutation
-      const content = JSON.parse(JSON.stringify(response.data.content));
+// Attach the sync function to the after:render event
+canvas.on("after:render", syncGridWithCanvas);
 
-      // Set content first
-      editor.commands.setContent(content);
-      
-      // Wait for content to be properly set
-      setTimeout(() => {
-        try {
-          if (response.data.name) {
-            // Make sure we can find the title node
-            const titleNode = editor.state.doc.content.firstChild;
-            
-            if (titleNode && titleNode.type.name === "title") {
-              // Now safely select and modify the title
-              editor
-                .chain()
-                .focus()
-                .setNodeSelection(1)
-                .deleteSelection()
-                .insertContent({
-                  type: "title",
-                  content: [
-                    { type: "text", text: response.data.name },
-                    { type: "text", text: " " }
-                  ],
-                })
-                .run();
-            }
+  canvas.on("mouse:down", function (opt) {
+    const evt = opt.e;
+    if (evt.button === 1) {
+      // Middle mouse button pressed
+      isPanning = true;
+      // canvas.isDrawingMode = false; // Temporarily disable drawing
+      lastPosX = evt.clientX;
+      lastPosY = evt.clientY;
+    }
+  });
+  canvas.on("mouse:move", function (opt) {
+    if (isPanning) {
+      const evt = opt.e;
+      const deltaX = evt.clientX - lastPosX;
+      const deltaY = evt.clientY - lastPosY;
+      const vpt = canvas.viewportTransform;
+      vpt[4] += deltaX; // Update x-axis pan
+      vpt[5] += deltaY; // Update y-axis pan
+      drawGrid(vpt[4], vpt[5], canvas.getZoom());
+      lastPosX = evt.clientX;
+      lastPosY = evt.clientY;
+    }
+  });
+  canvas.on("mouse:up", function () {
+    isPanning = false;
+  });
+  canvas.on("mouse:wheel", function (opt) {
+    const evt = opt.e;
+
+    // Check for Ctrl key or pinch-to-zoom gesture
+    if (evt.ctrlKey) {
+      // Zoom behavior
+      let zoom = canvas.getZoom();
+      zoom *= 0.99 ** evt.deltaY; // Adjust zoom level
+      zoom = Math.min(Math.max(zoom, 0.1), 50); // Limit zoom levels
+      canvas.zoomToPoint({ x: evt.offsetX, y: evt.offsetY }, zoom);
+      drawGrid(canvas.viewportTransform[4], canvas.viewportTransform[5], zoom); // Redraw grid on zoom
+    } else {
+      // Panning behavior
+      const deltaX = evt.deltaX;
+      const deltaY = evt.deltaY;
+      const vpt = canvas.viewportTransform;
+
+      vpt[4] -= deltaX; // Horizontal panning
+      vpt[5] -= deltaY; // Vertical panning
+      drawGrid(vpt[4], vpt[5], canvas.getZoom()); // Redraw grid during panning
+      canvas.requestRenderAll();
+    }
+
+    evt.preventDefault(); // Prevent default scrolling behavior
+  });
+  window.addEventListener(
+    "touchstart",
+    function (e) {
+      const touches = e.touches;
+      if (touches.length === 2) {
+        console.log("ultimate two fingers detected");
+        console.log(touches);
+        canvas.discardActiveObject().renderAll();
+        // const activ=eObject = canvas.getActiveObject();
+
+        e.preventDefault();
+        canvas.isDrawingMode = false;
+        canvas.selection = false;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = true;
+          o.lockMovementY = true;
+          o.selectable = false;
+        });
+      } else if (touches.length === 1) {
+        console.log("only one finger detected");
+
+        canvas.selection = true;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = false;
+          o.lockMovementY = false;
+          o.selectable = true;
+        });
+        if (mode.value === "draw") {
+          canvas.isDrawingMode = true;
+        }
+      }
+
+      if (touches.length > 0) {
+        const touch = touches[0];
+
+        if ("force" in touch) {
+          console.log("Touch pressure (force):", touch.force);
+        }
+        if (touch.force > 0) {
+          console.log("Apple Pencil detected");
+          if (mode.value === "draw") {
+            canvas.isDrawingMode = true;
           }
-          
-          editor.commands.focus("end");
-        } catch (e) {
-          console.error("Error updating title:", e);
+        } else {
+          console.log("Finger detected");
+          canvas.isDrawingMode = false;
         }
-      }, 10); // Small delay to ensure content is set
-    });
-}
-
-onMounted(() => {
-  LoadFromBackend();
-  editor.chain().focus().run();
-});
-
-onBeforeUnmount(() => {
-  console.error("Saving to backend...");
-  SaveToBackend();
-  if (editor) {
-    editor.destroy();
-  }
-});
-
-const CustomDocument = Document.extend({
-  content: "title block+ ",
-});
-
-const Title = Heading.extend({
-  name: "title",
-  marks: "",
-  group: "title",
-  content: "inline*",
-  defining: true,
-  selectable: false,
-
-  parseHTML() {
-    return [{ tag: "div.note-title-container h1" }, { tag: "h1:first-child" }];
-  },
-
-  renderHTML({ HTMLAttributes }) {
-    return [
-      "div",
-      { class: "note-title-container" },
-      ["h1", HTMLAttributes, 0],
-    ];
-  },
-}).configure({ levels: [1] });
-
-
-
-let editor = new Editor({
-  extensions: [
-    Document,
-    Details.configure({
-      persist: true,
-      HTMLAttributes: {
-        class: "details",
-      },
-    }),
-    DetailsSummary,
-    DetailsContent,
-    Paragraph,
-    Heading,
-    Underline,
-    Text,
-    Title,
-    TaskList,
-    TaskItem.configure({
-      nested: true,
-    }),
-    Youtube.configure({
-      controls: true,
-      nocookie: true,
-      modestBranding: true,
-    }),
-    Code,
-    CodeBlockLowlight.configure({
-      lowlight,
-    }),
-    OrderedList,
-    BulletList,
-    ListItem,
-    Typography,
-    ColorHighlighter,
-    SmilieReplacer,
-    CustomDocument,
-    StarterKit.configure({
-      document: false,
-    }),
-    TextAlign.configure({
-      types: ["heading", "paragraph"],
-    }),
-    Highlight.configure({ multicolor: true }),
-    Mention.configure({
-      HTMLAttributes: {
-        class: "mention",
-      },
-      // suggestion,
-    }),
-    Extension.create({
-      name: "customSelectAll",
-
-      addKeyboardShortcuts() {
-        return {
-          "Mod-a": ({ editor }) => {
-            const { state } = editor;
-            const { doc } = state;
-
-            // Skip the title node (first node) and find the position right after it
-            if (doc.firstChild && doc.childCount > 1) {
-              // Get the position after the first node (title)
-              const startPos = doc.firstChild.nodeSize;
-
-              // Set selection from start of content to end of document
-              editor.commands.setTextSelection({
-                from: startPos,
-                to: doc.content.size,
-              });
-
-              return true;
-            }
-
-            return false;
-          },
-        };
-      },
-    }),
-    Commands.configure({
-      suggestion: {
-        items: ({ query }) => {
-          return commands.filter((command) => {
-            return command.title.toLowerCase().includes(query.toLowerCase());
-          });
-        },
-        render: () => {
-          // Your existing render function with VueRenderer and tippy
-          // ...
-          let component;
-          let popup;
-
-          return {
-            onStart: (props) => {
-              component = new VueRenderer(CommandsList, {
-                // using vue 2:
-                // parent: this,
-                // propsData: props,
-                // using vue 3:
-                props,
-                editor: props.editor,
-              });
-
-              if (!props.clientRect) {
-                return;
-              }
-
-              popup = tippy("body", {
-                getReferenceClientRect: props.clientRect,
-                appendTo: () => document.body,
-                content: component.element,
-                showOnCreate: true,
-                interactive: true,
-                trigger: "manual",
-                placement: "bottom-start",
-              });
-            },
-
-            onUpdate(props) {
-              component.updateProps(props);
-
-              if (!props.clientRect) {
-                return;
-              }
-
-              popup[0].setProps({
-                getReferenceClientRect: props.clientRect,
-              });
-            },
-
-            onKeyDown(props) {
-              if (props.event.key === "Escape") {
-                popup[0].hide();
-
-                return true;
-              }
-
-              return component.ref?.onKeyDown(props);
-            },
-
-            onExit() {
-              popup[0].destroy();
-              component.destroy();
-            },
-          };
-        },
-      },
-    }),
-    Tags.configure({
-      suggestion: {
-        items: ({ query }) => {
-          return getTags(query);
-        },
-        render: () => {
-          let component;
-          let popup;
-
-          return {
-            onStart: (props) => {
-              component = new VueRenderer(TagsList, {
-                props,
-                editor: props.editor,
-              });
-
-              if (!props.clientRect) {
-                return;
-              }
-
-              popup = tippy("body", {
-                getReferenceClientRect: props.clientRect,
-                appendTo: () => document.body,
-                content: component.element,
-                showOnCreate: true,
-                interactive: true,
-                trigger: "manual",
-                placement: "bottom-start",
-              });
-            },
-
-            onUpdate(props) {
-              component.updateProps(props);
-
-              if (!props.clientRect) {
-                return;
-              }
-
-              popup[0].setProps({
-                getReferenceClientRect: props.clientRect,
-              });
-            },
-
-            onKeyDown(props) {
-              if (props.event.key === "Escape") {
-                popup[0].hide();
-                return true;
-              }
-
-              return component.ref?.onKeyDown(props);
-            },
-
-            onExit() {
-              popup[0].destroy();
-              component.destroy();
-            },
-          };
-        },
-      },
-    }),
-    Image,
-    Gapcursor,
-    Placeholder.configure({
-      // emptyEditorClass: 'h1',
-      showOnlyCurrent: false,
-      placeholder: ({ node }) => {
-        if (node.type.name === "title") {
-          return "Untitled Note:";
-        }
-
-        // return "Lets get writing...";
-      },
-    }),
-  ],
-  editorProps: {
-    attributes: {
-      class: "",
+      }
     },
-  },
-  content: `
-     <div class="note-title-container">
-    <h1>Untitled Note</h1>
-  </div>
-  <div class="tags-container"></div>
-  <p></p>
-  `,
+    true
+  );
+  const hammer = new Hammer(canvas.wrapperEl);
+  hammer.get("pan").set({ direction: Hammer.DIRECTION_ALL, pointers: 2 });
+  hammer.get("pinch").set({ enable: true });
+  hammer.get("press").set({ time: 0 });
+  hammer.get("pinch").recognizeWith(hammer.get("pan"));
+
+  let lastScale = 1;
+
+  hammer.on("pinchstart", function (e) {
+    canvas._zoomStartScale = canvas.getZoom(); // Record the initial zoom level
+    lastScale = 1; // Reset the last scale for the new gesture
+  });
+
+  hammer.on("pinchmove", function (e) {
+    const scaleChange = e.scale / lastScale; // Calculate incremental scale change
+    lastScale = e.scale; // Update last scale for the next move event
+
+    const newZoom = canvas.getZoom() * scaleChange; // Apply incremental zoom
+    const boundedZoom = Math.min(Math.max(newZoom, 0.1), 50); // Clamp zoom level
+
+    const center = { x: e.center.x, y: e.center.y }; // Zoom relative to touch center
+    canvas.zoomToPoint(center, boundedZoom); // Apply zoom at the given point
+
+    // Redraw grid and canvas
+    drawGrid(
+      canvas.viewportTransform[4],
+      canvas.viewportTransform[5],
+      boundedZoom
+    );
+    canvas.requestRenderAll();
+  });
+
+  hammer.on("pinchend", function () {
+    lastScale = 1; // Reset scale tracking after the pinch gesture ends
+  });
+  let lastDeltaX = 0;
+  let lastDeltaY = 0;
+
+  hammer.on("panmove", function (e) {
+    console.log("Pan move detected:", e); // Debugging log
+
+    const vpt = canvas.viewportTransform;
+
+    // Calculate the incremental delta values
+    const deltaX = e.deltaX - lastDeltaX;
+    const deltaY = e.deltaY - lastDeltaY;
+
+    // Update last delta values
+    lastDeltaX = e.deltaX;
+    lastDeltaY = e.deltaY;
+
+    // Adjust the movement scale (optional for smoothing)
+    const movementScale = 1;
+
+    // Apply panning movement incrementally
+    vpt[4] += deltaX * movementScale;
+    vpt[5] += deltaY * movementScale;
+
+    // Re-render the canvas with the new viewport transform
+    canvas.requestRenderAll();
+    drawGrid(vpt[4], vpt[5], canvas.getZoom()); // Redraw grid during panning
+  });
+
+  hammer.on("panend", function () {
+    // Reset last delta values when the pan gesture ends
+    lastDeltaX = 0;
+    lastDeltaY = 0;
+  });
+}
+
+onMounted(async () => {
+  // Wait for content to load before proceeding
+  initaliseCanvas();
+  const loaded = await LoadFromBackend();
+
+  // Only proceed with the rest if loading was successful
+  if (loaded) {
+    useUserStore().addToRecentNotes(props.noteId);
+
+    // Full save every minute
+    saveInterval.value = setInterval(async () => {
+      await SaveToBackend();
+    }, 60000);
+    // initaliseCanvas();
+    // console.error("Editor loaded successfully", isLoading.value);
+  }
 });
+
+function drawGrid(offsetX = 0, offsetY = 0, zoom = 1) {
+  if (background.value === "empty") {
+    vertical = false;
+    horizontal = false;
+  } else if (background.value === "sGrid") {
+    vertical = true;
+    horizontal = true;
+    gridSize = 20;
+  } else if (background.value === "mGrid") {
+    vertical = true;
+    horizontal = true;
+    gridSize = 40;
+  } else if (background.value === "lGrid") {
+    vertical = true;
+    horizontal = true;
+    gridSize = 60;
+  } else if (background.value === "line") {
+    vertical = false;
+    horizontal = true;
+    gridSize = 40;
+  }
+  gridContext.clearRect(0, 0, gridCanvas.width, gridCanvas.height); // Clear the grid canvas
+
+  gridContext.strokeStyle = "#ccc";
+  gridContext.lineWidth = 0.5;
+
+  const scaledGridSize = gridSize * zoom;
+
+  // Calculate starting points based on offset
+  const startX = ((offsetX % scaledGridSize) + scaledGridSize) % scaledGridSize;
+  const startY = ((offsetY % scaledGridSize) + scaledGridSize) % scaledGridSize;
+
+  // Draw vertical lines
+  if (vertical) {
+    for (let x = startX; x < gridCanvas.width; x += scaledGridSize) {
+      gridContext.beginPath();
+      gridContext.moveTo(x, 0);
+      gridContext.lineTo(x, gridCanvas.height);
+      gridContext.stroke();
+    }
+  }
+
+  // Draw horizontal lines
+  if (horizontal) {
+    for (let y = startY; y < gridCanvas.height; y += scaledGridSize) {
+      gridContext.beginPath();
+      gridContext.moveTo(0, y);
+      gridContext.lineTo(gridCanvas.width, y);
+      gridContext.stroke();
+    }
+  }
+}
+
+watch(mode, (newMode) => {
+  //   canvas.isDrawingMode = newMode === "draw";
+  if (newMode == "draw") {
+    canvas.isDrawingMode = true;
+  } else {
+    canvas.isDrawingMode = false;
+  }
+});
+
+watch(penColour, (newColor) => {
+  canvas.freeDrawingBrush.color = newColor;
+});
+watch(penWidth, (newWidth) => {
+  canvas.freeDrawingBrush.width = newWidth;
+});
+watch(background, (newBackground) => {
+  drawGrid(
+    canvas.viewportTransform[4],
+    canvas.viewportTransform[5],
+    canvas.getZoom()
+  );
+});
+
+// untested
+// watch(background, (newBackground) => {
+//   drawGrid(
+//     canvas.viewportTransform[4],
+//     canvas.viewportTransform[5],
+//     canvas.getZoom()
+//   );
+// });
+
+function addShape(shapeType) {
+  let shape;
+  if (shapeType === "rectangle") {
+    shape = new fabric.Rect({
+      left: 100,
+      top: 100,
+      width: 100,
+      height: 60,
+      fill: "blue",
+    });
+  } else if (shapeType === "circle") {
+    shape = new fabric.Circle({
+      left: 100,
+      top: 100,
+      radius: 50,
+      fill: "green",
+    });
+  } else if (shapeType === "triangle") {
+    shape = new fabric.Triangle({
+      left: 100,
+      top: 100,
+      width: 100,
+      height: 100,
+      fill: "yellow",
+    });
+  }
+  if (shape) {
+    canvas.add(shape);
+  }
+}
+
+function addText() {
+  const textbox = new fabric.Textbox("Type here...", {
+    left: 20,
+    top: 20,
+    width: 300,
+    fontSize: 30,
+    fill: "gray", // Set placeholder text color
+    editable: true,
+    borderColor: "#ccc",
+    cornerColor: "#ccc",
+    hasBorders: true,
+    hasControls: true,
+  });
+
+  // Event listener for when the text box is clicked and edited
+  textbox.on("editing:entered", function () {
+    // Only clear the text if it is still the placeholder text
+    if (textbox.text.trim() === "Type here...") {
+      textbox.set({ text: "" }); // Clear the placeholder text
+      textbox.set({ fill: "black" }); // Set text color to black
+      canvas.renderAll(); // Re-render the canvas to reflect the changes
+    }
+  });
+
+  canvas.add(textbox);
+}
+function deleteSelected() {
+  const activeObjects = canvas.getActiveObjects();
+  activeObjects.forEach((obj) => canvas.remove(obj));
+  canvas.discardActiveObject().renderAll();
+}
 </script>
-
-<template>
-  <div class="flex w-full h-full flex-col">
-    <!-- Floating Toolbar -->
-    <div class="h-24 w-full mb-0 relative">
-      <div class="absolute top-6 w-full z-50 px-4 flex justify-center">
-        <div
-          class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
-        >
-          <div class="flex items-center gap-1">
-            <!-- above flex wrap -->
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    @click="emit('note-closed')"
-                    class="mr-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-800/30"
-                  >
-                    <XIcon class="h-4 w-4 text-red-500 dark:text-red-400" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Close Note</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <Separator orientation="vertical" class="h-6 mx-1" />
-            <!-- Basic Text Formatting -->
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    @click="editor.chain().focus().toggleBold().run()"
-                    :class="{ 'bg-primary/20': editor.isActive('bold') }"
-                  >
-                    <BoldIcon class="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Bold</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    @click="editor.chain().focus().toggleItalic().run()"
-                    :class="{ 'bg-primary/20': editor.isActive('italic') }"
-                  >
-                    <ItalicIcon class="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Italic</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    @click="editor.chain().focus().toggleUnderline().run()"
-                    :class="{ 'bg-primary/20': editor.isActive('underline') }"
-                  >
-                    <UnderlineIcon class="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Underline</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    @click="editor.chain().focus().toggleStrike().run()"
-                    :class="{ 'bg-primary/20': editor.isActive('strike') }"
-                  >
-                    <StrikethroughIcon class="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Strikethrough</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    @click="editor.chain().focus().toggleCode().run()"
-                    :class="{ 'bg-primary/20': editor.isActive('code') }"
-                  >
-                    <CodeIcon class="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Emphasis</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <Separator orientation="vertical" class="h-6 mx-1" />
-
-            <!-- Heading Dropdown -->
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  class="flex gap-1 items-center"
-                >
-                  <TextIcon class="h-4 w-4" />
-                  <span>Headings</span>
-                  <ChevronDownIcon class="h-3 w-3 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem
-                  @click="editor.chain().focus().setParagraph().run()"
-                >
-                  <span :class="{ 'font-bold': editor.isActive('paragraph') }"
-                    >Paragraph</span
-                  >
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  @click="
-                    editor.chain().focus().toggleHeading({ level: 1 }).run()
-                  "
-                >
-                  <span
-                    :class="{
-                      'font-bold': editor.isActive('heading', { level: 1 }),
-                    }"
-                    >Heading 1</span
-                  >
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  @click="
-                    editor.chain().focus().toggleHeading({ level: 2 }).run()
-                  "
-                >
-                  <span
-                    :class="{
-                      'font-bold': editor.isActive('heading', { level: 2 }),
-                    }"
-                    >Heading 2</span
-                  >
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  @click="
-                    editor.chain().focus().toggleHeading({ level: 3 }).run()
-                  "
-                >
-                  <span
-                    :class="{
-                      'font-bold': editor.isActive('heading', { level: 3 }),
-                    }"
-                    >Heading 3</span
-                  >
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Separator orientation="vertical" class="h-6 mx-1" />
-
-            <!-- Alignment Options -->
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    @click="editor.chain().focus().setTextAlign('left').run()"
-                    :class="{
-                      'bg-primary/20': editor.isActive({ textAlign: 'left' }),
-                    }"
-                  >
-                    <AlignLeftIcon class="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Align left</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    @click="editor.chain().focus().setTextAlign('center').run()"
-                    :class="{
-                      'bg-primary/20': editor.isActive({ textAlign: 'center' }),
-                    }"
-                  >
-                    <AlignCenterIcon class="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Align center</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    @click="editor.chain().focus().setTextAlign('right').run()"
-                    :class="{
-                      'bg-primary/20': editor.isActive({ textAlign: 'right' }),
-                    }"
-                  >
-                    <AlignRightIcon class="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Align right</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    @click="
-                      editor.chain().focus().setTextAlign('justify').run()
-                    "
-                    :class="{
-                      'bg-primary/20': editor.isActive({
-                        textAlign: 'justify',
-                      }),
-                    }"
-                  >
-                    <AlignJustifyIcon class="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Justify</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            <Separator orientation="vertical" class="h-6 mx-1" />
-
-            <!-- Highlight Colors Dropdown -->
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  class="flex gap-1 items-center"
-                >
-                  <PaintbrushIcon class="h-4 w-4" />
-                  <span>Highlight</span>
-                  <ChevronDownIcon class="h-3 w-3 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <div class="flex flex-wrap gap-1 p-2 w-48">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="h-7 w-7 bg-yellow-200 hover:bg-yellow-300 border-yellow-400"
-                    @click="
-                      editor
-                        .chain()
-                        .focus()
-                        .toggleHighlight({ color: '#fef08a' })
-                        .run()
-                    "
-                    :class="{
-                      'ring-2 ring-offset-1': editor.isActive('highlight', {
-                        color: '#fef08a',
-                      }),
-                    }"
-                  />
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="h-7 w-7 bg-green-200 hover:bg-green-300 border-green-400"
-                    @click="
-                      editor
-                        .chain()
-                        .focus()
-                        .toggleHighlight({ color: '#bbf7d0' })
-                        .run()
-                    "
-                    :class="{
-                      'ring-2 ring-offset-1': editor.isActive('highlight', {
-                        color: '#bbf7d0',
-                      }),
-                    }"
-                  />
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="h-7 w-7 bg-blue-200 hover:bg-blue-300 border-blue-400"
-                    @click="
-                      editor
-                        .chain()
-                        .focus()
-                        .toggleHighlight({ color: '#bfdbfe' })
-                        .run()
-                    "
-                    :class="{
-                      'ring-2 ring-offset-1': editor.isActive('highlight', {
-                        color: '#bfdbfe',
-                      }),
-                    }"
-                  />
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="h-7 w-7 bg-pink-200 hover:bg-pink-300 border-pink-400"
-                    @click="
-                      editor
-                        .chain()
-                        .focus()
-                        .toggleHighlight({ color: '#fbcfe8' })
-                        .run()
-                    "
-                    :class="{
-                      'ring-2 ring-offset-1': editor.isActive('highlight', {
-                        color: '#fbcfe8',
-                      }),
-                    }"
-                  />
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="h-7 w-7 bg-purple-200 hover:bg-purple-300 border-purple-400"
-                    @click="
-                      editor
-                        .chain()
-                        .focus()
-                        .toggleHighlight({ color: '#e9d5ff' })
-                        .run()
-                    "
-                    :class="{
-                      'ring-2 ring-offset-1': editor.isActive('highlight', {
-                        color: '#e9d5ff',
-                      }),
-                    }"
-                  />
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="h-7 w-7 bg-orange-200 hover:bg-orange-300 border-orange-400"
-                    @click="
-                      editor
-                        .chain()
-                        .focus()
-                        .toggleHighlight({ color: '#fed7aa' })
-                        .run()
-                    "
-                    :class="{
-                      'ring-2 ring-offset-1': editor.isActive('highlight', {
-                        color: '#fed7aa',
-                      }),
-                    }"
-                  />
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="h-7 w-7 bg-red-200 hover:bg-red-300 border-red-400"
-                    @click="
-                      editor
-                        .chain()
-                        .focus()
-                        .toggleHighlight({ color: '#fecaca' })
-                        .run()
-                    "
-                    :class="{
-                      'ring-2 ring-offset-1': editor.isActive('highlight', {
-                        color: '#fecaca',
-                      }),
-                    }"
-                  />
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="h-7 w-7 bg-gray-200 hover:bg-gray-300 border-gray-400"
-                    @click="
-                      editor
-                        .chain()
-                        .focus()
-                        .toggleHighlight({ color: '#e5e7eb' })
-                        .run()
-                    "
-                    :class="{
-                      'ring-2 ring-offset-1': editor.isActive('highlight', {
-                        color: '#e5e7eb',
-                      }),
-                    }"
-                  />
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    class="h-7 w-7 flex items-center justify-center"
-                    @click="editor.chain().focus().unsetHighlight().run()"
-                  >
-                    <XIcon class="h-4 w-4" />
-                  </Button>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="flex justify-center flex-1">
-      <ScrollArea
-        class="editor w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-y-auto bg-primary-foreground rounded-lg border border-input m-4"
-        @click="focusEditor"
-      >
-        <editor-content class="p-4" :editor="editor" />
-      </ScrollArea>
-    </div>
-  </div>
-</template>
-
-<style lang="scss">
-math-inline {
-  font-family: "KaTeX_Main", serif;
-  min-width: 1em;
-  min-height: 1em;
-  font-size: 1em;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  @apply bg-purple-600;
-}
-
-math-inline.ProseMirror-selectednode {
-  outline: 2px solid #6a00f5;
-  background-color: rgba(106, 0, 245, 0.1);
-}
-
-math-display {
-  display: block;
-  font-family: "KaTeX_Main", serif;
-  font-size: 1.2em;
-  padding: 0.5rem 0;
-  cursor: pointer;
-}
-
-math-display.ProseMirror-selectednode {
-  outline: 2px solid #6a00f5;
-  background-color: rgba(106, 0, 245, 0.1);
-}
-
-/* Additional KaTeX-related styles */
-.katex-html {
-  display: none;
-}
-/* Basic editor styles */
-
-// .ProseMirror:focus {
-//     outline: none;
-//   }
-//   .ProseMirror {
-//   min-height: 100px;
-//   max-height: 100%;
-//   overflow: scroll;
-// }
-// *,
-// *::before,
-// *::after {
-//   box-sizing: border-box;
-// }
-::selection {
-  background: #6a00f5;
-  color: white;
-}
-
-.tiptap {
-  caret-color: #6a00f5;
-
-  &:focus {
-    outline: none;
-  }
-  &.ProseMirror-selectednode {
-    outline: 3px solid var(--purple);
-  }
-  // :first-child {
-  //   margin-top: 0;
-  // }
-  .editor h1:first-child {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #333;
-    border-bottom: 2px solid #ddd;
-    margin-bottom: 8px;
-    padding-bottom: 4px;
-  }
-
-  /* Color swatches */
-  .color {
-    white-space: nowrap;
-
-    &::before {
-      background-color: var(--color);
-      border: 1px solid rgba(128, 128, 128, 0.3);
-      border-radius: 2px;
-      content: " ";
-      display: inline-block;
-      height: 1em;
-      margin-bottom: 0.15em;
-      margin-right: 0.1em;
-      vertical-align: middle;
-      width: 1em;
-    }
-  }
-
-  // Note title container styling
-  .note-title-container {
-    position: relative;
-    margin: 0 0 1rem;
-    padding: 1rem 0;
-    border-bottom: 2px solid #6a00f5;
-
-    // Pseudo-elements for visual distinction
-    // &::before {
-    //   content: '';
-    //   position: absolute;
-    //   top: 0;
-    //   left: 0;
-    //   right: 0;
-    //   height: 1px;
-    //   @apply bg-purple-600;
-    // }
-    // .is-empty::before,
-    h1 {
-      margin: 0;
-      font-size: 1.8rem;
-      @apply text-purple-800 dark:text-purple-300;
-      // float: left;
-      // height: 0;
-    }
-
-    // Add a subtle background for visual emphasis
-    @apply bg-purple-100/30 dark:bg-purple-900/10 rounded-md px-4;
-  }
-  .mention {
-    border-radius: 0.4rem;
-    box-decoration-break: clone;
-    padding: 0.1rem 0.3rem 0.1rem 0.2rem; /* Adjust padding to account for the @ */
-    @apply bg-purple-800 text-purple-200;
-    position: relative;
-
-    &::first-letter {
-      /* Style for the @ symbol */
-      @apply text-purple-300; /* Lighter color for better contrast */
-      font-weight: 300; /* Lighter weight */
-      opacity: 0.2;
-      /* Optional: add a subtle spacing after @ */
-      margin-right: 10px;
-    }
-    // /* Add a subtle tag symbol */
-    // &::before {
-    //   content: "@";
-    //   opacity: 0.7;
-    //   margin-right: 2px;
-    //   position: relative;
-    //   display: inline;
-    // }
-  }
-
-  .note-title-container .mention {
-    font-size: 0.9rem; // Smaller font size
-    padding: 0.05rem 0.2rem; // Smaller padding
-    vertical-align: middle; // Better alignment with title text
-    @apply bg-purple-700 text-purple-100; // Slightly different color if desired
-  }
-
-  .note-title-container .mention::first-letter {
-    @apply text-purple-200;
-    opacity: 0.1;
-  }
-
-
-
-  /* Task list specific styles */
-  ul[data-type="taskList"] {
-    list-style: none;
-    margin-left: 0;
-    padding: 0;
-
-    li {
-      align-items: flex-start;
-      display: flex;
-
-      > label {
-        flex: 0 0 auto;
-        margin-right: 0.5rem;
-        user-select: none;
-      }
-
-      > div {
-        flex: 1 1 auto;
-      }
-    }
-
-    input[type="checkbox"] {
-      cursor: pointer;
-    }
-
-    ul[data-type="taskList"] {
-      margin: 0;
-    }
-  }
-
-  ul,
-  ol {
-    padding: 0 1rem;
-    margin: 1.25rem 1rem 1.25rem 0.4rem;
-
-    li p {
-      margin-top: 0.25em;
-      margin-bottom: 0.25em;
-    }
-  }
-
-  ul {
-    list-style-type: disc;
-  }
-
-  ol {
-    list-style-type: decimal;
-  }
-
-  /* Heading styles */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    line-height: 1.1;
-    margin-top: 2.5rem;
-    text-wrap: pretty;
-  }
-
-  h1,
-  h2 {
-    margin-top: 3.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  h1 {
-    font-size: 1.4rem;
-  }
-
-  h2 {
-    font-size: 1.2rem;
-  }
-
-  h3 {
-    font-size: 1.1rem;
-  }
-
-  h4,
-  h5,
-  h6 {
-    font-size: 1rem;
-  }
-
-  /* Details */
-  .details {
-    display: flex;
-    gap: 0.25rem;
-    margin: 1.5rem 0;
-    border: 1px solid;
-    @apply border border-gray-600;
-    border-radius: 0.5rem;
-    padding: 0.5rem;
-
-    summary {
-      font-weight: 700;
-    }
-
-    > button {
-      align-items: center;
-      background: transparent;
-      border-radius: 4px;
-      display: flex;
-      font-size: 0.625rem;
-      height: 1.25rem;
-      justify-content: center;
-      line-height: 1;
-      margin-top: 0.1rem;
-      padding: 0;
-      width: 1.25rem;
-
-      &:hover {
-        background-color: var(--gray-3);
-        @apply bg-slate-600 rounded;
-      }
-
-      &::before {
-        content: "\25B6";
-      }
-    }
-
-    &.is-open > button::before {
-      transform: rotate(90deg);
-    }
-
-    > div {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      width: 100%;
-
-      > [data-type="detailsContent"] > :last-child {
-        margin-bottom: 0.5rem;
-      }
-    }
-
-    .details {
-      margin: 0.5rem 0;
-    }
-  }
-  /* Code and preformatted text styles */
-  code {
-    background-color: #c8a2c8;
-    border-radius: 0.4rem;
-    // color: #C8A2C8;
-    font-size: 0.85rem;
-    padding: 0.25em 0.3em;
-  }
-  pre {
-    @apply bg-gray-800 text-gray-200 dark:bg-slate-800 dark:text-gray-200;
-    border-radius: 0.5rem;
-    font-family: "JetBrainsMono", monospace;
-    margin: 1.5rem 0;
-    padding: 0.75rem 1rem;
-
-    code {
-      background: none;
-      color: inherit;
-      font-size: 0.8rem;
-      padding: 0;
-    }
-
-    /* Code styling */
-    .hljs-comment,
-    .hljs-quote {
-      @apply text-gray-400;
-    }
-
-    .hljs-variable,
-    .hljs-template-variable,
-    .hljs-attribute,
-    .hljs-tag,
-    .hljs-name,
-    .hljs-regexp,
-    .hljs-link,
-    .hljs-name,
-    .hljs-selector-id,
-    .hljs-selector-class {
-      @apply text-rose-400;
-    }
-
-    .hljs-number,
-    .hljs-meta,
-    .hljs-built_in,
-    .hljs-builtin-name,
-    .hljs-literal,
-    .hljs-type,
-    .hljs-params {
-      @apply text-orange-300;
-    }
-
-    .hljs-string,
-    .hljs-symbol,
-    .hljs-bullet {
-      @apply text-lime-200;
-    }
-
-    .hljs-title,
-    .hljs-section {
-      @apply text-yellow-200;
-    }
-
-    .hljs-keyword,
-    .hljs-selector-tag {
-      @apply text-sky-300;
-    }
-
-    .hljs-emphasis {
-      font-style: italic;
-    }
-
-    .hljs-strong {
-      font-weight: 700;
-    }
-  }
-
-  mark {
-    background-color: #faf594;
-    border-radius: 0.4rem;
-    box-decoration-break: clone;
-    padding: 0.1rem 0.3rem;
-  }
-
-  blockquote {
-    border-left: 3px solid;
-    @apply border-l-4 border-l-gray-600;
-    margin: 1.5rem 0;
-    padding-left: 1rem;
-  }
-
-  // hr {
-  //   border: none;
-  //   border-top: 1px solid var(--gray-2);
-  //   margin: 2rem 0;
-  // }
-  hr {
-    border: none;
-    border-top: solid;
-    @apply border-t border-t-gray-600;
-    cursor: pointer;
-    margin: 2rem 0;
-
-    &.ProseMirror-selectednode {
-      border-top: solid;
-      @apply border-t  border-t-purple-600;
-    }
-  }
-
-  img {
-    display: block;
-    height: auto;
-    margin: 2.5rem 0;
-    max-width: 40%;
-    border-radius: 0.25rem;
-
-    &.ProseMirror-selectednode {
-      outline: 3px solid #6a00f5;
-      border-radius: 0.25rem;
-      display: inline-block; /* Prevent selection from extending - might break later so watch */
-    }
-  }
-
-  .is-empty::before {
-    // color: var(--gray-4);
-    content: attr(data-placeholder);
-    float: left;
-    height: 0;
-    pointer-events: none;
-
-    margin: 0;
-    font-size: 1.8rem;
-    @apply text-purple-800 dark:text-purple-300;
-  }
-}
-</style>

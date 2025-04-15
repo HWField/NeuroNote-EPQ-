@@ -1326,13 +1326,20 @@ async function RenameNode(Node) {
 
 async function CreateNote(format) {
   let noteName = "";
+  let noteFormat;
+  let response;
   if (!format) {
     console.error("No format provided for CreateNote");
-    noteName = (await openDialogue("newNote")).name;
+    response = (await openDialogue("newNote"));
   } else {
     console.error(" format provided for CreateNote");
-    noteName = (await openDialogue("newNote", { type: format })).name;
+    response = (await openDialogue("newNote", { type: format })).name;
   }
+  noteName = response.name;
+  noteFormat = response.type;
+  console.errror
+  console.error("noteName is", noteName);
+  console.error("noteFormat is", noteFormat);
   if (!noteName || noteName.trim() === "") return;
 
   // Get all currently selected tags before creating the note
@@ -1342,7 +1349,7 @@ async function CreateNote(format) {
     .post("/create", {
       type: "note",
       name: noteName,
-      format: format,
+      format: noteFormat,
     })
     .then((response) => {
       AddNodes(response.data); // Call the updateGraph function with the new data
@@ -2126,7 +2133,6 @@ onBeforeUnmount(() => {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <!-- <SelectLabel>Fruits</SelectLabel> -->
                   <SelectItem value="document"> Document </SelectItem>
                   <SelectItem value="whiteboard"> Whiteboard </SelectItem>
                 </SelectGroup>
