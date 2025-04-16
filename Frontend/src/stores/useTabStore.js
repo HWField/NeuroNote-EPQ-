@@ -14,6 +14,7 @@ import NoteTab from "@/components/NoteTab.vue";
 import axios from "../axios"; // Import the Axios instance
 import GraphTab from "@/components/GraphTab.vue"; // Import the GraphTab component
 import { useUserStore } from "@/stores/useUserStore";
+import chemicalstructure from "@/components/Document Editor/ChemicalStructure.vue"; // Import the ChemicalStructure component
 
 export const useTabStore = defineStore("tabStore", () => {
   const activeTab = ref(1); // Set first tab as active by default

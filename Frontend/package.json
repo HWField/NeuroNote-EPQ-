@@ -54,6 +54,7 @@
     "hammerjs": "^2.0.8",
     "highlight.js": "^11.11.1",
     "katex": "^0.16.22",
+    "kekule": "^1.0.2",
     "lodash": "^4.17.21",
     "lowlight": "^3.3.0",
     "lucide-vue-next": "^0.469.0",

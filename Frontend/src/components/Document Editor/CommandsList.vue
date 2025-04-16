@@ -1,6 +1,6 @@
 <template>
   <div class="commands-dropdown">
-    <ScrollArea 
+    <ScrollArea
       :style="{ height: commandsHeight }"
       class="commands-scroll-area"
     >
@@ -27,9 +27,9 @@
 </template>
 
 <script>
-import { eventBus } from '@/components/Document Editor/EventBus.js'; // Import the event
+import { eventBus } from "@/components/Document Editor/EventBus.js"; // Import the event
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { computed } from 'vue';
+import { computed } from "vue";
 import {
   Heading1,
   Heading2,
@@ -52,7 +52,7 @@ import {
   FoldVertical,
   Link,
   TestTube2,
-  Diff
+  Diff,
 } from "lucide-vue-next";
 
 export const commands = [
@@ -79,13 +79,17 @@ export const commands = [
         .deleteRange(range)
         .insertContent("$  $") // Insert the math formula template
         .run();
-        
+
       // Calculate position for cursor (3 chars back from current position)
       const { from } = editor.state.selection;
-      editor.chain().focus().setTextSelection(from - 2).run();
+      editor
+        .chain()
+        .focus()
+        .setTextSelection(from - 2)
+        .run();
     },
   },
-  
+
   {
     title: "Chemistry Formula",
     icon: TestTube2, // Import this icon if available
@@ -96,10 +100,32 @@ export const commands = [
         .deleteRange(range)
         .insertContent("$\\ce{  }$") // Insert the chemistry formula template
         .run();
-        
+
       // Calculate position for cursor (6 chars back from current position)
       const { from } = editor.state.selection;
-      editor.chain().focus().setTextSelection(from - 3).run();
+      editor
+        .chain()
+        .focus()
+        .setTextSelection(from - 3)
+        .run();
+    },
+  },
+  {
+    title: "Molecule Viewer",
+    icon: TestTube2, // Use any icon you want here
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .insertContent({
+          type: "chemistry",
+          // attrs: {
+          //   mol: "", // Start with an empty molfile
+          //   viewMode: "editor", // Default to editor mode
+          // },
+        })
+        .run();
     },
   },
 
@@ -179,7 +205,7 @@ export const commands = [
     command: ({ editor, range }) => {
       editor.chain().focus().deleteRange(range).run();
       // Emit an event instead of calling the function directly
-      eventBus.emit('open-image-modal');
+      eventBus.emit("open-image-modal");
     },
   },
   {
@@ -204,16 +230,17 @@ export const commands = [
     },
   },
   {
-    title: 'Link',
-    description: 'Add a hyperlink',
+    title: "Link",
+    description: "Add a hyperlink",
     icon: Link, // Use appropriate icon
     command: ({ editor, range }) => {
-      editor.chain()
+      editor
+        .chain()
         .focus()
         .deleteRange(range)
-        .setHyperlink({ href: '' })
+        .setHyperlink({ href: "" })
         .run();
-    }
+    },
   },
   {
     title: "Collapsible",
@@ -273,20 +300,20 @@ export default {
     commandsHeight() {
       // Base height for empty results or single item
       if (this.items.length === 0) {
-        return '50px';
+        return "50px";
       }
-      
+
       // Calculate height based on number of items
       const itemCount = this.items.length;
-      
+
       if (itemCount <= 5) {
         // For 1-5 items, use content height (approximately 40px per item)
         return `${itemCount * 40}px`;
       } else {
         // For more items, cap at a reasonable maximum height
-        return '250px';
+        return "250px";
       }
-    }
+    },
   },
   watch: {
     items() {
@@ -359,7 +386,7 @@ export default {
   @apply bg-white dark:bg-slate-800 
          border border-slate-200 dark:border-slate-700
          rounded-xl shadow-lg p-1;
-         
+
   /* Animation */
   animation: fadeIn 0.2s ease-out;
 }
@@ -380,7 +407,8 @@ export default {
   @apply text-slate-500 dark:text-slate-400 flex-shrink-0;
 }
 
-.command-item:hover, .command-item.is-selected {
+.command-item:hover,
+.command-item.is-selected {
   @apply bg-slate-100 dark:bg-slate-700;
 }
 

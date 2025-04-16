@@ -1,4 +1,5 @@
 <script setup>
+import chemistry from './Chemistry/Extension.js'
 import Gapcursor from "@tiptap/extension-gapcursor";
 import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
@@ -37,7 +38,6 @@ import CommandsList, {
 
 import { Tags } from "@/components/Document Editor/Tags.js";
 import TagsList, { getTags } from "@/components/Document Editor/TagsList.vue";
-
 import { VueRenderer } from "@tiptap/vue-3";
 import tippy from "tippy.js";
 import Underline from "@tiptap/extension-underline";
@@ -153,6 +153,7 @@ const noteTags = ref([]);
 const { toast } = useToast();
 // Add to your imports at the top
 import { Camera } from "lucide-vue-next"; // You already have UploadIcon
+
 
 // Add these refs
 const cameraInputRef = ref(null);
@@ -488,6 +489,7 @@ let editor = new Editor({
   }, 1000),
   extensions: [
     Document,
+    chemistry,
     Mathematics.configure({
       // Add proper configuration
       render: true,
