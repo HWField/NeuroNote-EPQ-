@@ -1333,7 +1333,7 @@ async function CreateNote(format) {
     response = (await openDialogue("newNote"));
   } else {
     console.error(" format provided for CreateNote");
-    response = (await openDialogue("newNote", { type: format })).name;
+    response = (await openDialogue("newNote", { type: format }));
   }
   noteName = response.name;
   noteFormat = response.type;

@@ -1,12 +1,13 @@
 <script setup>
-import chemistry from './Chemistry/Extension.js'
+import chemistry from "./Chemistry/Extension.js";
+import { WhiteboardExtension } from "./Whiteboard/extension.js";
 import Gapcursor from "@tiptap/extension-gapcursor";
 import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
 import Mention from "@tiptap/extension-mention";
-import 'katex/dist/katex.min.css' //import base katex css
-import 'katex/contrib/mhchem'; // Import the further katex chemistry extension
-import Mathematics from '@tiptap-pro/extension-mathematics'
+import "katex/dist/katex.min.css"; //import base katex css
+import "katex/contrib/mhchem"; // Import the further katex chemistry extension
+import Mathematics from "@tiptap-pro/extension-mathematics";
 import { Hyperlink } from "@docs.plus/extension-hyperlink";
 import { HyperMultimediaKit } from "@docs.plus/extension-hypermultimedia";
 import previewHyperlinkModal from "@/components/Document Editor/modals/previewHyperlink.ts";
@@ -92,6 +93,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
+
 import {
   Bold as BoldIcon,
   Italic as ItalicIcon,
@@ -114,7 +116,7 @@ import { useTabStore } from "@/stores/useTabStore";
 import { useUserStore } from "@/stores/useUserStore";
 import axios, { getBaseUrl } from "../../axios.js";
 import { useToast } from "@/components/ui/toast/use-toast";
-import { ref, onBeforeUnmount, watch } from "vue";
+import { ref, onBeforeUnmount, watch, computed } from "vue";
 import { onMounted } from "vue";
 import { set } from "@vueuse/core";
 const emit = defineEmits(["note-closed"]);
@@ -153,7 +155,6 @@ const noteTags = ref([]);
 const { toast } = useToast();
 // Add to your imports at the top
 import { Camera } from "lucide-vue-next"; // You already have UploadIcon
-
 
 // Add these refs
 const cameraInputRef = ref(null);
@@ -268,6 +269,82 @@ const ImageUpload = Extension.create({
   },
 });
 
+// whiteboard functions
+
+const showWhiteboardModal = ref(false);
+const newWhiteboardName = ref(""); //stores new name
+const selectedWhiteboard = ref(null); //will store id of the selecte whitebaord (new or preexisting)
+const whiteboardSearch = ref("");
+const filteredWhiteboards = computed(() => {
+  const search = whiteboardSearch.value.toLowerCase().trim();
+  const whiteboards = useGraphStore().elements
+    .filter(element => element.type === "note" && element.format === "whiteboard")
+    .map(whiteboard => ({
+      id: whiteboard.id,
+      name: whiteboard.name || "Untitled Whiteboard"
+    }));
+    
+  if (!search) return whiteboards;
+  
+  return whiteboards.filter(whiteboard => 
+    whiteboard.name.toLowerCase().includes(search)
+  );
+});
+
+
+const openWhiteboardModal = () => {
+  newWhiteboardName.value = "";
+  showWhiteboardModal.value = true;
+};
+const closeWhiteboardModal = () => {
+  showWhiteboardModal.value = false;
+
+};
+
+const createWhiteboard = async () => {
+  if (!newWhiteboardName.value.trim()) return;
+
+  try {
+    const response = await axios.post("/create", {
+      type: "note",
+      name: newWhiteboardName.value,
+      format: "whiteboard",
+    });
+
+    useGraphStore().addNode(response.data);
+    selectedWhiteboard.value = response.data.elements[0].id;
+    newWhiteboardName.value = "";
+    insertWhiteboard();
+
+    
+  } catch (error) {
+    console.error("Error creating whiteboard:", error);
+    toast({
+      title: "Error",
+      description: "Failed to create whiteboard. Please try again.",
+      variant: "destructive",
+    });
+  }
+};
+const insertWhiteboard = () => {
+  console.error("Inserting whiteboard with ID:", selectedWhiteboard.value);
+  if (selectedWhiteboard.value) {
+    editor.commands.insertContent({
+      type: 'whiteboard',
+      attrs: {
+        id: selectedWhiteboard.value,
+      }
+    });
+    closeWhiteboardModal();
+  } else {
+    toast({
+      title: "Error",
+      description: "Please select or create a whiteboard.",
+      variant: "destructive",
+    });
+  }
+};
+
 function extractTagsFromDocument(document) {
   const uniqueTagIds = new Set();
 
@@ -309,9 +386,8 @@ async function SaveToBackend() {
   if (isLoading.value) {
     console.error("Editor is still loading, skipping save.");
     return false;
-    
   }
- 
+
   let noteContent = editor.getJSON();
   const title = noteTitle.value || "Untitled Note";
   const tags = noteTags.value;
@@ -374,7 +450,7 @@ async function LoadFromBackend() {
     console.error("Error loading note:", error);
     isLoading.value = false;
     return false; // Failed to load
-  } 
+  }
 }
 
 // Update title from the header component
@@ -392,11 +468,11 @@ async function closeNote() {
   if (isLoading.value) {
     return;
   }
-  
+
   try {
     // Try to save before closing
     const saveResult = await SaveToBackend();
-    
+
     if (saveResult) {
       // Only close if save was successful
       console.error("Note saved successfully before closing");
@@ -410,7 +486,6 @@ async function closeNote() {
         variant: "destructive",
       });
       isLoading.value = false;
-    
     }
   } catch (error) {
     console.error("Error saving note before close:", error);
@@ -419,7 +494,6 @@ async function closeNote() {
       description: "Failed to save your note. Please try again.",
       variant: "destructive",
     });
-  
   }
 }
 const handleEscapeKey = (event) => {
@@ -439,6 +513,7 @@ onMounted(async () => {
 
     // Add event listener for tag updates
     eventBus.on("open-image-modal", openImageModal);
+    eventBus.on("open-whiteboard-modal", openWhiteboardModal);
 
     window.addEventListener("keydown", handleEscapeKey);
 
@@ -468,7 +543,7 @@ onBeforeUnmount(async () => {
       console.error("Failed to save note before unmount:", error);
     }
   }
-  
+
   // Clean up event listeners
   eventBus.off("open-image-modal", openImageModal);
   if (editor) {
@@ -490,6 +565,7 @@ let editor = new Editor({
   }, 1000),
   extensions: [
     Document,
+    WhiteboardExtension,
     chemistry,
     Mathematics.configure({
       // Add proper configuration
@@ -497,10 +573,10 @@ let editor = new Editor({
       katex: {
         displayMode: false,
         throwOnError: false,
-        output: 'html',
+        output: "html",
       },
       HTMLAttributes: {
-        class: 'math-node',
+        class: "math-node",
       },
     }),
     Details.configure({
@@ -768,7 +844,7 @@ let editor = new Editor({
                     <Button
                       variant="ghost"
                       size="icon"
-                      @click="closeNote();"
+                      @click="closeNote()"
                       class="mr-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-800/30"
                     >
                       <XIcon class="h-4 w-4 text-red-500 dark:text-red-400" />
@@ -861,7 +937,6 @@ let editor = new Editor({
               </TooltipProvider>
 
               <Separator orientation="vertical" class="h-6 mx-1" />
-         
 
               <!-- Heading Dropdown -->
               <DropdownMenu>
@@ -1208,7 +1283,6 @@ let editor = new Editor({
   </div>
 
   <!-- Image Modal -->
-  <!-- Image Modal -->
   <Dialog :open="showImageModal" @update:open="closeImageModal">
     <DialogContent class="sm:max-w-[425px]">
       <DialogHeader>
@@ -1267,6 +1341,87 @@ let editor = new Editor({
           <Button class="mt-2" @click="handleUrlSubmit"
             >Insert Image URL</Button
           >
+        </div>
+      </div>
+    </DialogContent>
+  </Dialog>
+  <!-- whiteboard modal -->
+  <Dialog :open="showWhiteboardModal" @update:open="closeWhiteboardModal">
+    <DialogContent class="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle>Insert Whiteboard</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <!-- New Whiteboard Section -->
+        <div class="flex flex-col gap-2">
+          <label class="font-medium">Create New Whiteboard</label>
+          <div class="flex gap-2">
+            <input
+              v-model="newWhiteboardName"
+              type="text"
+              placeholder="Enter whiteboard name"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              @keydown.enter="createWhiteboard"
+            />
+            <Button
+              @click="createWhiteboard"
+              :disabled="!newWhiteboardName.trim()"
+              class="shrink-0"
+            >
+              Create
+            </Button>
+          </div>
+        </div>
+
+        <!-- Existing Whiteboards Combobox -->
+        <div class="flex flex-col gap-2 mt-4">
+          <label class="font-medium">Or Select Existing</label>
+
+          <!-- Search input -->
+          <div class="mb-2">
+            <input
+              v-model="whiteboardSearch"
+              type="text"
+              placeholder="Search whiteboards..."
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </div>
+
+          <!-- Whiteboards list -->
+          <ScrollArea class="h-60 border rounded-md border-input">
+            <div class="p-1">
+              <div
+                v-for="whiteboard in filteredWhiteboards"
+                :key="whiteboard.id"
+                @click="selectedWhiteboard = whiteboard.id"
+                class="flex items-center p-2 rounded-md cursor-pointer transition-colors"
+                :class="
+                  selectedWhiteboard === whiteboard.id
+                    ? 'bg-primary/20'
+                    : 'hover:bg-muted'
+                "
+              >
+                <div class="mr-2 flex-shrink-0">
+                  <Presentation class="w-4 h-4" />
+                </div>
+                <div class="text-sm font-medium">{{ whiteboard.name }}</div>
+              </div>
+
+              <div
+                v-if="filteredWhiteboards.length === 0"
+                class="text-center p-4 text-muted-foreground"
+              >
+                No whiteboards found
+              </div>
+            </div>
+          </ScrollArea>
+          <Button 
+            class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white"
+            @click="insertWhiteboard"
+            :disabled="!selectedWhiteboard"
+          >
+            <PlusIcon class="h-4 w-4 mr-2" />Insert Whiteboard
+          </Button>
         </div>
       </div>
     </DialogContent>
@@ -1575,33 +1730,33 @@ math-display.ProseMirror-selectednode {
     }
   }
   .math-node {
-  min-width: 1em;
-  min-height: 1em;
-  font-family: KaTeX_Main, 'Times New Roman', serif;
-  cursor: pointer;
-  display: inline-block;
-}
+    min-width: 1em;
+    min-height: 1em;
+    font-family: KaTeX_Main, "Times New Roman", serif;
+    cursor: pointer;
+    display: inline-block;
+  }
 
-/* Override any display:none that might be hiding the rendered output */
-.katex, 
-.katex-html, 
-.katex-mathml {
-  display: block !important;
-}
+  /* Override any display:none that might be hiding the rendered output */
+  .katex,
+  .katex-html,
+  .katex-mathml {
+    display: block !important;
+  }
 
-.Tiptap-mathematics-editor {
-  background: #202020;
-  color: #fff;
-  font-family: monospace;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.25rem;
-}
+  .Tiptap-mathematics-editor {
+    background: #202020;
+    color: #fff;
+    font-family: monospace;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.25rem;
+  }
 
-.Tiptap-mathematics-render {
-  display: inline-block !important;
-  cursor: pointer;
-  border-radius: 0.25rem;
-}
+  .Tiptap-mathematics-render {
+    display: inline-block !important;
+    cursor: pointer;
+    border-radius: 0.25rem;
+  }
 
   // Note title container styling
   .note-title-container {

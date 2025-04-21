@@ -53,6 +53,7 @@ import {
   Link,
   TestTube2,
   Diff,
+  Presentation
 } from "lucide-vue-next";
 
 export const commands = [
@@ -206,6 +207,15 @@ export const commands = [
       editor.chain().focus().deleteRange(range).run();
       // Emit an event instead of calling the function directly
       eventBus.emit("open-image-modal");
+    },
+  },
+  {
+    title: "Whiteboard",
+    icon: Presentation,
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).run();
+      // Emit an event instead of calling the function directly
+      eventBus.emit("open-whiteboard-modal");
     },
   },
   {
