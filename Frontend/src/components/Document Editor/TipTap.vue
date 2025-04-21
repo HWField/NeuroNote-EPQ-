@@ -114,7 +114,7 @@ import { useTabStore } from "@/stores/useTabStore";
 import { useUserStore } from "@/stores/useUserStore";
 import axios, { getBaseUrl } from "../../axios.js";
 import { useToast } from "@/components/ui/toast/use-toast";
-import { ref, onBeforeUnmount, watch } from "vue";
+import { ref, onBeforeUnmount, watch, computed } from "vue";
 import { onMounted } from "vue";
 import { set } from "@vueuse/core";
 const emit = defineEmits(["note-closed"]);
@@ -267,6 +267,88 @@ const ImageUpload = Extension.create({
     };
   },
 });
+
+
+
+
+// whiteboard functions
+
+const showWhiteboardModal = ref(false);
+const newWhiteboardName = ref(""); //stores new name
+const selectedWhiteboard = ref(null); //will store id of the selecte whitebaord (new or preexisting)
+const whiteboardSearch = ref("");
+const filteredWhiteboards = computed(() => {
+  const search = whiteboardSearch.value.toLowerCase().trim();
+  const whiteboards = useGraphStore().elements
+    .filter(element => element.type === "note" && element.format === "whiteboard")
+    .map(whiteboard => ({
+      id: whiteboard.id,
+      name: whiteboard.name || "Untitled Whiteboard"
+    }));
+    
+  if (!search) return whiteboards;
+  
+  return whiteboards.filter(whiteboard => 
+    whiteboard.name.toLowerCase().includes(search)
+  );
+});
+
+
+const openWhiteboardModal = () => {
+  newWhiteboardName.value = "";
+  showWhiteboardModal.value = true;
+};
+const closeWhiteboardModal = () => {
+  showWhiteboardModal.value = false;
+
+};
+
+const createWhiteboard = async () => {
+  if (!newWhiteboardName.value.trim()) return;
+
+  try {
+    const response = await axios.post("/create", {
+      type: "note",
+      name: newWhiteboardName.value,
+      format: "whiteboard",
+    });
+
+    useGraphStore().addNode(response.data);
+    selectedWhiteboard.value = response.data.elements[0].id;
+    newWhiteboardName.value = "";
+    insertWhiteboard();
+
+    
+  } catch (error) {
+    console.error("Error creating whiteboard:", error);
+    toast({
+      title: "Error",
+      description: "Failed to create whiteboard. Please try again.",
+      variant: "destructive",
+    });
+  }
+};
+const insertWhiteboard = () => {
+  console.error("Inserting whiteboard with ID:", selectedWhiteboard.value);
+  if (selectedWhiteboard.value) {
+    editor.commands.insertContent({
+      type: 'whiteboard',
+      attrs: {
+        id: selectedWhiteboard.value,
+      }
+    });
+    closeWhiteboardModal();
+  } else {
+    toast({
+      title: "Error",
+      description: "Please select or create a whiteboard.",
+      variant: "destructive",
+    });
+  }
+};
+
+
+
 
 function extractTagsFromDocument(document) {
   const uniqueTagIds = new Set();
@@ -439,6 +521,7 @@ onMounted(async () => {
 
     // Add event listener for tag updates
     eventBus.on("open-image-modal", openImageModal);
+    eventBus.on("open-whiteboard-modal", openWhiteboardModal);
 
     window.addEventListener("keydown", handleEscapeKey);
 
@@ -1271,6 +1354,90 @@ let editor = new Editor({
       </div>
     </DialogContent>
   </Dialog>
+
+
+  <Dialog :open="showWhiteboardModal" @update:open="closeWhiteboardModal">
+    <DialogContent class="sm:max-w-[425px]">
+      <DialogHeader>
+        <DialogTitle>Insert Whiteboard</DialogTitle>
+      </DialogHeader>
+      <div class="grid gap-4 py-4">
+        <!-- New Whiteboard Section -->
+        <div class="flex flex-col gap-2">
+          <label class="font-medium">Create New Whiteboard</label>
+          <div class="flex gap-2">
+            <input
+              v-model="newWhiteboardName"
+              type="text"
+              placeholder="Enter whiteboard name"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              @keydown.enter="createWhiteboard"
+            />
+            <Button
+              @click="createWhiteboard"
+              :disabled="!newWhiteboardName.trim()"
+              class="shrink-0"
+            >
+              Create
+            </Button>
+          </div>
+        </div>
+
+        <!-- Existing Whiteboards Combobox -->
+        <div class="flex flex-col gap-2 mt-4">
+          <label class="font-medium">Or Select Existing</label>
+
+          <!-- Search input -->
+          <div class="mb-2">
+            <input
+              v-model="whiteboardSearch"
+              type="text"
+              placeholder="Search whiteboards..."
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+          </div>
+
+          <!-- Whiteboards list -->
+          <ScrollArea class="h-60 border rounded-md border-input">
+            <div class="p-1">
+              <div
+                v-for="whiteboard in filteredWhiteboards"
+                :key="whiteboard.id"
+                @click="selectedWhiteboard = whiteboard.id"
+                class="flex items-center p-2 rounded-md cursor-pointer transition-colors"
+                :class="
+                  selectedWhiteboard === whiteboard.id
+                    ? 'bg-primary/20'
+                    : 'hover:bg-muted'
+                "
+              >
+                <div class="mr-2 flex-shrink-0">
+                  <Presentation class="w-4 h-4" />
+                </div>
+                <div class="text-sm font-medium">{{ whiteboard.name }}</div>
+              </div>
+
+              <div
+                v-if="filteredWhiteboards.length === 0"
+                class="text-center p-4 text-muted-foreground"
+              >
+                No whiteboards found
+              </div>
+            </div>
+          </ScrollArea>
+          <Button 
+            class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white"
+            @click="insertWhiteboard"
+            :disabled="!selectedWhiteboard"
+          >
+            <PlusIcon class="h-4 w-4 mr-2" />Insert Whiteboard
+          </Button>
+        </div>
+      </div>
+    </DialogContent>
+  </Dialog>
+
+
 </template>
 
 <style lang="scss">
