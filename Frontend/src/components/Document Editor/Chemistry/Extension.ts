@@ -12,22 +12,33 @@ export default Node.create({
 
   addAttributes() {
     return {
-      height: {
-        default: 350, // Default height in pixels
+      moleculeData: {
+        default: null,
       },
+      format: {
+        default: 'mol',
+      },
+      is3D: {
+        default: true
+      },
+      height: {
+        default: 250
+      }
     }
   },
 
   parseHTML() {
     return [
       {
-        tag: 'vue-component',
+        tag: 'div[data-type="chemistry-component"]',
       },
     ]
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['vue-component', mergeAttributes(HTMLAttributes)]
+    return ['div', mergeAttributes({
+      'data-type': 'chemistry-component'
+    }, HTMLAttributes)]
   },
 
   addNodeView() {

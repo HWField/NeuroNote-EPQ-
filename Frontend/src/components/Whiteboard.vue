@@ -28,40 +28,39 @@
 
               <Separator orientation="vertical" class="h-6 mx-1" />
 
-              <!-- Edit Mode -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="flex gap-1 items-center"
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      :variant="showNoteHeader ? 'default' : 'ghost'"
+                      size="icon"
+                      @click="showNoteHeader = !showNoteHeader"
+                    >
+                      <Info class="h-4 w-4" />
+                      <span class="sr-only">Toggle Note Header</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent
+                    >{{ showNoteHeader ? "Hide" : "Show" }} Note
+                    Details</TooltipContent
                   >
-                    <TextIcon v-if="mode === 'type'" class="h-4 w-4" />
-                    <Pencil v-else-if="mode === 'draw'" class="h-4 w-4" />
-                    <Eraser v-else-if="mode === 'eraser'" class="h-4 w-4" />
-                    <span>Mode: {{ mode }}</span>
-                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem @click="mode = 'draw'">
-                    <Pencil class="h-4 w-4 mr-2" />
-                    <span>Draw</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="mode = 'type'">
-                    <Type class="h-4 w-4 mr-2" />
-                    <span>Type</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="mode = 'pan'">
-                    <Move class="h-4 w-4 mr-2" />
-                    <span>Move</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="mode = 'eraser'">
-                    <Eraser class="h-4 w-4 mr-2" />
-                    <span>Erase</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </Tooltip>
+              </TooltipProvider>
+
+              <Separator orientation="vertical" class="h-6 mx-1" />
+
+              <!-- Edit Mode -->
+              <Button
+                :variant="mode === 'draw' ? 'default' : 'ghost'"
+                size="sm"
+                class="flex items-center gap-2 px-3"
+                @click="mode = mode === 'draw' ? 'type' : 'draw'"
+              >
+                <Pencil class="h-4 w-4" />
+                <span>{{
+                  mode === "draw" ? "Drawing: On" : "Drawing: Off"
+                }}</span>
+              </Button>
 
               <Separator orientation="vertical" class="h-6 mx-1" />
 
@@ -107,44 +106,49 @@
 
               <!-- Pen Color -->
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="flex gap-1 items-center"
-                  >
-                    <Palette class="h-4 w-4" />
-                    <span>Colour</span>
-                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem @click="penColour = 'black'">
-                    <Circle class="h-4 w-4 mr-2" fill="black" />
-                    <span>Black</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="penColour = 'white'">
-                    <Circle class="h-4 w-4 mr-2" fill="white" />
-                    <span>White</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="penColour = 'red'">
-                    <Circle class="h-4 w-4 mr-2" fill="red" />
-                    <span>Red</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="penColour = 'blue'">
-                    <Circle class="h-4 w-4 mr-2" fill="blue" />
-                    <span>Blue</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="penColour = 'green'">
-                    <Circle class="h-4 w-4 mr-2" fill="green" />
-                    <span>Green</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+  <DropdownMenuTrigger asChild>
+    <Button
+      variant="ghost"
+      size="sm"
+      class="flex gap-1 items-center"
+    >
+      <Palette class="h-4 w-4" :color="colour" />
+      <span>Colour</span>
+      <ChevronDownIcon class="h-3 w-3 opacity-50" />
+    </Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent>
+    <DropdownMenuItem @click="colour = 'black'">
+      <Circle class="h-4 w-4 mr-2" fill="black" />
+      <span>Black</span>
+      <Check v-if="colour === 'black'" class="h-4 w-4 ml-auto" />
+    </DropdownMenuItem>
+    <DropdownMenuItem @click="colour = 'white'">
+      <Circle class="h-4 w-4 mr-2" fill="white" stroke="#e5e5e5" />
+      <span>White</span>
+      <Check v-if="colour === 'white'" class="h-4 w-4 ml-auto" />
+    </DropdownMenuItem>
+    <DropdownMenuItem @click="colour = 'red'">
+      <Circle class="h-4 w-4 mr-2" fill="red" />
+      <span>Red</span>
+      <Check v-if="colour === 'red'" class="h-4 w-4 ml-auto" />
+    </DropdownMenuItem>
+    <DropdownMenuItem @click="colour = 'blue'">
+      <Circle class="h-4 w-4 mr-2" fill="blue" />
+      <span>Blue</span>
+      <Check v-if="colour === 'blue'" class="h-4 w-4 ml-auto" />
+    </DropdownMenuItem>
+    <DropdownMenuItem @click="colour = 'green'">
+      <Circle class="h-4 w-4 mr-2" fill="green" />
+      <span>Green</span>
+      <Check v-if="colour === 'green'" class="h-4 w-4 ml-auto" />
+    </DropdownMenuItem>
+  </DropdownMenuContent>
+</DropdownMenu>
 
               <Separator orientation="vertical" class="h-6 mx-1" />
 
-              <!-- Pen Width -->
+              <!-- Pen type -->
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -153,7 +157,7 @@
                     class="flex gap-1 items-center"
                   >
                     <Pencil class="h-4 w-4" />
-                    <span>Width</span>
+                    <span>Type</span>
                     <ChevronDownIcon class="h-3 w-3 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -161,18 +165,22 @@
                   <DropdownMenuItem @click="penWidth = 1">
                     <Minus class="h-4 w-4 mr-2" :stroke-width="0.5" />
                     <span>Fine</span>
+                    <Check v-if="penWidth == 1" class="h-4 w-4 ml-auto" />
                   </DropdownMenuItem>
                   <DropdownMenuItem @click="penWidth = 3">
                     <Minus class="h-4 w-4 mr-2" :stroke-width="1" />
                     <span>Medium</span>
+                    <Check v-if="penWidth == 3" class="h-4 w-4 ml-auto" />
                   </DropdownMenuItem>
                   <DropdownMenuItem @click="penWidth = 8">
                     <Minus class="h-4 w-4 mr-2" :stroke-width="3" />
                     <span>Bold</span>
+                    <Check v-if="penWidth == 8" class="h-4 w-4 ml-auto" />
                   </DropdownMenuItem>
                   <DropdownMenuItem @click="penWidth = 16">
                     <Minus class="h-4 w-4 mr-2" :stroke-width="5" />
                     <span>Thick</span>
+                    <Check v-if="penWidth == 16" class="h-4 w-4 ml-auto" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -196,24 +204,29 @@
                   <DropdownMenuItem @click="background = 'line'">
                     <Rows3Icon class="h-4 w-4 mr-2" />
                     <span>Line</span>
+                    <Check v-if="background == 'line'" class="h-4 w-4 ml-auto" />
                   </DropdownMenuItem>
                   <Separator />
                   <DropdownMenuItem @click="background = 'sGrid'">
                     <Grid class="h-4 w-4 mr-2" />
                     <span>Small Grid</span>
+                    <Check v-if="background == 'sGrid'" class="h-4 w-4 ml-auto" />
                   </DropdownMenuItem>
                   <DropdownMenuItem @click="background = 'mGrid'">
                     <Grid class="h-4 w-4 mr-2" />
                     <span>Medium Grid</span>
+                    <Check v-if="background == 'mGrid'" class="h-4 w-4 ml-auto" />
                   </DropdownMenuItem>
                   <DropdownMenuItem @click="background = 'lGrid'">
                     <Grid class="h-4 w-4 mr-2" />
                     <span>Large Grid</span>
+                    <Check v-if="background == 'lGrid'" class="h-4 w-4 ml-auto" />
                   </DropdownMenuItem>
                   <Separator />
                   <DropdownMenuItem @click="background = 'empty'">
                     <Square class="h-4 w-4 mr-2" />
                     <span>Blank</span>
+                    <Check v-if="background == 'empty'" class="h-4 w-4 ml-auto" />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -230,7 +243,7 @@
                       class="text-orange-600"
                       @click="deleteSelected"
                     >
-                      <Eraser class="h-4 w-4" />
+                      <Trash2 class="h-4 w-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Delete Selected</TooltipContent>
@@ -240,11 +253,29 @@
           </div>
         </div>
       </div>
+      <Transition name="slide-down">
+        <div
+          v-if="showNoteHeader"
+          class="relative m-4 z-40 flex justify-center"
+        >
+          <div
+            class="bg-primary-foreground shadow-lg rounded-lg p-4 max-w-[2000px] w-full mx-auto"
+          >
+            <NoteHeader
+              :initial-title="noteTitle"
+              :initial-tags="noteTags"
+              @update:title="updateNoteTitle($event)"
+              @update:tags="noteTags = $event"
+            />
+          </div>
+        </div>
+      </Transition>
 
       <div class="flex justify-center flex-1">
         <div
           id="canvas-container"
-          class="canvas-container w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-hidden bg-primary-foreground rounded-lg border border-input m-4 relative"
+          class="canvas-container w-full  overflow-hidden bg-primary-foreground rounded-lg border border-input m-4 relative"
+          :class="showNoteHeader ? 'h-[calc(100vh-24rem)]' : 'h-[calc(100vh-12rem)]'"
         >
           <!-- Grid canvas (bottom layer) -->
           <canvas
@@ -261,6 +292,22 @@
     </div>
   </div>
 </template>
+<style>
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease;
+  max-height: 500px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-20px);
+}
+</style>
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from "vue";
@@ -271,6 +318,8 @@ import { useTabStore } from "@/stores/useTabStore";
 import { useGraphStore } from "@/stores/useGraphStore";
 import { useUserStore } from "@/stores/useUserStore";
 import Loading from "@/components/Loading.vue";
+import NoteHeader from "@/components/Document Editor/NoteHeader.vue";
+import { FileText, Info } from "lucide-vue-next";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -313,6 +362,7 @@ import {
   LucideFileLineChart,
   Rows3Icon,
   Move,
+  Check
 } from "lucide-vue-next";
 import { useToast } from "@/components/ui/toast/use-toast";
 
@@ -320,6 +370,7 @@ const props = defineProps({
   noteId: Number || 0,
   tabId: Number || 0,
 });
+const showNoteHeader = ref(false);
 const emit = defineEmits(["note-closed"]);
 const saveInterval = ref(null);
 const noteTitle = ref("Untitled Note");
@@ -329,14 +380,14 @@ const isLoading = ref(false);
 const viewport = ref({ x: 0, y: 0, zoom: 1 });
 const background = ref("Lgrid");
 const mode = ref("draw");
-const penColour = ref("");
+const colour = ref("");
 
 if (useUserStore.theme == "dark") {
-  penColour.value = "white";
+  colour.value = "white";
 } else {
-  penColour.value = "black";
+  colour.value = "black";
 }
-const penWidth = ref(5);
+const penWidth = ref(3);
 
 let modalContent = null;
 let fabricCanvasEl = null;
@@ -382,6 +433,8 @@ async function SaveToBackend() {
       content: noteContent, // Already serialized by toJSON()
       tags: tags, // Use the local constant
       id: props.noteId,
+      viewport: JSON.stringify(canvas.viewportTransform),
+      background: background.value,
     });
     console.error("Note saved  successfully:", props.noteId);
     return true;
@@ -429,7 +482,21 @@ async function LoadFromBackend() {
           canvas.loadFromJSON(response.data.content, function () {
             // Force multiple render calls to ensure everything appears
             setTimeout(() => {
+              
               canvas.renderAll();
+                // Apply sharpness settings to all paths after loading
+            canvas.getObjects().forEach(obj => {
+              // Check if it's a path or path-like object
+              if (obj.type === 'path' || obj.type === 'line' || obj.path) {
+                obj.objectCaching = false;
+                if (obj.strokeLineCap !== undefined) {
+                  obj.strokeLineCap = 'round';
+                  obj.strokeLineJoin = 'round';
+                }
+              }
+            });
+
+              
 
               // Force a second render after a brief delay
               setTimeout(() => {
@@ -498,6 +565,40 @@ async function closeNote() {
     });
   }
 }
+function resizeCanvasToContainer() {
+  // Guard against accessing canvas before it's initialized
+  if (!canvas || !gridCanvas || !modalContent) return;
+  
+  // Get the new container dimensions
+  const newWidth = modalContent.offsetWidth;
+  const newHeight = modalContent.offsetHeight;
+  
+  // Update both canvas sizes
+  canvas.setWidth(newWidth);
+  canvas.setHeight(newHeight);
+  gridCanvas.width = newWidth;
+  gridCanvas.height = newHeight;
+  
+  // Redraw the grid with current viewport
+  const vpt = canvas.viewportTransform;
+  drawGrid(vpt[4], vpt[5], canvas.getZoom());
+  
+  // Force canvas to render
+  canvas.requestRenderAll();
+}
+
+// Add a watcher for showNoteHeader
+watch(showNoteHeader, () => {
+  // Use setTimeout to ensure the DOM has updated before measuring
+  setTimeout(() => {
+    resizeCanvasToContainer();
+  }, 50); // Small delay to ensure DOM has updated
+});
+function updateNoteTitle(newTitle) {
+  console.error("Updating note title:", newTitle, "tab is", props.tabId);
+  noteTitle.value = newTitle;
+  useTabStore().RenameTab(props.tabId, newTitle); //update tab live
+}
 function initaliseCanvas() {
   modalContent = document.getElementById("canvas-container");
   fabricCanvasEl = document.getElementById("fabricCanvas");
@@ -509,6 +610,18 @@ function initaliseCanvas() {
     height: modalContent.offsetHeight,
     backgroundColor: "transparent", // Ensure background is transparent
   });
+  
+//   function onObjectSelected(e) {
+//     object = e.selected[0]
+//     console.error("Object selected:", object).type;
+//     canvas.bringObjectToFront(object);
+//     object.bringObjectToFront();
+//     object.bringToFront();
+//     canvas.renderAll();
+
+// }
+// canvas.on('selection:created', onObjectSelected);
+
   console.error("Canvas initialized:", canvas);
   //might need changing in future but prevents blurry edges for now
   // Disable object caching for better performance
@@ -517,7 +630,19 @@ function initaliseCanvas() {
   // IMPORTANT: Create a drawing brush first
   canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
   canvas.freeDrawingBrush.width = penWidth.value;
-  canvas.freeDrawingBrush.color = penColour.value;
+  canvas.freeDrawingBrush.color = colour.value;
+
+  // Override the createPath method to disable caching
+  const originalCreatePath = canvas.freeDrawingBrush.createPath;
+  canvas.freeDrawingBrush.createPath = function (pathData) {
+    const path = originalCreatePath.call(this, pathData);
+    path.objectCaching = false;
+    path.strokeLineCap = "round";
+    path.strokeLineJoin = "round";
+    return path;
+
+  
+  };
 
   // Set drawing mode based on your current mode
   canvas.isDrawingMode = mode.value === "draw";
@@ -539,14 +664,14 @@ function initaliseCanvas() {
   isPanning = false;
   lastPosX = 0;
   lastPosY = 0;
-// Sync grid with canvas after every render
-function syncGridWithCanvas() {
-  const vpt = canvas.viewportTransform;
-  drawGrid(vpt[4], vpt[5], canvas.getZoom());
-}
+  // Sync grid with canvas after every render
+  function syncGridWithCanvas() {
+    const vpt = canvas.viewportTransform;
+    drawGrid(vpt[4], vpt[5], canvas.getZoom());
+  }
 
-// Attach the sync function to the after:render event
-canvas.on("after:render", syncGridWithCanvas);
+  // Attach the sync function to the after:render event
+  canvas.on("after:render", syncGridWithCanvas);
 
   canvas.on("mouse:down", function (opt) {
     const evt = opt.e;
@@ -720,6 +845,66 @@ canvas.on("after:render", syncGridWithCanvas);
   });
 }
 
+
+function HandleWhiteboardClick(event) {
+    // Check if the active element is an input, textarea, or contenteditable element
+    const activeElement = document.activeElement;
+  const isEditableElement = 
+    activeElement.tagName === 'INPUT' || 
+    activeElement.tagName === 'TEXTAREA' || 
+    activeElement.getAttribute('contenteditable') === 'true' ||
+    activeElement.classList.contains('tiptap-editor') ||
+    activeElement.isContentEditable;
+  
+  // If user is typing in an editable field, don't process keyboard shortcuts
+  if (isEditableElement) {
+    return;
+  }
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeNote();
+  } else if (event.key === "Backspace" || event.key === "Delete") {
+    deleteSelected();
+  }  else if (event.key === "Tab") {
+    event.preventDefault(); // Prevent default tab behavior
+    // Toggle between draw and type mode
+
+    if (mode.value === "type") {
+      mode.value = "draw";
+    } else {
+      mode.value = "type";
+    }
+  } else if (event.key === "Enter") {
+    event.preventDefault(); // Prevent default enter behavior
+    // Add a new text box
+    addText();
+  } else if (event.key === "r" || event.key === "R") {
+    event.preventDefault(); // Prevent default R behavior
+    // Add a rectangle shape
+    addShape("rectangle");
+  } else if (event.key === "c" || event.key === "C") {
+    event.preventDefault(); // Prevent default C behavior
+    // Add a circle shape
+    addShape("circle");
+  } else if (event.key === "t" || event.key === "T") {
+    event.preventDefault(); // Prevent default T behavior
+    // Add a triangle shape
+    addShape("triangle");
+  } else if (event.key === "i") {
+    event.preventDefault(); // Prevent default I behavior
+    // Add an image shape
+    showNoteHeader.value = !showNoteHeader.value;
+  } else if ((event.metaKey || event.ctrlKey) && event.key === "a") {
+    event.preventDefault();
+    canvas.discardActiveObject();
+    var sel = new fabric.ActiveSelection(canvas.getObjects(), {
+      canvas: canvas,
+    });
+    canvas.setActiveObject(sel);
+    canvas.requestRenderAll();
+  }
+  
+}
 onMounted(async () => {
   // Wait for content to load before proceeding
   initaliseCanvas();
@@ -728,13 +913,34 @@ onMounted(async () => {
   // Only proceed with the rest if loading was successful
   if (loaded) {
     useUserStore().addToRecentNotes(props.noteId);
+    
 
     // Full save every minute
     saveInterval.value = setInterval(async () => {
       await SaveToBackend();
     }, 60000);
+    window.addEventListener("keydown", HandleWhiteboardClick);
     // initaliseCanvas();
     // console.error("Editor loaded successfully", isLoading.value);
+  }
+});
+
+onBeforeUnmount(async () => {
+  // Wait for save to complete before destroying editor
+  window.removeEventListener("keydown", HandleWhiteboardClick);
+  if (saveInterval.value) {
+    clearInterval(saveInterval.value);
+    saveInterval.value = null;
+    console.error("Save interval cleared");
+  }
+
+  // Only save if loading is complete
+  if (!isLoading.value) {
+    try {
+      await SaveToBackend();
+    } catch (error) {
+      console.error("Failed to save note before unmount:", error);
+    }
   }
 });
 
@@ -800,8 +1006,21 @@ watch(mode, (newMode) => {
   }
 });
 
-watch(penColour, (newColor) => {
+
+
+watch(colour, (newColor) => {
   canvas.freeDrawingBrush.color = newColor;
+  const activeObjects = canvas.getActiveObjects();
+  activeObjects.forEach((obj) => {
+    console.error("Updating color of object:", obj);
+    
+    if (obj.type === "path") {
+      obj.set("stroke", newColor);
+    } else {
+      obj.set("fill", newColor);
+    }
+    canvas.renderAll();
+  });
 });
 watch(penWidth, (newWidth) => {
   canvas.freeDrawingBrush.width = newWidth;
@@ -824,29 +1043,44 @@ watch(background, (newBackground) => {
 // });
 
 function addShape(shapeType) {
+
+    // Calculate the center of the current viewport in canvas coordinates
+    const vpt = canvas.viewportTransform;
+  const zoom = canvas.getZoom();
+  
+  // Get the visible area dimensions
+  const visibleWidth = modalContent.offsetWidth;
+  const visibleHeight = modalContent.offsetHeight;
+  
+  // Calculate the center position in canvas coordinates
+  const centerX = (-vpt[4] / zoom) + (visibleWidth / (2 * zoom));
+  const centerY = (-vpt[5] / zoom) + (visibleHeight / (2 * zoom));
   let shape;
   if (shapeType === "rectangle") {
     shape = new fabric.Rect({
-      left: 100,
-      top: 100,
+      left: centerX - 50, // Center by offsetting half width
+      top: centerY - 30,  // Center by offsetting half height
       width: 100,
       height: 60,
-      fill: "blue",
+      fill: colour.value,
+      objectCaching: false,
     });
   } else if (shapeType === "circle") {
     shape = new fabric.Circle({
-      left: 100,
-      top: 100,
+      left: centerX - 50, 
+      top: centerY - 30,
       radius: 50,
-      fill: "green",
+      fill: colour.value,
+      objectCaching: false, // prevent cachnig to improve sharpnes on zoom
     });
   } else if (shapeType === "triangle") {
     shape = new fabric.Triangle({
-      left: 100,
-      top: 100,
+      left: centerX - 50, 
+      top: centerY - 30,
       width: 100,
       height: 100,
-      fill: "yellow",
+      fill: colour.value,
+      objectCaching: false,
     });
   }
   if (shape) {

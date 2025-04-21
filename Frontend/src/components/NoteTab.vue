@@ -62,6 +62,7 @@ onBeforeUnmount(() => {});
       <Whiteboard 
         v-else-if="noteType === 'whiteboard'" 
         :noteId="currentNoteId" 
+        :tabId="tabId" 
         @note-closed="closeTab"
       />
       

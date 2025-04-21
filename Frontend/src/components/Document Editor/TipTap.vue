@@ -424,6 +424,7 @@ async function closeNote() {
 }
 const handleEscapeKey = (event) => {
   if (event.key === "Escape") {
+    event.preventDefault();
     closeNote();
   }
 };

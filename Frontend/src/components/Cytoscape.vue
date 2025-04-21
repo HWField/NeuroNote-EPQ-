@@ -153,7 +153,7 @@ function submitDialogue() {
 
     // Set default type if not selected
     if (!dialogueData.value.type) {
-      dialogueData.value.type = "Document";
+      dialogueData.value.type = "document"; //later make a preference user can set
     }
   }
 

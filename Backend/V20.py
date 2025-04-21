@@ -746,10 +746,7 @@ def update():
         # background = data.get('background')
        
         name = data.get('name')
-        
-
-     
-                    
+    
         name = data.get('name')
 
         # Validate input
@@ -793,7 +790,12 @@ def update():
         # SQLAlchemy handles adding new ones and removing old ones automatically
         note.tags = new_tags
         # print(f"------- set {len(new_tags)} tags on note {note_id}")
-        
+        if note.format == "whiteboard":
+            print("------- note is a whiteboard, setting viewport")
+            note.viewport = data.get('viewport')
+            note.background = data.get('background')
+            
+            
         dbsession.commit()
           # IMPORTANT: Explicitly refresh the object from DB to ensure latest state
         dbsession.refresh(note)

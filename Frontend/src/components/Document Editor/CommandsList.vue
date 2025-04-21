@@ -111,7 +111,7 @@ export const commands = [
     },
   },
   {
-    title: "Molecule Viewer",
+    title: "Molecule",
     icon: TestTube2, // Use any icon you want here
     command: ({ editor, range }) => {
       editor
