@@ -3,8 +3,8 @@ import router from "@/router"; // Adjust the path based on your project structur
 import { useUserStore } from "@/stores/useUserStore";
 
 // Create an Axios instance
-// const BASE_URL = 'http://127.0.0.1:8000';
-const BASE_URL = 'http://192.168.1.232:8000';  // Alternate URL
+const BASE_URL = 'http://127.0.0.1:8000';
+// const BASE_URL = 'http://192.168.1.232:8000';  // Alternate URL
 // const BASE_URL = 'https://api.henryfield.net';  // Production URL
 
 const api = axios.create({

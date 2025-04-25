@@ -8,7 +8,7 @@
       </div>
       <div 
         ref="canvasContainer" 
-        class="canvas-container"
+        class="prev-canvas-container"
       >
         <!-- Grid canvas (bottom layer) -->
         <canvas
@@ -33,6 +33,7 @@
   import { Pencil } from 'lucide-vue-next';
   import axios from '@/axios.js';
   import { useToast } from '@/components/ui/toast/use-toast';
+  import { useTabStore } from "@/stores/useTabStore";
   
   const props = defineProps({
     editor: Object,
@@ -41,7 +42,7 @@
     updateAttributes: Function
   });
   
-  const router = useRouter();
+
   const { toast } = useToast();
   const canvasContainer = ref(null);
   const fabricCanvas = ref(null);
@@ -51,18 +52,19 @@
   // Function to open the full whiteboard editor
   function openFullWhiteboard() {
     if (props.node.attrs.id) {
-      const tabParams = {
-        id: props.node.attrs.id,
-        name: props.node.attrs.name || 'Untitled Whiteboard',
-        type: 'whiteboard'
-      };
+      // const tabParams = {
+      //   id: props.node.attrs.id,
+      //   name: props.node.attrs.name || 'Untitled Whiteboard',
+      //   type: 'whiteboard'
+      // };
       
-      // You can adjust this to match your application's routing pattern
-      router.push({
-        name: 'whiteboard',
-        params: { id: props.node.attrs.id },
-        query: { tab: JSON.stringify(tabParams) }
-      });
+      // // You can adjust this to match your application's routing pattern
+      // router.push({
+      //   name: 'whiteboard',
+      //   params: { id: props.node.attrs.id },
+      //   query: { tab: JSON.stringify(tabParams) }
+      // });
+      useTabStore().addTab("note", "note", {noteId: props.node.attrs.id, creationTabId: props.node.attrs.parentTab});
     } else {
       toast({
         title: "Error",
@@ -296,7 +298,7 @@
     color: #6a00f5;
   }
   
-  .canvas-container {
+  .prev-canvas-container {
     position: relative;
     width: 100%;
     height: 500px;
@@ -304,11 +306,11 @@
     background-color: white;
   }
   
-  .canvas-container:active {
+  .prev-canvas-container:active {
     cursor: grabbing;
   }
   
-  .canvas-container canvas {
+  .prev-canvas-container canvas {
     position: absolute;
     top: 0;
     left: 0;

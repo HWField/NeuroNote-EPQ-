@@ -1143,6 +1143,7 @@ function HandlecyClick(event) {
       CreateNote();
     }
   } else if (event.key === "t") {
+    event.preventDefault();
     const selectedTag = cy.$('node[type="tag"]:selected');
     if (selectedTag.length > 0) {
       CreateTag("child");
@@ -1333,7 +1334,7 @@ async function CreateNote(format) {
     response = (await openDialogue("newNote"));
   } else {
     console.error(" format provided for CreateNote");
-    response = (await openDialogue("newNote", { type: format })).name;
+    response = (await openDialogue("newNote", { type: format }));
   }
   noteName = response.name;
   noteFormat = response.type;

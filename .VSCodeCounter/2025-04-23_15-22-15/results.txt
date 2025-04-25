@@ -1,0 +1,344 @@
+Date : 2025-04-23 15:22:15
+Directory : /Users/Henry/Desktop/EPQ
+Total : 259 files,  46079 codes, 16985 comments, 6272 blanks, all 69336 lines
+
+Languages
++--------------------+------------+------------+------------+------------+------------+
+| language           | files      | code       | comment    | blank      | total      |
++--------------------+------------+------------+------------+------------+------------+
+| vue                |        171 |     16,776 |        276 |      2,169 |     19,221 |
+| JavaScript         |         22 |     15,929 |     11,585 |      3,341 |     30,855 |
+| JSON               |          8 |      9,951 |          0 |          9 |      9,960 |
+| Python             |          3 |      1,369 |        278 |        383 |      2,030 |
+| TypeScript         |         44 |      1,011 |         38 |        188 |      1,237 |
+| HTML               |          3 |        793 |      4,803 |        122 |      5,718 |
+| CSS                |          4 |        217 |          5 |         44 |        266 |
+| Markdown           |          1 |         20 |          0 |         14 |         34 |
+| JSON with Comments |          1 |         11 |          0 |          1 |         12 |
+| XML                |          1 |          1 |          0 |          1 |          2 |
+| Properties         |          1 |          1 |          0 |          0 |          1 |
++--------------------+------------+------------+------------+------------+------------+
+
+Directories
++---------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                              | files      | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                 |        259 |     46,079 |     16,985 |      6,272 |     69,336 |
+| . (Files)                                                                                         |          2 |          7 |          0 |          2 |          9 |
+| Backend                                                                                           |          3 |      1,369 |        278 |        383 |      2,030 |
+| Frontend                                                                                          |        254 |     44,703 |     16,707 |      5,887 |     67,297 |
+| Frontend (Files)                                                                                  |         13 |     10,271 |      4,797 |         57 |     15,125 |
+| Frontend/public                                                                                   |         14 |     14,956 |     11,435 |      3,180 |     29,571 |
+| Frontend/public (Files)                                                                           |          1 |         17 |          0 |          0 |         17 |
+| Frontend/public/js                                                                                |         13 |     14,939 |     11,435 |      3,180 |     29,554 |
+| Frontend/src                                                                                      |        227 |     19,476 |        475 |      2,650 |     22,601 |
+| Frontend/src (Files)                                                                              |          3 |        128 |         33 |         26 |        187 |
+| Frontend/src/assets                                                                               |          3 |        177 |          4 |         37 |        218 |
+| Frontend/src/components                                                                           |        210 |     17,156 |        251 |      2,343 |     19,750 |
+| Frontend/src/components (Files)                                                                   |         16 |      9,359 |        173 |      1,029 |     10,561 |
+| Frontend/src/components/Document Editor                                                           |         21 |      4,061 |         74 |        519 |      4,654 |
+| Frontend/src/components/Document Editor (Files)                                                   |         13 |      3,415 |         32 |        384 |      3,831 |
+| Frontend/src/components/Document Editor/Chemistry                                                 |          2 |         84 |          0 |         20 |        104 |
+| Frontend/src/components/Document Editor/Whiteboard                                                |          2 |        329 |         10 |         50 |        389 |
+| Frontend/src/components/Document Editor/modals                                                    |          4 |        233 |         32 |         65 |        330 |
+| Frontend/src/components/TreeView                                                                  |          2 |        363 |          3 |         60 |        426 |
+| Frontend/src/components/ui                                                                        |        171 |      3,373 |          1 |        735 |      4,109 |
+| Frontend/src/components/ui/avatar                                                                 |          4 |         56 |          0 |         13 |         69 |
+| Frontend/src/components/ui/badge                                                                  |          2 |         38 |          0 |          7 |         45 |
+| Frontend/src/components/ui/breadcrumb                                                             |          8 |        119 |          0 |         22 |        141 |
+| Frontend/src/components/ui/button                                                                 |          2 |         55 |          0 |          8 |         63 |
+| Frontend/src/components/ui/calendar                                                               |         13 |        303 |          0 |         70 |        373 |
+| Frontend/src/components/ui/card                                                                   |          7 |         89 |          0 |         19 |        108 |
+| Frontend/src/components/ui/checkbox                                                               |          2 |         29 |          0 |          7 |         36 |
+| Frontend/src/components/ui/collapsible                                                            |          4 |         33 |          0 |         11 |         44 |
+| Frontend/src/components/ui/command                                                                |         10 |        193 |          0 |         49 |        242 |
+| Frontend/src/components/ui/dialog                                                                 |         10 |        209 |          0 |         43 |        252 |
+| Frontend/src/components/ui/dropdown-menu                                                          |         15 |        305 |          0 |         72 |        377 |
+| Frontend/src/components/ui/input                                                                  |          2 |         21 |          0 |          6 |         27 |
+| Frontend/src/components/ui/label                                                                  |          2 |         24 |          0 |          6 |         30 |
+| Frontend/src/components/ui/popover                                                                |          4 |         67 |          0 |         16 |         83 |
+| Frontend/src/components/ui/radio-group                                                            |          3 |         59 |          0 |         14 |         73 |
+| Frontend/src/components/ui/resizable                                                              |          3 |         42 |          0 |         11 |         53 |
+| Frontend/src/components/ui/scroll-area                                                            |          3 |         53 |          0 |         11 |         64 |
+| Frontend/src/components/ui/select                                                                 |         12 |        229 |          0 |         56 |        285 |
+| Frontend/src/components/ui/separator                                                              |          2 |         32 |          0 |          6 |         38 |
+| Frontend/src/components/ui/sheet                                                                  |          9 |        171 |          0 |         40 |        211 |
+| Frontend/src/components/ui/sidebar                                                                |         26 |        705 |          1 |        107 |        813 |
+| Frontend/src/components/ui/skeleton                                                               |          2 |         12 |          0 |          5 |         17 |
+| Frontend/src/components/ui/slider                                                                 |          2 |         33 |          0 |          7 |         40 |
+| Frontend/src/components/ui/switch                                                                 |          2 |         34 |          0 |          9 |         43 |
+| Frontend/src/components/ui/tabs                                                                   |          5 |         79 |          0 |         21 |        100 |
+| Frontend/src/components/ui/textarea                                                               |          2 |         21 |          0 |          6 |         27 |
+| Frontend/src/components/ui/toast                                                                  |         10 |        305 |          0 |         74 |        379 |
+| Frontend/src/components/ui/tooltip                                                                |          5 |         57 |          0 |         19 |         76 |
+| Frontend/src/lib                                                                                  |          1 |          5 |          0 |          2 |          7 |
+| Frontend/src/router                                                                               |          1 |         48 |          4 |          5 |         57 |
+| Frontend/src/stores                                                                               |          4 |        672 |        103 |        120 |        895 |
+| Frontend/src/views                                                                                |          5 |      1,290 |         80 |        117 |      1,487 |
++---------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++---------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| filename                                                                                          | language           | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+
+| /Users/Henry/Desktop/EPQ/Backend/V19 dont use.py                                                  | Python             |        583 |         73 |        151 |        807 |
+| /Users/Henry/Desktop/EPQ/Backend/V20.py                                                           | Python             |        759 |        193 |        222 |      1,174 |
+| /Users/Henry/Desktop/EPQ/Backend/loadtest.py                                                      | Python             |         27 |         12 |         10 |         49 |
+| /Users/Henry/Desktop/EPQ/Frontend/README.md                                                       | Markdown           |         20 |          0 |         14 |         34 |
+| /Users/Henry/Desktop/EPQ/Frontend/components.json                                                 | JSON               |         18 |          0 |          0 |         18 |
+| /Users/Henry/Desktop/EPQ/Frontend/env.d.ts                                                        | TypeScript         |          0 |          1 |          1 |          2 |
+| /Users/Henry/Desktop/EPQ/Frontend/index.html                                                      | HTML               |         36 |          2 |          7 |         45 |
+| /Users/Henry/Desktop/EPQ/Frontend/keys.npmrc                                                      | Properties         |          1 |          0 |          0 |          1 |
+| /Users/Henry/Desktop/EPQ/Frontend/package-lock.json                                               | JSON               |      9,788 |          0 |          1 |      9,789 |
+| /Users/Henry/Desktop/EPQ/Frontend/package.json                                                    | JSON               |         92 |          0 |          1 |         93 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/cola.js                                               | JavaScript         |          3 |          0 |          1 |          4 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/cose-base.js                                          | JavaScript         |      2,511 |        225 |        478 |      3,214 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape-cola.js                                     | JavaScript         |          1 |          6 |          1 |          8 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape-cxtmenu.js                                  | JavaScript         |        630 |         57 |        162 |        849 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape-edgehandles.js                              | JavaScript         |        797 |         72 |        286 |      1,155 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape-fcose.js                                    | JavaScript         |      1,157 |        156 |        236 |      1,549 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape-popper.js                                   | JavaScript         |        264 |         43 |         87 |        394 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape.min.js                                      | JavaScript         |          3 |         28 |          1 |         32 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/fabric.min.js                                         | JavaScript         |          1 |          0 |          0 |          1 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/hammer.js                                             | JavaScript         |          1 |          5 |          1 |          7 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/layout-base.js                                        | JavaScript         |      3,638 |        716 |        876 |      5,230 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/lodash.js                                             | JavaScript         |      5,932 |     10,124 |      1,049 |     17,105 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/js/popper-core.js                                        | JavaScript         |          1 |          3 |          2 |          6 |
+| /Users/Henry/Desktop/EPQ/Frontend/public/manifest.json                                            | JSON               |         17 |          0 |          0 |         17 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/App.vue                                                     | vue                |         34 |          2 |          4 |         40 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/assets/index(backup copy.css                                | CSS                |         85 |          2 |         18 |        105 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/assets/index.css                                            | CSS                |         91 |          2 |         18 |        111 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/assets/logo.svg                                             | XML                |          1 |          0 |          1 |          2 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/axios.js                                                    | JavaScript         |         79 |         31 |         18 |        128 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/AIWhiteboard.vue                                 | vue                |      1,259 |         13 |        185 |      1,457 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Chat.vue                                         | vue                |      1,027 |          4 |         75 |      1,106 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Cytoscape backup.vue                             | vue                |      1,010 |          4 |         83 |      1,097 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Cytoscape.vue                                    | vue                |      2,251 |         13 |        246 |      2,510 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Dashboard.vue                                    | vue                |        572 |         24 |         50 |        646 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/ChemicalStructure.vue            | vue                |         55 |          0 |         21 |         76 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Chemistry/Component.vue          | vue                |         45 |          0 |         12 |         57 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Chemistry/Extension.ts           | TypeScript         |         39 |          0 |          8 |         47 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/ColorHighlighter.ts              | TypeScript         |         27 |          0 |          4 |         31 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Commands.js                      | JavaScript         |         26 |          1 |          4 |         31 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/CommandsList.vue                 | vue                |        411 |          0 |         29 |        440 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/EventBus.js                      | JavaScript         |         22 |          5 |          4 |         31 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/FindColours.ts                   | TypeScript         |         23 |          0 |          6 |         29 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/NoteHeader.vue                   | vue                |        460 |          6 |         39 |        505 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/SymbolReplacer.ts                | TypeScript         |        132 |          0 |          3 |        135 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Tags.js                          | JavaScript         |         45 |          1 |          5 |         51 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/TagsList.vue                     | vue                |        156 |          1 |         28 |        185 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/TipTap.vue                       | vue                |      2,017 |         17 |        233 |      2,267 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Whiteboard/WhiteboardPreview.vue | vue                |        275 |          2 |         41 |        318 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Whiteboard/extension.js          | JavaScript         |         54 |          8 |          9 |         71 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/katex.min.css                    | CSS                |          1 |          0 |          1 |          2 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/math.css                         | CSS                |         40 |          1 |          7 |         48 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/modals/editeHyperlink.ts         | TypeScript         |         75 |          4 |         22 |        101 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/modals/icons.ts                  | TypeScript         |         41 |          1 |          4 |         46 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/modals/previewHyperlink.ts       | TypeScript         |         49 |         22 |         19 |         90 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/modals/setHyperlink.ts           | TypeScript         |         68 |          5 |         20 |         93 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Feedback.vue                                     | vue                |        339 |         27 |         37 |        403 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/GenericTab.vue                                   | vue                |        109 |          3 |         13 |        125 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/GraphTab.vue                                     | vue                |         67 |          1 |         13 |         81 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/LightDark.vue                                    | vue                |         31 |          0 |          3 |         34 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Loading.vue                                      | vue                |         98 |          0 |         12 |        110 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Note.vue                                         | vue                |         86 |          6 |         20 |        112 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/NoteTab.vue                                      | vue                |         60 |          4 |         12 |         76 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Settings.vue                                     | vue                |        768 |         52 |         60 |        880 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/TreeView/TagNode.vue                             | vue                |        217 |          2 |         35 |        254 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/TreeView/TreeView.vue                            | vue                |        146 |          1 |         25 |        172 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/V19.html                                         | HTML               |        619 |          9 |         95 |        723 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/Whiteboard.vue                                   | vue                |      1,002 |         10 |        114 |      1,126 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/testinglogin.vue                                 | vue                |         61 |          3 |         11 |         75 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/avatar/Avatar.vue                             | vue                |         19 |          0 |          3 |         22 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/avatar/AvatarFallback.vue                     | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/avatar/AvatarImage.vue                        | vue                |          7 |          0 |          3 |         10 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/avatar/index.ts                               | TypeScript         |         21 |          0 |          4 |         25 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/badge/Badge.vue                               | vue                |         15 |          0 |          3 |         18 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/badge/index.ts                                | TypeScript         |         23 |          0 |          4 |         27 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/Breadcrumb.vue                     | vue                |         11 |          0 |          3 |         14 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbEllipsis.vue             | vue                |         20 |          0 |          3 |         23 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbItem.vue                 | vue                |         14 |          0 |          3 |         17 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbLink.vue                 | vue                |         17 |          0 |          3 |         20 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbList.vue                 | vue                |         14 |          0 |          3 |         17 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbPage.vue                 | vue                |         17 |          0 |          3 |         20 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbSeparator.vue            | vue                |         19 |          0 |          3 |         22 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/index.ts                           | TypeScript         |          7 |          0 |          1 |          8 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/button/Button.vue                             | vue                |         23 |          0 |          4 |         27 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/button/index.ts                               | TypeScript         |         32 |          0 |          4 |         36 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/Calendar.vue                         | vue                |         55 |          0 |          8 |         63 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarCell.vue                     | vue                |         21 |          0 |          6 |         27 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarCellTrigger.vue              | vue                |         35 |          0 |          6 |         41 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarGrid.vue                     | vue                |         21 |          0 |          6 |         27 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarGridBody.vue                 | vue                |         10 |          0 |          3 |         13 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarGridHead.vue                 | vue                |         10 |          0 |          3 |         13 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarGridRow.vue                  | vue                |         18 |          0 |          6 |         24 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarHeadCell.vue                 | vue                |         18 |          0 |          6 |         24 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarHeader.vue                   | vue                |         18 |          0 |          6 |         24 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarHeading.vue                  | vue                |         27 |          0 |          7 |         34 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarNextButton.vue               | vue                |         29 |          0 |          6 |         35 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarPrevButton.vue               | vue                |         29 |          0 |          6 |         35 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/index.ts                             | TypeScript         |         12 |          0 |          1 |         13 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/Card.vue                                 | vue                |         19 |          0 |          3 |         22 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/CardContent.vue                          | vue                |         12 |          0 |          3 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/CardDescription.vue                      | vue                |         12 |          0 |          3 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/CardFooter.vue                           | vue                |         12 |          0 |          3 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/CardHeader.vue                           | vue                |         12 |          0 |          3 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/CardTitle.vue                            | vue                |         16 |          0 |          3 |         19 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/index.ts                                 | TypeScript         |          6 |          0 |          1 |          7 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/checkbox/Checkbox.vue                         | vue                |         28 |          0 |          6 |         34 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/checkbox/index.ts                             | TypeScript         |          1 |          0 |          1 |          2 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/collapsible/Collapsible.vue                   | vue                |         12 |          0 |          4 |         16 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/collapsible/CollapsibleContent.vue            | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/collapsible/CollapsibleTrigger.vue            | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/collapsible/index.ts                          | TypeScript         |          3 |          0 |          1 |          4 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/Command.vue                           | vue                |         24 |          0 |          7 |         31 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandDialog.vue                     | vue                |         18 |          0 |          4 |         22 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandEmpty.vue                      | vue                |         16 |          0 |          5 |         21 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandGroup.vue                      | vue                |         25 |          0 |          5 |         30 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandInput.vue                      | vue                |         27 |          0 |          7 |         34 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandItem.vue                       | vue                |         21 |          0 |          6 |         27 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandList.vue                       | vue                |         22 |          0 |          6 |         28 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandSeparator.vue                  | vue                |         19 |          0 |          5 |         24 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandShortcut.vue                   | vue                |         12 |          0 |          3 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/index.ts                              | TypeScript         |          9 |          0 |          1 |         10 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/Dialog.vue                             | vue                |         11 |          0 |          4 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogClose.vue                        | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogContent.vue                      | vue                |         44 |          0 |          7 |         51 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogDescription.vue                  | vue                |         19 |          0 |          6 |         25 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogFooter.vue                       | vue                |         17 |          0 |          3 |         20 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogHeader.vue                       | vue                |         14 |          0 |          3 |         17 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogScrollContent.vue                | vue                |         53 |          0 |          7 |         60 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogTitle.vue                        | vue                |         24 |          0 |          6 |         30 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogTrigger.vue                      | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/index.ts                               | TypeScript         |          9 |          0 |          1 |         10 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenu.vue                | vue                |         11 |          0 |          4 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuCheckboxItem.vue    | vue                |         35 |          0 |          6 |         41 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue         | vue                |         33 |          0 |          6 |         39 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuGroup.vue           | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuItem.vue            | vue                |         23 |          0 |          6 |         29 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuLabel.vue           | vue                |         19 |          0 |          6 |         25 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuRadioGroup.vue      | vue                |         16 |          0 |          4 |         20 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuRadioItem.vue       | vue                |         35 |          0 |          7 |         42 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuSeparator.vue       | vue                |         18 |          0 |          5 |         23 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuShortcut.vue        | vue                |         12 |          0 |          3 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuSub.vue             | vue                |         16 |          0 |          4 |         20 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuSubContent.vue      | vue                |         25 |          0 |          6 |         31 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuSubTrigger.vue      | vue                |         28 |          0 |          6 |         34 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuTrigger.vue         | vue                |         10 |          0 |          4 |         14 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/index.ts                        | TypeScript         |         15 |          0 |          2 |         17 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/input/Input.vue                               | vue                |         20 |          0 |          5 |         25 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/input/index.ts                                | TypeScript         |          1 |          0 |          1 |          2 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/label/Label.vue                               | vue                |         23 |          0 |          5 |         28 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/label/index.ts                                | TypeScript         |          1 |          0 |          1 |          2 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/popover/Popover.vue                           | vue                |         12 |          0 |          4 |         16 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/popover/PopoverContent.vue                    | vue                |         42 |          0 |          8 |         50 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/popover/PopoverTrigger.vue                    | vue                |         10 |          0 |          3 |         13 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/popover/index.ts                              | TypeScript         |          3 |          0 |          1 |          4 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/radio-group/RadioGroup.vue                    | vue                |         22 |          0 |          6 |         28 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/radio-group/RadioGroupItem.vue                | vue                |         35 |          0 |          7 |         42 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/radio-group/index.ts                          | TypeScript         |          2 |          0 |          1 |          3 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/resizable/ResizableHandle.vue                 | vue                |         22 |          0 |          5 |         27 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/resizable/ResizablePanelGroup.vue             | vue                |         17 |          0 |          5 |         22 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/resizable/index.ts                            | TypeScript         |          3 |          0 |          1 |          4 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/scroll-area/ScrollArea.vue                    | vue                |         25 |          0 |          5 |         30 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/scroll-area/ScrollBar.vue                     | vue                |         26 |          0 |          5 |         31 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/scroll-area/index.ts                          | TypeScript         |          2 |          0 |          1 |          3 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/Select.vue                             | vue                |         12 |          0 |          4 |         16 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectContent.vue                      | vue                |         47 |          0 |          7 |         54 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectGroup.vue                        | vue                |         15 |          0 |          5 |         20 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectItem.vue                         | vue                |         38 |          0 |          7 |         45 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectItemText.vue                     | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectLabel.vue                        | vue                |         11 |          0 |          3 |         14 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectScrollDownButton.vue             | vue                |         19 |          0 |          6 |         25 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectScrollUpButton.vue               | vue                |         19 |          0 |          6 |         25 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectSeparator.vue                    | vue                |         13 |          0 |          5 |         18 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectTrigger.vue                      | vue                |         26 |          0 |          6 |         32 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectValue.vue                        | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/index.ts                               | TypeScript         |         11 |          0 |          1 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/separator/Separator.vue                       | vue                |         31 |          0 |          5 |         36 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/separator/index.ts                            | TypeScript         |          1 |          0 |          1 |          2 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/Sheet.vue                               | vue                |         11 |          0 |          4 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetClose.vue                          | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetContent.vue                        | vue                |         47 |          0 |         10 |         57 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetDescription.vue                    | vue                |         18 |          0 |          5 |         23 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetFooter.vue                         | vue                |         17 |          0 |          3 |         20 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetHeader.vue                         | vue                |         14 |          0 |          3 |         17 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetTitle.vue                          | vue                |         18 |          0 |          5 |         23 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetTrigger.vue                        | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/index.ts                                | TypeScript         |         28 |          0 |          4 |         32 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/Sidebar.vue                           | vue                |         93 |          1 |         10 |        104 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarContent.vue                    | vue                |         15 |          0 |          3 |         18 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarFooter.vue                     | vue                |         15 |          0 |          3 |         18 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarGroup.vue                      | vue                |         15 |          0 |          3 |         18 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarGroupAction.vue                | vue                |         25 |          0 |          3 |         28 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarGroupContent.vue               | vue                |         15 |          0 |          3 |         18 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarGroupLabel.vue                 | vue                |         22 |          0 |          3 |         25 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarHeader.vue                     | vue                |         15 |          0 |          3 |         18 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarInput.vue                      | vue                |         19 |          0 |          3 |         22 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarInset.vue                      | vue                |         18 |          0 |          3 |         21 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenu.vue                       | vue                |         15 |          0 |          3 |         18 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuAction.vue                 | vue                |         32 |          0 |          3 |         35 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuBadge.vue                  | vue                |         23 |          0 |          3 |         26 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuButton.vue                 | vue                |         43 |          0 |          7 |         50 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuButtonChild.vue            | vue                |         30 |          0 |          4 |         34 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuItem.vue                   | vue                |         15 |          0 |          3 |         18 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuSkeleton.vue               | vue                |         29 |          0 |          5 |         34 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuSub.vue                    | vue                |         19 |          0 |          3 |         22 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuSubButton.vue              | vue                |         33 |          0 |          3 |         36 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuSubItem.vue                | vue                |          7 |          0 |          3 |         10 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarProvider.vue                   | vue                |         68 |          0 |         13 |         81 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarRail.vue                       | vue                |         29 |          0 |          4 |         33 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarSeparator.vue                  | vue                |         16 |          0 |          3 |         19 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarTrigger.vue                    | vue                |         23 |          0 |          4 |         27 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/index.ts                              | TypeScript         |         54 |          0 |          6 |         60 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/utils.ts                              | TypeScript         |         17 |          0 |          3 |         20 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/skeleton/Skeleton.vue                         | vue                |         11 |          0 |          4 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/skeleton/index.ts                             | TypeScript         |          1 |          0 |          1 |          2 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/slider/Slider.vue                             | vue                |         32 |          0 |          6 |         38 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/slider/index.ts                               | TypeScript         |          1 |          0 |          1 |          2 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/switch/Switch.vue                             | vue                |         33 |          0 |          8 |         41 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/switch/index.ts                               | TypeScript         |          1 |          0 |          1 |          2 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tabs/Tabs.vue                                 | vue                |         12 |          0 |          4 |         16 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tabs/TabsContent.vue                          | vue                |         18 |          0 |          5 |         23 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tabs/TabsList.vue                             | vue                |         21 |          0 |          5 |         26 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tabs/TabsTrigger.vue                          | vue                |         24 |          0 |          6 |         30 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tabs/index.ts                                 | TypeScript         |          4 |          0 |          1 |          5 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/textarea/Textarea.vue                         | vue                |         20 |          0 |          5 |         25 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/textarea/index.ts                             | TypeScript         |          1 |          0 |          1 |          2 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/Toast.vue                               | vue                |         22 |          0 |          7 |         29 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastAction.vue                         | vue                |         15 |          0 |          5 |         20 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastClose.vue                          | vue                |         18 |          0 |          5 |         23 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastDescription.vue                    | vue                |         15 |          0 |          5 |         20 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastProvider.vue                       | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastTitle.vue                          | vue                |         15 |          0 |          5 |         20 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastViewport.vue                       | vue                |         13 |          0 |          5 |         18 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/Toaster.vue                             | vue                |         28 |          0 |          3 |         31 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/index.ts                                | TypeScript         |         34 |          0 |          6 |         40 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/use-toast.ts                            | TypeScript         |        136 |          0 |         30 |        166 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tooltip/Tooltip.vue                           | vue                |         11 |          0 |          4 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tooltip/TooltipContent.vue                    | vue                |         24 |          0 |          8 |         32 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tooltip/TooltipProvider.vue                   | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tooltip/TooltipTrigger.vue                    | vue                |          9 |          0 |          3 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tooltip/index.ts                              | TypeScript         |          4 |          0 |          1 |          5 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/lib/utils.ts                                                | TypeScript         |          5 |          0 |          2 |          7 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/main.ts                                                     | TypeScript         |         15 |          0 |          4 |         19 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/router/index.ts                                             | TypeScript         |         48 |          4 |          5 |         57 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/stores/counter.ts                                           | TypeScript         |         10 |          0 |          3 |         13 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/stores/useGraphStore.js                                     | JavaScript         |        241 |         37 |         50 |        328 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/stores/useTabStore.js                                       | JavaScript         |        237 |         41 |         39 |        317 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/stores/useUserStore.js                                      | JavaScript         |        184 |         25 |         28 |        237 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/views/Authentication.vue                                    | vue                |        335 |         36 |         34 |        405 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/views/Error.vue                                             | vue                |         33 |          0 |          3 |         36 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/views/Home.vue                                              | vue                |        719 |         44 |         69 |        832 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/views/test.vue                                              | vue                |        200 |          0 |         11 |        211 |
+| /Users/Henry/Desktop/EPQ/Frontend/src/views/test1.vue                                             | vue                |          3 |          0 |          0 |          3 |
+| /Users/Henry/Desktop/EPQ/Frontend/stats.html                                                      | HTML               |        138 |      4,792 |         20 |      4,950 |
+| /Users/Henry/Desktop/EPQ/Frontend/tailwind.config.js                                              | JavaScript         |        102 |          1 |          4 |        107 |
+| /Users/Henry/Desktop/EPQ/Frontend/tsconfig.app.json                                               | JSON               |         12 |          0 |          3 |         15 |
+| /Users/Henry/Desktop/EPQ/Frontend/tsconfig.json                                                   | JSON with Comments |         11 |          0 |          1 |         12 |
+| /Users/Henry/Desktop/EPQ/Frontend/tsconfig.node.json                                              | JSON               |         17 |          0 |          2 |         19 |
+| /Users/Henry/Desktop/EPQ/Frontend/vite.config.ts                                                  | TypeScript         |         36 |          1 |          3 |         40 |
+| /Users/Henry/Desktop/EPQ/package-lock.json                                                        | JSON               |          6 |          0 |          1 |          7 |
+| /Users/Henry/Desktop/EPQ/package.json                                                             | JSON               |          1 |          0 |          1 |          2 |
+| Total                                                                                             |                    |     46,079 |     16,985 |      6,272 |     69,336 |
++---------------------------------------------------------------------------------------------------+--------------------+------------+------------+------------+------------+

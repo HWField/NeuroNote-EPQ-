@@ -312,14 +312,12 @@ def login():
     # print(data)
     email = data.get('email').lower()
     password = data.get('password')
-    terms = data.get('terms')
+  
     
     # Query the user from the database
     user = dbsession.query(User).filter_by(email=email).first()
     
-    if terms == False:
-        # print("didnt accept terms")
-        return jsonify({"message": "Please accept the terms and conditions"}), 400
+
     # Check if user exists and passwords match
     if user is None:    
         return jsonify({"message": "Invalid email"}), 400

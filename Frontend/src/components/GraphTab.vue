@@ -63,7 +63,7 @@ onBeforeUnmount(() => {
     <!-- Graph View with inset -->
     <div class="w-full h-full p-4 sm:p-6">
       <div
-        class="w-full h-full bg-primary-foreground rounded-lg border border-input overflow-hidden"
+        class="w-full h-full bg-primary-foreground rounded-lg shadow-md border border-input overflow-hidden"
       >
         <Cytoscape
           :tabId="tabId"

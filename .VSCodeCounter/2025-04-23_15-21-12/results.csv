@@ -1,0 +1,256 @@
+"filename", "language", "JavaScript", "JSON", "HTML", "JSON with Comments", "TypeScript", "Properties", "vue", "Markdown", "CSS", "XML", "comment", "blank", "total"
+"/Users/Henry/Desktop/EPQ/Frontend/README.md", "Markdown", 0, 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 14, 34
+"/Users/Henry/Desktop/EPQ/Frontend/components.json", "JSON", 0, 18, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18
+"/Users/Henry/Desktop/EPQ/Frontend/env.d.ts", "TypeScript", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2
+"/Users/Henry/Desktop/EPQ/Frontend/index.html", "HTML", 0, 0, 36, 0, 0, 0, 0, 0, 0, 0, 2, 7, 45
+"/Users/Henry/Desktop/EPQ/Frontend/keys.npmrc", "Properties", 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1
+"/Users/Henry/Desktop/EPQ/Frontend/package-lock.json", "JSON", 0, 9788, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 9789
+"/Users/Henry/Desktop/EPQ/Frontend/package.json", "JSON", 0, 92, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 93
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/cola.js", "JavaScript", 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/cose-base.js", "JavaScript", 2511, 0, 0, 0, 0, 0, 0, 0, 0, 0, 225, 478, 3214
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape-cola.js", "JavaScript", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 8
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape-cxtmenu.js", "JavaScript", 630, 0, 0, 0, 0, 0, 0, 0, 0, 0, 57, 162, 849
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape-edgehandles.js", "JavaScript", 797, 0, 0, 0, 0, 0, 0, 0, 0, 0, 72, 286, 1155
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape-fcose.js", "JavaScript", 1157, 0, 0, 0, 0, 0, 0, 0, 0, 0, 156, 236, 1549
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape-popper.js", "JavaScript", 264, 0, 0, 0, 0, 0, 0, 0, 0, 0, 43, 87, 394
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/cytoscape.min.js", "JavaScript", 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 28, 1, 32
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/fabric.min.js", "JavaScript", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/hammer.js", "JavaScript", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 1, 7
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/layout-base.js", "JavaScript", 3638, 0, 0, 0, 0, 0, 0, 0, 0, 0, 716, 876, 5230
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/lodash.js", "JavaScript", 5932, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10124, 1049, 17105
+"/Users/Henry/Desktop/EPQ/Frontend/public/js/popper-core.js", "JavaScript", 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 6
+"/Users/Henry/Desktop/EPQ/Frontend/public/manifest.json", "JSON", 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 17
+"/Users/Henry/Desktop/EPQ/Frontend/src/App.vue", "vue", 0, 0, 0, 0, 0, 0, 34, 0, 0, 0, 2, 4, 40
+"/Users/Henry/Desktop/EPQ/Frontend/src/assets/index(backup copy.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 85, 0, 2, 18, 105
+"/Users/Henry/Desktop/EPQ/Frontend/src/assets/index.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 91, 0, 2, 18, 111
+"/Users/Henry/Desktop/EPQ/Frontend/src/assets/logo.svg", "XML", 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 2
+"/Users/Henry/Desktop/EPQ/Frontend/src/axios.js", "JavaScript", 79, 0, 0, 0, 0, 0, 0, 0, 0, 0, 31, 18, 128
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/AIWhiteboard.vue", "vue", 0, 0, 0, 0, 0, 0, 1259, 0, 0, 0, 13, 185, 1457
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Chat.vue", "vue", 0, 0, 0, 0, 0, 0, 1027, 0, 0, 0, 4, 75, 1106
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Cytoscape backup.vue", "vue", 0, 0, 0, 0, 0, 0, 1010, 0, 0, 0, 4, 83, 1097
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Cytoscape.vue", "vue", 0, 0, 0, 0, 0, 0, 2251, 0, 0, 0, 13, 246, 2510
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Dashboard.vue", "vue", 0, 0, 0, 0, 0, 0, 572, 0, 0, 0, 24, 50, 646
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/ChemicalStructure.vue", "vue", 0, 0, 0, 0, 0, 0, 55, 0, 0, 0, 0, 21, 76
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Chemistry/Component.vue", "vue", 0, 0, 0, 0, 0, 0, 45, 0, 0, 0, 0, 12, 57
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Chemistry/Extension.ts", "TypeScript", 0, 0, 0, 0, 39, 0, 0, 0, 0, 0, 0, 8, 47
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/ColorHighlighter.ts", "TypeScript", 0, 0, 0, 0, 27, 0, 0, 0, 0, 0, 0, 4, 31
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Commands.js", "JavaScript", 26, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 31
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/CommandsList.vue", "vue", 0, 0, 0, 0, 0, 0, 411, 0, 0, 0, 0, 29, 440
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/EventBus.js", "JavaScript", 22, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 31
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/FindColours.ts", "TypeScript", 0, 0, 0, 0, 23, 0, 0, 0, 0, 0, 0, 6, 29
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/NoteHeader.vue", "vue", 0, 0, 0, 0, 0, 0, 460, 0, 0, 0, 6, 39, 505
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/SymbolReplacer.ts", "TypeScript", 0, 0, 0, 0, 132, 0, 0, 0, 0, 0, 0, 3, 135
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Tags.js", "JavaScript", 45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 51
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/TagsList.vue", "vue", 0, 0, 0, 0, 0, 0, 156, 0, 0, 0, 1, 28, 185
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/TipTap.vue", "vue", 0, 0, 0, 0, 0, 0, 2017, 0, 0, 0, 17, 233, 2267
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Whiteboard/WhiteboardPreview.vue", "vue", 0, 0, 0, 0, 0, 0, 275, 0, 0, 0, 2, 41, 318
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/Whiteboard/extension.js", "JavaScript", 54, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 9, 71
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/katex.min.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 2
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/math.css", "CSS", 0, 0, 0, 0, 0, 0, 0, 0, 40, 0, 1, 7, 48
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/modals/editeHyperlink.ts", "TypeScript", 0, 0, 0, 0, 75, 0, 0, 0, 0, 0, 4, 22, 101
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/modals/icons.ts", "TypeScript", 0, 0, 0, 0, 41, 0, 0, 0, 0, 0, 1, 4, 46
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/modals/previewHyperlink.ts", "TypeScript", 0, 0, 0, 0, 49, 0, 0, 0, 0, 0, 22, 19, 90
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Document Editor/modals/setHyperlink.ts", "TypeScript", 0, 0, 0, 0, 68, 0, 0, 0, 0, 0, 5, 20, 93
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Feedback.vue", "vue", 0, 0, 0, 0, 0, 0, 339, 0, 0, 0, 27, 37, 403
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/GenericTab.vue", "vue", 0, 0, 0, 0, 0, 0, 109, 0, 0, 0, 3, 13, 125
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/GraphTab.vue", "vue", 0, 0, 0, 0, 0, 0, 67, 0, 0, 0, 1, 13, 81
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/LightDark.vue", "vue", 0, 0, 0, 0, 0, 0, 31, 0, 0, 0, 0, 3, 34
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Loading.vue", "vue", 0, 0, 0, 0, 0, 0, 98, 0, 0, 0, 0, 12, 110
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Note.vue", "vue", 0, 0, 0, 0, 0, 0, 86, 0, 0, 0, 6, 20, 112
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/NoteTab.vue", "vue", 0, 0, 0, 0, 0, 0, 60, 0, 0, 0, 4, 12, 76
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Settings.vue", "vue", 0, 0, 0, 0, 0, 0, 768, 0, 0, 0, 52, 60, 880
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/TreeView/TagNode.vue", "vue", 0, 0, 0, 0, 0, 0, 217, 0, 0, 0, 2, 35, 254
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/TreeView/TreeView.vue", "vue", 0, 0, 0, 0, 0, 0, 146, 0, 0, 0, 1, 25, 172
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/V19.html", "HTML", 0, 0, 619, 0, 0, 0, 0, 0, 0, 0, 9, 95, 723
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/Whiteboard.vue", "vue", 0, 0, 0, 0, 0, 0, 1002, 0, 0, 0, 10, 114, 1126
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/testinglogin.vue", "vue", 0, 0, 0, 0, 0, 0, 61, 0, 0, 0, 3, 11, 75
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/avatar/Avatar.vue", "vue", 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 3, 22
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/avatar/AvatarFallback.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/avatar/AvatarImage.vue", "vue", 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 3, 10
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/avatar/index.ts", "TypeScript", 0, 0, 0, 0, 21, 0, 0, 0, 0, 0, 0, 4, 25
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/badge/Badge.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 3, 18
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/badge/index.ts", "TypeScript", 0, 0, 0, 0, 23, 0, 0, 0, 0, 0, 0, 4, 27
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/Breadcrumb.vue", "vue", 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 3, 14
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbEllipsis.vue", "vue", 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 3, 23
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbItem.vue", "vue", 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 3, 17
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbLink.vue", "vue", 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 3, 20
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbList.vue", "vue", 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 3, 17
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbPage.vue", "vue", 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 3, 20
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/BreadcrumbSeparator.vue", "vue", 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 3, 22
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/breadcrumb/index.ts", "TypeScript", 0, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 1, 8
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/button/Button.vue", "vue", 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 4, 27
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/button/index.ts", "TypeScript", 0, 0, 0, 0, 32, 0, 0, 0, 0, 0, 0, 4, 36
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/Calendar.vue", "vue", 0, 0, 0, 0, 0, 0, 55, 0, 0, 0, 0, 8, 63
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarCell.vue", "vue", 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 6, 27
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarCellTrigger.vue", "vue", 0, 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 6, 41
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarGrid.vue", "vue", 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 6, 27
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarGridBody.vue", "vue", 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 3, 13
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarGridHead.vue", "vue", 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 3, 13
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarGridRow.vue", "vue", 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 6, 24
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarHeadCell.vue", "vue", 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 6, 24
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarHeader.vue", "vue", 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 6, 24
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarHeading.vue", "vue", 0, 0, 0, 0, 0, 0, 27, 0, 0, 0, 0, 7, 34
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarNextButton.vue", "vue", 0, 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 6, 35
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/CalendarPrevButton.vue", "vue", 0, 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 6, 35
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/calendar/index.ts", "TypeScript", 0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 0, 1, 13
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/Card.vue", "vue", 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 3, 22
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/CardContent.vue", "vue", 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 3, 15
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/CardDescription.vue", "vue", 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 3, 15
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/CardFooter.vue", "vue", 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 3, 15
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/CardHeader.vue", "vue", 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 3, 15
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/CardTitle.vue", "vue", 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 3, 19
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/card/index.ts", "TypeScript", 0, 0, 0, 0, 6, 0, 0, 0, 0, 0, 0, 1, 7
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/checkbox/Checkbox.vue", "vue", 0, 0, 0, 0, 0, 0, 28, 0, 0, 0, 0, 6, 34
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/checkbox/index.ts", "TypeScript", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/collapsible/Collapsible.vue", "vue", 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 4, 16
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/collapsible/CollapsibleContent.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/collapsible/CollapsibleTrigger.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/collapsible/index.ts", "TypeScript", 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 1, 4
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/Command.vue", "vue", 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 7, 31
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandDialog.vue", "vue", 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 4, 22
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandEmpty.vue", "vue", 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 5, 21
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandGroup.vue", "vue", 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 5, 30
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandInput.vue", "vue", 0, 0, 0, 0, 0, 0, 27, 0, 0, 0, 0, 7, 34
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandItem.vue", "vue", 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 6, 27
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandList.vue", "vue", 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 6, 28
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandSeparator.vue", "vue", 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 5, 24
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/CommandShortcut.vue", "vue", 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 3, 15
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/command/index.ts", "TypeScript", 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 1, 10
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/Dialog.vue", "vue", 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 4, 15
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogClose.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogContent.vue", "vue", 0, 0, 0, 0, 0, 0, 44, 0, 0, 0, 0, 7, 51
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogDescription.vue", "vue", 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 6, 25
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogFooter.vue", "vue", 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 3, 20
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogHeader.vue", "vue", 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 3, 17
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogScrollContent.vue", "vue", 0, 0, 0, 0, 0, 0, 53, 0, 0, 0, 0, 7, 60
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogTitle.vue", "vue", 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 6, 30
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/DialogTrigger.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dialog/index.ts", "TypeScript", 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 0, 1, 10
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenu.vue", "vue", 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 4, 15
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuCheckboxItem.vue", "vue", 0, 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 6, 41
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuContent.vue", "vue", 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, 0, 6, 39
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuGroup.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuItem.vue", "vue", 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 6, 29
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuLabel.vue", "vue", 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 6, 25
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuRadioGroup.vue", "vue", 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 4, 20
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuRadioItem.vue", "vue", 0, 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 7, 42
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuSeparator.vue", "vue", 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 5, 23
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuShortcut.vue", "vue", 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 3, 15
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuSub.vue", "vue", 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 4, 20
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuSubContent.vue", "vue", 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 6, 31
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuSubTrigger.vue", "vue", 0, 0, 0, 0, 0, 0, 28, 0, 0, 0, 0, 6, 34
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/DropdownMenuTrigger.vue", "vue", 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 4, 14
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/dropdown-menu/index.ts", "TypeScript", 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 2, 17
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/input/Input.vue", "vue", 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 5, 25
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/input/index.ts", "TypeScript", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/label/Label.vue", "vue", 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 5, 28
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/label/index.ts", "TypeScript", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/popover/Popover.vue", "vue", 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 4, 16
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/popover/PopoverContent.vue", "vue", 0, 0, 0, 0, 0, 0, 42, 0, 0, 0, 0, 8, 50
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/popover/PopoverTrigger.vue", "vue", 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 3, 13
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/popover/index.ts", "TypeScript", 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 1, 4
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/radio-group/RadioGroup.vue", "vue", 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 6, 28
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/radio-group/RadioGroupItem.vue", "vue", 0, 0, 0, 0, 0, 0, 35, 0, 0, 0, 0, 7, 42
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/radio-group/index.ts", "TypeScript", 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 3
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/resizable/ResizableHandle.vue", "vue", 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 5, 27
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/resizable/ResizablePanelGroup.vue", "vue", 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 5, 22
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/resizable/index.ts", "TypeScript", 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 1, 4
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/scroll-area/ScrollArea.vue", "vue", 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 5, 30
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/scroll-area/ScrollBar.vue", "vue", 0, 0, 0, 0, 0, 0, 26, 0, 0, 0, 0, 5, 31
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/scroll-area/index.ts", "TypeScript", 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 3
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/Select.vue", "vue", 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 4, 16
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectContent.vue", "vue", 0, 0, 0, 0, 0, 0, 47, 0, 0, 0, 0, 7, 54
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectGroup.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 5, 20
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectItem.vue", "vue", 0, 0, 0, 0, 0, 0, 38, 0, 0, 0, 0, 7, 45
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectItemText.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectLabel.vue", "vue", 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 3, 14
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectScrollDownButton.vue", "vue", 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 6, 25
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectScrollUpButton.vue", "vue", 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 6, 25
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectSeparator.vue", "vue", 0, 0, 0, 0, 0, 0, 13, 0, 0, 0, 0, 5, 18
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectTrigger.vue", "vue", 0, 0, 0, 0, 0, 0, 26, 0, 0, 0, 0, 6, 32
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/SelectValue.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/select/index.ts", "TypeScript", 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 1, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/separator/Separator.vue", "vue", 0, 0, 0, 0, 0, 0, 31, 0, 0, 0, 0, 5, 36
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/separator/index.ts", "TypeScript", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/Sheet.vue", "vue", 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 4, 15
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetClose.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetContent.vue", "vue", 0, 0, 0, 0, 0, 0, 47, 0, 0, 0, 0, 10, 57
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetDescription.vue", "vue", 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 5, 23
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetFooter.vue", "vue", 0, 0, 0, 0, 0, 0, 17, 0, 0, 0, 0, 3, 20
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetHeader.vue", "vue", 0, 0, 0, 0, 0, 0, 14, 0, 0, 0, 0, 3, 17
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetTitle.vue", "vue", 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 5, 23
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/SheetTrigger.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sheet/index.ts", "TypeScript", 0, 0, 0, 0, 28, 0, 0, 0, 0, 0, 0, 4, 32
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/Sidebar.vue", "vue", 0, 0, 0, 0, 0, 0, 93, 0, 0, 0, 1, 10, 104
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarContent.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 3, 18
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarFooter.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 3, 18
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarGroup.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 3, 18
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarGroupAction.vue", "vue", 0, 0, 0, 0, 0, 0, 25, 0, 0, 0, 0, 3, 28
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarGroupContent.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 3, 18
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarGroupLabel.vue", "vue", 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 3, 25
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarHeader.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 3, 18
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarInput.vue", "vue", 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 3, 22
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarInset.vue", "vue", 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 3, 21
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenu.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 3, 18
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuAction.vue", "vue", 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 3, 35
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuBadge.vue", "vue", 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 3, 26
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuButton.vue", "vue", 0, 0, 0, 0, 0, 0, 43, 0, 0, 0, 0, 7, 50
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuButtonChild.vue", "vue", 0, 0, 0, 0, 0, 0, 30, 0, 0, 0, 0, 4, 34
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuItem.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 3, 18
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuSkeleton.vue", "vue", 0, 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 5, 34
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuSub.vue", "vue", 0, 0, 0, 0, 0, 0, 19, 0, 0, 0, 0, 3, 22
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuSubButton.vue", "vue", 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, 0, 3, 36
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarMenuSubItem.vue", "vue", 0, 0, 0, 0, 0, 0, 7, 0, 0, 0, 0, 3, 10
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarProvider.vue", "vue", 0, 0, 0, 0, 0, 0, 68, 0, 0, 0, 0, 13, 81
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarRail.vue", "vue", 0, 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 4, 33
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarSeparator.vue", "vue", 0, 0, 0, 0, 0, 0, 16, 0, 0, 0, 0, 3, 19
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/SidebarTrigger.vue", "vue", 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0, 4, 27
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/index.ts", "TypeScript", 0, 0, 0, 0, 54, 0, 0, 0, 0, 0, 0, 6, 60
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/sidebar/utils.ts", "TypeScript", 0, 0, 0, 0, 17, 0, 0, 0, 0, 0, 0, 3, 20
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/skeleton/Skeleton.vue", "vue", 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 4, 15
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/skeleton/index.ts", "TypeScript", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/slider/Slider.vue", "vue", 0, 0, 0, 0, 0, 0, 32, 0, 0, 0, 0, 6, 38
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/slider/index.ts", "TypeScript", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/switch/Switch.vue", "vue", 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, 0, 8, 41
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/switch/index.ts", "TypeScript", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tabs/Tabs.vue", "vue", 0, 0, 0, 0, 0, 0, 12, 0, 0, 0, 0, 4, 16
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tabs/TabsContent.vue", "vue", 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 5, 23
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tabs/TabsList.vue", "vue", 0, 0, 0, 0, 0, 0, 21, 0, 0, 0, 0, 5, 26
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tabs/TabsTrigger.vue", "vue", 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 6, 30
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tabs/index.ts", "TypeScript", 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 1, 5
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/textarea/Textarea.vue", "vue", 0, 0, 0, 0, 0, 0, 20, 0, 0, 0, 0, 5, 25
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/textarea/index.ts", "TypeScript", 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/Toast.vue", "vue", 0, 0, 0, 0, 0, 0, 22, 0, 0, 0, 0, 7, 29
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastAction.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 5, 20
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastClose.vue", "vue", 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 5, 23
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastDescription.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 5, 20
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastProvider.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastTitle.vue", "vue", 0, 0, 0, 0, 0, 0, 15, 0, 0, 0, 0, 5, 20
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/ToastViewport.vue", "vue", 0, 0, 0, 0, 0, 0, 13, 0, 0, 0, 0, 5, 18
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/Toaster.vue", "vue", 0, 0, 0, 0, 0, 0, 28, 0, 0, 0, 0, 3, 31
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/index.ts", "TypeScript", 0, 0, 0, 0, 34, 0, 0, 0, 0, 0, 0, 6, 40
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/toast/use-toast.ts", "TypeScript", 0, 0, 0, 0, 136, 0, 0, 0, 0, 0, 0, 30, 166
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tooltip/Tooltip.vue", "vue", 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 4, 15
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tooltip/TooltipContent.vue", "vue", 0, 0, 0, 0, 0, 0, 24, 0, 0, 0, 0, 8, 32
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tooltip/TooltipProvider.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tooltip/TooltipTrigger.vue", "vue", 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 3, 12
+"/Users/Henry/Desktop/EPQ/Frontend/src/components/ui/tooltip/index.ts", "TypeScript", 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 1, 5
+"/Users/Henry/Desktop/EPQ/Frontend/src/lib/utils.ts", "TypeScript", 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 2, 7
+"/Users/Henry/Desktop/EPQ/Frontend/src/main.ts", "TypeScript", 0, 0, 0, 0, 15, 0, 0, 0, 0, 0, 0, 4, 19
+"/Users/Henry/Desktop/EPQ/Frontend/src/router/index.ts", "TypeScript", 0, 0, 0, 0, 48, 0, 0, 0, 0, 0, 4, 5, 57
+"/Users/Henry/Desktop/EPQ/Frontend/src/stores/counter.ts", "TypeScript", 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 3, 13
+"/Users/Henry/Desktop/EPQ/Frontend/src/stores/useGraphStore.js", "JavaScript", 241, 0, 0, 0, 0, 0, 0, 0, 0, 0, 37, 50, 328
+"/Users/Henry/Desktop/EPQ/Frontend/src/stores/useTabStore.js", "JavaScript", 237, 0, 0, 0, 0, 0, 0, 0, 0, 0, 41, 39, 317
+"/Users/Henry/Desktop/EPQ/Frontend/src/stores/useUserStore.js", "JavaScript", 184, 0, 0, 0, 0, 0, 0, 0, 0, 0, 25, 28, 237
+"/Users/Henry/Desktop/EPQ/Frontend/src/views/Authentication.vue", "vue", 0, 0, 0, 0, 0, 0, 335, 0, 0, 0, 36, 34, 405
+"/Users/Henry/Desktop/EPQ/Frontend/src/views/Error.vue", "vue", 0, 0, 0, 0, 0, 0, 33, 0, 0, 0, 0, 3, 36
+"/Users/Henry/Desktop/EPQ/Frontend/src/views/Home.vue", "vue", 0, 0, 0, 0, 0, 0, 719, 0, 0, 0, 44, 69, 832
+"/Users/Henry/Desktop/EPQ/Frontend/src/views/test.vue", "vue", 0, 0, 0, 0, 0, 0, 200, 0, 0, 0, 0, 11, 211
+"/Users/Henry/Desktop/EPQ/Frontend/src/views/test1.vue", "vue", 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 3
+"/Users/Henry/Desktop/EPQ/Frontend/stats.html", "HTML", 0, 0, 138, 0, 0, 0, 0, 0, 0, 0, 4792, 20, 4950
+"/Users/Henry/Desktop/EPQ/Frontend/tailwind.config.js", "JavaScript", 102, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 4, 107
+"/Users/Henry/Desktop/EPQ/Frontend/tsconfig.app.json", "JSON", 0, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 15
+"/Users/Henry/Desktop/EPQ/Frontend/tsconfig.json", "JSON with Comments", 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 1, 12
+"/Users/Henry/Desktop/EPQ/Frontend/tsconfig.node.json", "JSON", 0, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 19
+"/Users/Henry/Desktop/EPQ/Frontend/vite.config.ts", "TypeScript", 0, 0, 0, 0, 36, 0, 0, 0, 0, 0, 1, 3, 40
+"Total", "-", 15929, 9944, 793, 11, 1011, 1, 16776, 20, 217, 1, 16707, 5887, 67297

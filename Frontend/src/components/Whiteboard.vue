@@ -106,45 +106,49 @@
 
               <!-- Pen Color -->
               <DropdownMenu>
-  <DropdownMenuTrigger asChild>
-    <Button
-      variant="ghost"
-      size="sm"
-      class="flex gap-1 items-center"
-    >
-      <Palette class="h-4 w-4" :color="colour" />
-      <span>Colour</span>
-      <ChevronDownIcon class="h-3 w-3 opacity-50" />
-    </Button>
-  </DropdownMenuTrigger>
-  <DropdownMenuContent>
-    <DropdownMenuItem @click="colour = 'black'">
-      <Circle class="h-4 w-4 mr-2" fill="black" />
-      <span>Black</span>
-      <Check v-if="colour === 'black'" class="h-4 w-4 ml-auto" />
-    </DropdownMenuItem>
-    <DropdownMenuItem @click="colour = 'white'">
-      <Circle class="h-4 w-4 mr-2" fill="white" stroke="#e5e5e5" />
-      <span>White</span>
-      <Check v-if="colour === 'white'" class="h-4 w-4 ml-auto" />
-    </DropdownMenuItem>
-    <DropdownMenuItem @click="colour = 'red'">
-      <Circle class="h-4 w-4 mr-2" fill="red" />
-      <span>Red</span>
-      <Check v-if="colour === 'red'" class="h-4 w-4 ml-auto" />
-    </DropdownMenuItem>
-    <DropdownMenuItem @click="colour = 'blue'">
-      <Circle class="h-4 w-4 mr-2" fill="blue" />
-      <span>Blue</span>
-      <Check v-if="colour === 'blue'" class="h-4 w-4 ml-auto" />
-    </DropdownMenuItem>
-    <DropdownMenuItem @click="colour = 'green'">
-      <Circle class="h-4 w-4 mr-2" fill="green" />
-      <span>Green</span>
-      <Check v-if="colour === 'green'" class="h-4 w-4 ml-auto" />
-    </DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    class="flex gap-1 items-center"
+                  >
+                    <Palette class="h-4 w-4" :color="colour" />
+                    <span>Colour</span>
+                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem @click="colour = 'black'">
+                    <Circle class="h-4 w-4 mr-2" fill="black" />
+                    <span>Black</span>
+                    <Check v-if="colour === 'black'" class="h-4 w-4 ml-auto" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="colour = 'white'">
+                    <Circle
+                      class="h-4 w-4 mr-2"
+                      fill="white"
+                      stroke="#e5e5e5"
+                    />
+                    <span>White</span>
+                    <Check v-if="colour === 'white'" class="h-4 w-4 ml-auto" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="colour = 'red'">
+                    <Circle class="h-4 w-4 mr-2" fill="red" />
+                    <span>Red</span>
+                    <Check v-if="colour === 'red'" class="h-4 w-4 ml-auto" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="colour = 'blue'">
+                    <Circle class="h-4 w-4 mr-2" fill="blue" />
+                    <span>Blue</span>
+                    <Check v-if="colour === 'blue'" class="h-4 w-4 ml-auto" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="colour = 'green'">
+                    <Circle class="h-4 w-4 mr-2" fill="green" />
+                    <span>Green</span>
+                    <Check v-if="colour === 'green'" class="h-4 w-4 ml-auto" />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               <Separator orientation="vertical" class="h-6 mx-1" />
 
@@ -157,7 +161,7 @@
                     class="flex gap-1 items-center"
                   >
                     <Pencil class="h-4 w-4" />
-                    <span>Type</span>
+                    <span>Width</span>
                     <ChevronDownIcon class="h-3 w-3 opacity-50" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -204,29 +208,44 @@
                   <DropdownMenuItem @click="background = 'line'">
                     <Rows3Icon class="h-4 w-4 mr-2" />
                     <span>Line</span>
-                    <Check v-if="background == 'line'" class="h-4 w-4 ml-auto" />
+                    <Check
+                      v-if="background == 'line'"
+                      class="h-4 w-4 ml-auto"
+                    />
                   </DropdownMenuItem>
                   <Separator />
                   <DropdownMenuItem @click="background = 'sGrid'">
                     <Grid class="h-4 w-4 mr-2" />
                     <span>Small Grid</span>
-                    <Check v-if="background == 'sGrid'" class="h-4 w-4 ml-auto" />
+                    <Check
+                      v-if="background == 'sGrid'"
+                      class="h-4 w-4 ml-auto"
+                    />
                   </DropdownMenuItem>
                   <DropdownMenuItem @click="background = 'mGrid'">
                     <Grid class="h-4 w-4 mr-2" />
                     <span>Medium Grid</span>
-                    <Check v-if="background == 'mGrid'" class="h-4 w-4 ml-auto" />
+                    <Check
+                      v-if="background == 'mGrid'"
+                      class="h-4 w-4 ml-auto"
+                    />
                   </DropdownMenuItem>
                   <DropdownMenuItem @click="background = 'lGrid'">
                     <Grid class="h-4 w-4 mr-2" />
                     <span>Large Grid</span>
-                    <Check v-if="background == 'lGrid'" class="h-4 w-4 ml-auto" />
+                    <Check
+                      v-if="background == 'lGrid'"
+                      class="h-4 w-4 ml-auto"
+                    />
                   </DropdownMenuItem>
                   <Separator />
                   <DropdownMenuItem @click="background = 'empty'">
                     <Square class="h-4 w-4 mr-2" />
                     <span>Blank</span>
-                    <Check v-if="background == 'empty'" class="h-4 w-4 ml-auto" />
+                    <Check
+                      v-if="background == 'empty'"
+                      class="h-4 w-4 ml-auto"
+                    />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -259,7 +278,7 @@
           class="relative m-4 z-40 flex justify-center"
         >
           <div
-            class="bg-primary-foreground shadow-lg rounded-lg p-4 max-w-[2000px] w-full mx-auto"
+            class="bg-primary-foreground shadow-lg rounded-lg shadow-md p-4 max-w-[2000px] w-full mx-auto"
           >
             <NoteHeader
               :initial-title="noteTitle"
@@ -274,13 +293,15 @@
       <div class="flex justify-center flex-1">
         <div
           id="canvas-container"
-          class="canvas-container w-full  overflow-hidden bg-primary-foreground rounded-lg border border-input m-4 relative"
-          :class="showNoteHeader ? 'h-[calc(100vh-24rem)]' : 'h-[calc(100vh-12rem)]'"
+          class="canvas-container w-full overflow-hidden bg-primary-foreground rounded-lg shadow-md border border-input m-4 relative"
+          :class="
+            showNoteHeader ? 'h-[calc(100vh-24rem)]' : 'h-[calc(100vh-12rem)]'
+          "
         >
           <!-- Grid canvas (bottom layer) -->
           <canvas
             id="grid-canvas"
-            class="absolute top-0 left-0 w-full h-full"
+            class="absolute top-0 left-0 w-full h-full bg-white"
           ></canvas>
           <!-- Main canvas (top layer) -->
           <canvas
@@ -362,7 +383,7 @@ import {
   LucideFileLineChart,
   Rows3Icon,
   Move,
-  Check
+  Check,
 } from "lucide-vue-next";
 import { useToast } from "@/components/ui/toast/use-toast";
 
@@ -380,7 +401,7 @@ const isLoading = ref(false);
 const viewport = ref({ x: 0, y: 0, zoom: 1 });
 const background = ref("Lgrid");
 const mode = ref("draw");
-const colour = ref("");
+const colour = ref("red");
 
 if (useUserStore.theme == "dark") {
   colour.value = "white";
@@ -445,6 +466,7 @@ async function SaveToBackend() {
 }
 async function LoadFromBackend() {
   console.error("Loading note:", props.noteId);
+  Loading.value = true;
   try {
     // isLoading.value = true;
 
@@ -453,6 +475,7 @@ async function LoadFromBackend() {
       operation: "content",
     });
     console.error("Note loaded successfully:", response.data);
+    Loading.value = false;
     // Set the title in our ref
     noteTitle.value = response.data.name || "Untitled Note";
     // Set the viewport
@@ -482,21 +505,18 @@ async function LoadFromBackend() {
           canvas.loadFromJSON(response.data.content, function () {
             // Force multiple render calls to ensure everything appears
             setTimeout(() => {
-              
               canvas.renderAll();
-                // Apply sharpness settings to all paths after loading
-            canvas.getObjects().forEach(obj => {
-              // Check if it's a path or path-like object
-              if (obj.type === 'path' || obj.type === 'line' || obj.path) {
-                obj.objectCaching = false;
-                if (obj.strokeLineCap !== undefined) {
-                  obj.strokeLineCap = 'round';
-                  obj.strokeLineJoin = 'round';
+              // Apply sharpness settings to all paths after loading
+              canvas.getObjects().forEach((obj) => {
+                // Check if it's a path or path-like object
+                if (obj.type === "path" || obj.type === "line" || obj.path) {
+                  obj.objectCaching = false;
+                  if (obj.strokeLineCap !== undefined) {
+                    obj.strokeLineCap = "round";
+                    obj.strokeLineJoin = "round";
+                  }
                 }
-              }
-            });
-
-              
+              });
 
               // Force a second render after a brief delay
               setTimeout(() => {
@@ -568,21 +588,21 @@ async function closeNote() {
 function resizeCanvasToContainer() {
   // Guard against accessing canvas before it's initialized
   if (!canvas || !gridCanvas || !modalContent) return;
-  
+
   // Get the new container dimensions
   const newWidth = modalContent.offsetWidth;
   const newHeight = modalContent.offsetHeight;
-  
+
   // Update both canvas sizes
   canvas.setWidth(newWidth);
   canvas.setHeight(newHeight);
   gridCanvas.width = newWidth;
   gridCanvas.height = newHeight;
-  
+
   // Redraw the grid with current viewport
   const vpt = canvas.viewportTransform;
   drawGrid(vpt[4], vpt[5], canvas.getZoom());
-  
+
   // Force canvas to render
   canvas.requestRenderAll();
 }
@@ -610,17 +630,17 @@ function initaliseCanvas() {
     height: modalContent.offsetHeight,
     backgroundColor: "transparent", // Ensure background is transparent
   });
-  
-//   function onObjectSelected(e) {
-//     object = e.selected[0]
-//     console.error("Object selected:", object).type;
-//     canvas.bringObjectToFront(object);
-//     object.bringObjectToFront();
-//     object.bringToFront();
-//     canvas.renderAll();
 
-// }
-// canvas.on('selection:created', onObjectSelected);
+  //   function onObjectSelected(e) {
+  //     object = e.selected[0]
+  //     console.error("Object selected:", object).type;
+  //     canvas.bringObjectToFront(object);
+  //     object.bringObjectToFront();
+  //     object.bringToFront();
+  //     canvas.renderAll();
+
+  // }
+  // canvas.on('selection:created', onObjectSelected);
 
   console.error("Canvas initialized:", canvas);
   //might need changing in future but prevents blurry edges for now
@@ -640,8 +660,6 @@ function initaliseCanvas() {
     path.strokeLineCap = "round";
     path.strokeLineJoin = "round";
     return path;
-
-  
   };
 
   // Set drawing mode based on your current mode
@@ -845,17 +863,16 @@ function initaliseCanvas() {
   });
 }
 
-
 function HandleWhiteboardClick(event) {
-    // Check if the active element is an input, textarea, or contenteditable element
-    const activeElement = document.activeElement;
-  const isEditableElement = 
-    activeElement.tagName === 'INPUT' || 
-    activeElement.tagName === 'TEXTAREA' || 
-    activeElement.getAttribute('contenteditable') === 'true' ||
-    activeElement.classList.contains('tiptap-editor') ||
+  // Check if the active element is an input, textarea, or contenteditable element
+  const activeElement = document.activeElement;
+  const isEditableElement =
+    activeElement.tagName === "INPUT" ||
+    activeElement.tagName === "TEXTAREA" ||
+    activeElement.getAttribute("contenteditable") === "true" ||
+    activeElement.classList.contains("tiptap-editor") ||
     activeElement.isContentEditable;
-  
+
   // If user is typing in an editable field, don't process keyboard shortcuts
   if (isEditableElement) {
     return;
@@ -865,7 +882,7 @@ function HandleWhiteboardClick(event) {
     closeNote();
   } else if (event.key === "Backspace" || event.key === "Delete") {
     deleteSelected();
-  }  else if (event.key === "Tab") {
+  } else if (event.key === "Tab") {
     event.preventDefault(); // Prevent default tab behavior
     // Toggle between draw and type mode
 
@@ -903,7 +920,6 @@ function HandleWhiteboardClick(event) {
     canvas.setActiveObject(sel);
     canvas.requestRenderAll();
   }
-  
 }
 onMounted(async () => {
   // Wait for content to load before proceeding
@@ -913,7 +929,7 @@ onMounted(async () => {
   // Only proceed with the rest if loading was successful
   if (loaded) {
     useUserStore().addToRecentNotes(props.noteId);
-    
+    useTabStore().RenameTab(props.tabId, noteTitle); //update tab live
 
     // Full save every minute
     saveInterval.value = setInterval(async () => {
@@ -1006,14 +1022,12 @@ watch(mode, (newMode) => {
   }
 });
 
-
-
 watch(colour, (newColor) => {
   canvas.freeDrawingBrush.color = newColor;
   const activeObjects = canvas.getActiveObjects();
   activeObjects.forEach((obj) => {
     console.error("Updating color of object:", obj);
-    
+
     if (obj.type === "path") {
       obj.set("stroke", newColor);
     } else {
@@ -1043,23 +1057,22 @@ watch(background, (newBackground) => {
 // });
 
 function addShape(shapeType) {
-
-    // Calculate the center of the current viewport in canvas coordinates
-    const vpt = canvas.viewportTransform;
+  // Calculate the center of the current viewport in canvas coordinates
+  const vpt = canvas.viewportTransform;
   const zoom = canvas.getZoom();
-  
+
   // Get the visible area dimensions
   const visibleWidth = modalContent.offsetWidth;
   const visibleHeight = modalContent.offsetHeight;
-  
+
   // Calculate the center position in canvas coordinates
-  const centerX = (-vpt[4] / zoom) + (visibleWidth / (2 * zoom));
-  const centerY = (-vpt[5] / zoom) + (visibleHeight / (2 * zoom));
+  const centerX = -vpt[4] / zoom + visibleWidth / (2 * zoom);
+  const centerY = -vpt[5] / zoom + visibleHeight / (2 * zoom);
   let shape;
   if (shapeType === "rectangle") {
     shape = new fabric.Rect({
       left: centerX - 50, // Center by offsetting half width
-      top: centerY - 30,  // Center by offsetting half height
+      top: centerY - 30, // Center by offsetting half height
       width: 100,
       height: 60,
       fill: colour.value,
@@ -1067,7 +1080,7 @@ function addShape(shapeType) {
     });
   } else if (shapeType === "circle") {
     shape = new fabric.Circle({
-      left: centerX - 50, 
+      left: centerX - 50,
       top: centerY - 30,
       radius: 50,
       fill: colour.value,
@@ -1075,7 +1088,7 @@ function addShape(shapeType) {
     });
   } else if (shapeType === "triangle") {
     shape = new fabric.Triangle({
-      left: centerX - 50, 
+      left: centerX - 50,
       top: centerY - 30,
       width: 100,
       height: 100,

@@ -1,4 +1,5 @@
 <script setup>
+import { WhiteboardExtension } from './Whiteboard/extension.js';
 import chemistry from './Chemistry/Extension.js'
 import Gapcursor from "@tiptap/extension-gapcursor";
 import Code from "@tiptap/extension-code";
@@ -329,12 +330,14 @@ const createWhiteboard = async () => {
   }
 };
 const insertWhiteboard = () => {
-  console.error("Inserting whiteboard with ID:", selectedWhiteboard.value);
+  console.error("Inserting whiteboard with ID:", selectedWhiteboard.value, "parents:", props.tabId);
   if (selectedWhiteboard.value) {
     editor.commands.insertContent({
       type: 'whiteboard',
       attrs: {
         id: selectedWhiteboard.value,
+        name: newWhiteboardName.value || "Untitled Whiteboard",
+        parentTab: props.tabId,
       }
     });
     closeWhiteboardModal();
@@ -346,6 +349,19 @@ const insertWhiteboard = () => {
     });
   }
 };
+
+function updateWhiteboardParentTabs() {
+  if (!editor || isLoading.value) return;
+  
+  // Find and update all whiteboard nodes
+  editor.state.doc.descendants((node, pos) => {
+    if (node.type.name === 'whiteboard') {
+      editor.commands.updateAttributes('whiteboard', {
+        parentTab: props.tabId
+      }, { at: pos });
+    }
+  });
+}
 
 
 
@@ -440,6 +456,9 @@ async function LoadFromBackend() {
     if (response.data.content) {
       editor.commands.setContent(response.data.content);
     }
+
+    setTimeout(() => updateWhiteboardParentTabs(), 0);
+    
     isLoading.value = false;
     return true; // Successfully loaded
   } catch (error) {
@@ -554,6 +573,7 @@ onBeforeUnmount(async () => {
   
   // Clean up event listeners
   eventBus.off("open-image-modal", openImageModal);
+  eventBus.off("open-whiteboard-modal", openWhiteboardModal);
   if (editor) {
     editor.destroy();
   }
@@ -574,6 +594,7 @@ let editor = new Editor({
   extensions: [
     Document,
     chemistry,
+    WhiteboardExtension,
     Mathematics.configure({
       // Add proper configuration
       render: true,
@@ -836,8 +857,9 @@ let editor = new Editor({
 <template>
   <div class="flex w-full h-full flex-col">
     <!-- Floating Toolbar -->
-    <Loading v-if="isLoading" />
-    <div v-else>
+    <!-- <Loading v-if="isLoading" /> -->
+    <div> 
+      <!-- maybe div shoudl be v else -->
       <div class="h-24 w-full mb-0 relative">
         <div class="absolute top-6 w-full z-50 px-4 flex justify-center">
           <div
@@ -1273,7 +1295,7 @@ let editor = new Editor({
 
       <div class="flex justify-center flex-1">
         <ScrollArea
-          class="editor w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-y-auto bg-primary-foreground rounded-lg border border-input m-4"
+          class="editor w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-y-auto bg-primary-foreground rounded-lg shadow-md border border-input m-4"
           @click="focusEditor"
         >
           <NoteHeader

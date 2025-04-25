@@ -448,7 +448,7 @@ function updateSearchQuery(event) {
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
-              <DropdownMenuTrigger as-child>
+              <DropdownMenuTrigger disabled as-child>
                 <SidebarMenuButton
                   size="lg"
                   class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
