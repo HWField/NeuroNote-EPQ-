@@ -13,6 +13,7 @@ import Feedback from "@/components/Feedback.vue";
 import NoteTab from "@/components/NoteTab.vue";
 import axios from "../axios"; // Import the Axios instance
 import GraphTab from "@/components/GraphTab.vue"; // Import the GraphTab component
+import LegalTab from "@/components/LegalTab.vue"; // Import the LegalTab component
 import { useUserStore } from "@/stores/useUserStore";
 import chemicalstructure from "@/components/Document Editor/ChemicalStructure.vue"; // Import the ChemicalStructure component
 
@@ -27,7 +28,9 @@ export const useTabStore = defineStore("tabStore", () => {
     Feedback: markRaw(Feedback),
     NoteTab: markRaw(NoteTab),
     GraphTab: markRaw(GraphTab),
+    LegalTab: markRaw(LegalTab),
   };
+
   const defaultTabs = [
     {
       id: 0,
@@ -133,6 +136,17 @@ export const useTabStore = defineStore("tabStore", () => {
           state: state || {},
         });
         break;
+
+        case "legal":
+          tabs.value.push({
+            id,
+            title,
+            componentName: "LegalTab", // Store name for serialization
+            component: componentMapping.LegalTab,
+            type: "legal",
+            state: state || {},
+          });
+          break;
 
 
       case "settings":

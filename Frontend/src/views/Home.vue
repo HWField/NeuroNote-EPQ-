@@ -98,6 +98,7 @@ import {
   Tag,
   FileText,
   Presentation,
+  Scale,
 } from "lucide-vue-next";
 import * as icons from "lucide-vue-next";
 
@@ -167,6 +168,8 @@ function openNewTab(tabType) {
     // tabStore.addTab("New Tab:", "generic");
   } else if (tabType === "Feedback") {
     tabStore.addTab("Feedback", "feedback");
+  } else if (tabType === "Legal") {
+    tabStore.addTab("Legal", "legal");
   }
 }
 
@@ -294,11 +297,26 @@ function getTabIcon(tab) {
   if (tab.type === "graph") {
     return Globe;
   } else if (tab.type === "note") {
-    return NotepadText;
+
+    const noteType = graphStore.elements.find(
+    el => el.type === 'note' && el.id === parseInt(tab.state.noteId)
+  ).format;
+
+  console.error("Note type:", noteType);
+  
+
+    if (noteType === "document") {
+      return FileText;
+    } else if (noteType === "whiteboard") {
+      return Presentation;
+    }
+
   } else if (tab.type === "settings") {
     return Settings;
   } else if (tab.type === "feedback") {
     return MessageSquareText;
+  } else if (tab.type === "legal") {
+    return Scale;
   }
 }
 
@@ -322,25 +340,22 @@ const graphStore = useGraphStore();
 // Filtered notes based on search query
 const filteredNotes = computed(() => {
   const query = searchQuery.value.toLowerCase();
-  return graphStore.elements
-    .filter(
-      (item) =>
-        item.type === "note" &&
-        (!query || item.name.toLowerCase().includes(query))
-    )
-   // Limit to first 10 results for performance
+  return graphStore.elements.filter(
+    (item) =>
+      item.type === "note" &&
+      (!query || item.name.toLowerCase().includes(query))
+  );
+  // Limit to first 10 results for performance
 });
 
 // Filtered tags based on search query
 const filteredTags = computed(() => {
   const query = searchQuery.value.toLowerCase();
-  return graphStore.elements
-    .filter(
-      (item) =>
-        item.type === "tag" &&
-        (!query || item.name.toLowerCase().includes(query))
-    )
- // Limit to first 10 results for performance
+  return graphStore.elements.filter(
+    (item) =>
+      item.type === "tag" && (!query || item.name.toLowerCase().includes(query))
+  );
+  // Limit to first 10 results for performance
 });
 
 // Watch the command input for changes
@@ -400,10 +415,10 @@ function updateSearchQuery(event) {
 
   <CommandDialog v-model:open="open">
     <CommandInput placeholder="Search notes and tags..." />
-    
-      <CommandList class="overflow-hidden">
-        <CommandEmpty>No results found.</CommandEmpty>
-        <ScrollArea class="h-[300px] overflow-hidden">
+
+    <CommandList class="overflow-hidden">
+      <CommandEmpty>No results found.</CommandEmpty>
+      <ScrollArea class="h-[300px] overflow-hidden">
         <!-- Notes Group -->
         <CommandGroup heading="Notes">
           <CommandItem
@@ -413,7 +428,10 @@ function updateSearchQuery(event) {
             @select="openNoteTab(note.id)"
           >
             <FileText v-if="note.format === 'document'" class="mr-2 h-4 w-4" />
-            <Presentation v-else-if="note.format === 'whiteboard'" class="mr-2 h-4 w-4" />
+            <Presentation
+              v-else-if="note.format === 'whiteboard'"
+              class="mr-2 h-4 w-4"
+            />
             {{ note.name }}
           </CommandItem>
         </CommandGroup>
@@ -431,15 +449,14 @@ function updateSearchQuery(event) {
           </CommandItem>
         </CommandGroup>
       </ScrollArea>
-        <!-- Settings Group (keep existing items) -->
-        <!-- <CommandSeparator />
+      <!-- Settings Group (keep existing items) -->
+      <!-- <CommandSeparator />
     <CommandGroup heading="Settings">
       <CommandItem value="profile"> Profile </CommandItem>
       <CommandItem value="billing"> Billing </CommandItem>
       <CommandItem value="settings"> Settings </CommandItem>
     </CommandGroup> -->
-      </CommandList>
-  
+    </CommandList>
   </CommandDialog>
 
   <SidebarProvider>
@@ -546,7 +563,6 @@ function updateSearchQuery(event) {
             <Plus /> <span class="sr-only">Add Tab</span>
           </SidebarGroupAction>
 
-          <!-- Tab List -->
           <!-- Tab List -->
           <ScrollArea class="flex-1 min-h-0 overflow-y-auto">
             <SidebarGroupContent>
@@ -685,6 +701,11 @@ function updateSearchQuery(event) {
                   <DropdownMenuItem @click="openNewTab('Settings')">
                     <Settings />
                     Settings
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem @click="openNewTab('Legal')">
+                    <Scale />
+                    Legal
                   </DropdownMenuItem>
 
                   <DropdownMenuItem @click="Sync()">
