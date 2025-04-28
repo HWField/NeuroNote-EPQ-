@@ -79,11 +79,11 @@ export const useTabStore = defineStore("tabStore", () => {
             console.log(
               `Note ${state.noteId} already open in tab ${existingTab.id} - switching to it`
             );
+
             setActiveTab(existingTab.id);
             return; // Exit early - no need to create a new tab
           }
         }
-
         tabs.value.push({
           id,
           title,
@@ -106,6 +106,7 @@ export const useTabStore = defineStore("tabStore", () => {
             console.log(
               `Note ${state.noteId} already open in tab ${existingTab.id} - switching to it`
             );
+            updateTabState(existingTab.id, state); // Update the creation id to be the current tab id need to be carreful this doesnt overwrite other elements but should be fine
             setActiveTab(existingTab.id);
             return; // Exit early - no need to create a new tab
           }

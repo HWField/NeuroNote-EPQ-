@@ -1038,6 +1038,15 @@ watch(colour, (newColor) => {
 });
 watch(penWidth, (newWidth) => {
   canvas.freeDrawingBrush.width = newWidth;
+  const activeObjects = canvas.getActiveObjects();
+  activeObjects.forEach((obj) => {
+    console.error("Updating stroke width of object:", obj);
+
+    if (obj.type === "path") {
+      obj.set("strokeWidth", newWidth);
+    } 
+    canvas.renderAll();
+  });
 });
 watch(background, (newBackground) => {
   drawGrid(
