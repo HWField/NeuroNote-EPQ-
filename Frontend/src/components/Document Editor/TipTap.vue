@@ -1737,14 +1737,14 @@ math-display.ProseMirror-selectednode {
   // :first-child {
   //   margin-top: 0;
   // }
-  .editor h1:first-child {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #333;
-    border-bottom: 2px solid #ddd;
-    margin-bottom: 8px;
-    padding-bottom: 4px;
-  }
+  // .editor h1:first-child {
+  //   font-size: 1.5rem;
+  //   font-weight: bold;
+  //   color: #333;
+  //   border-bottom: 2px solid #ddd;
+  //   margin-bottom: 8px;
+  //   padding-bottom: 4px;
+  // }
 
   /* Color swatches */
   .color {
@@ -1921,7 +1921,7 @@ math-display.ProseMirror-selectednode {
 
   h1,
   h2 {
-    margin-top: 3.5rem;
+    margin-top: 1.5rem; //was 3.5
     margin-bottom: 1.5rem;
   }
 

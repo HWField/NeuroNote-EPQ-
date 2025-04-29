@@ -48,19 +48,32 @@
               </TooltipProvider>
 
               <Separator orientation="vertical" class="h-6 mx-1" />
-
-              <!-- Edit Mode -->
-              <Button
-                :variant="mode === 'draw' ? 'default' : 'ghost'"
-                size="sm"
-                class="flex items-center gap-2 px-3"
-                @click="mode = mode === 'draw' ? 'type' : 'draw'"
+              <div
+                class="inline-flex rounded-md shadow-sm border overflow-hidden"
               >
-                <Pencil class="h-4 w-4" />
-                <span>{{
-                  mode === "draw" ? "Drawing: On" : "Drawing: Off"
-                }}</span>
-              </Button>
+                <!-- Auto Button -->
+                <Button
+                  :variant="mode === 'auto' ? 'default' : 'ghost'"
+                  size="sm"
+                  class="rounded-none border-r px-3"
+                  @click="mode = mode === 'auto' ? 'type' : 'auto'"
+                >
+                  <Bot class="h-4 w-4 mr-1" />
+                  Auto
+                </Button>
+
+                <!-- Manual Draw Button -->
+                <Button
+                  :variant="mode === 'draw' ? 'default' : 'ghost'"
+                  :class="{ 'opacity-50 ': mode === 'auto' }"
+                  size="sm"
+                  class="rounded-none px-3"
+                  @click="mode = mode === 'draw' ? 'type' : 'draw'"
+                >
+                  <Pencil class="h-4 w-4 mr-1" />
+                  Draw
+                </Button>
+              </div>
 
               <Separator orientation="vertical" class="h-6 mx-1" />
 
@@ -340,7 +353,7 @@ import { useGraphStore } from "@/stores/useGraphStore";
 import { useUserStore } from "@/stores/useUserStore";
 import Loading from "@/components/Loading.vue";
 import NoteHeader from "@/components/Document Editor/NoteHeader.vue";
-import { FileText, Info } from "lucide-vue-next";
+import { Bot, FileText, Info } from "lucide-vue-next";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -400,7 +413,7 @@ const { toast } = useToast();
 const isLoading = ref(false);
 const viewport = ref({ x: 0, y: 0, zoom: 1 });
 const background = ref("Lgrid");
-const mode = ref("draw");
+const mode = ref("auto");
 const colour = ref("red");
 
 if (useUserStore.theme == "dark") {
@@ -742,59 +755,80 @@ function initaliseCanvas() {
 
     evt.preventDefault(); // Prevent default scrolling behavior
   });
-  window.addEventListener(
-    "touchstart",
-    function (e) {
-      const touches = e.touches;
-      if (touches.length === 2) {
-        console.log("ultimate two fingers detected");
-        console.log(touches);
-        canvas.discardActiveObject().renderAll();
-        // const activ=eObject = canvas.getActiveObject();
 
-        e.preventDefault();
-        canvas.isDrawingMode = false;
+  // REPLCED BY HAMMER JS
+  // window.addEventListener(
+  //   "touchstart",
+  //   function (e) {
+  //     const touches = e.touches;
+  //     if (touches.length === 2) {
+  //       console.log("ultimate two fingers detected");
+  //       console.log(touches);
+  //       canvas.discardActiveObject().renderAll();
+  //       // const activ=eObject = canvas.getActiveObject();
+
+  //       e.preventDefault();
+  //       canvas.isDrawingMode = false;
+  //       canvas.selection = false;
+  //       canvas.forEachObject(function (o) {
+  //         o.lockMovementX = true;
+  //         o.lockMovementY = true;
+  //         o.selectable = false;
+  //       });
+  //     } else if (touches.length === 1) {
+  //       console.log("only one finger detected");
+
+  //       canvas.selection = true;
+  //       canvas.forEachObject(function (o) {
+  //         o.lockMovementX = false;
+  //         o.lockMovementY = false;
+  //         o.selectable = true;
+  //       });
+  //       if (mode.value === "draw") {
+  //         canvas.isDrawingMode = true;
+  //       }
+  //     }
+
+  //     if (touches.length > 0) {
+  //       const touch = touches[0];
+
+  //       if ("force" in touch) {
+  //         console.log("Touch pressure (force):", touch.force);
+  //       }
+  //       if (touch.force > 0) {
+  //         console.log("Apple Pencil detected");
+  //         if (mode.value === "draw") {
+  //           canvas.isDrawingMode = true;
+  //         }
+  //       } else {
+  //         console.log("Finger detected");
+  //         canvas.isDrawingMode = false;
+  //       }
+  //     }
+  //   },
+  //   true
+  // );
+  //mode switching if auto
+  canvas.wrapperEl.addEventListener("pointerdown", (e) => {
+    console.error("Pointer down event detected:", e, "mode is", mode.value); // Debugging log
+    if (mode.value == "auto") {
+
+      if (e.pointerType === "pen") {
+        console.error("Pointer type is pen");
+        canvas.isDrawingMode = true;
         canvas.selection = false;
-        canvas.forEachObject(function (o) {
-          o.lockMovementX = true;
-          o.lockMovementY = true;
-          o.selectable = false;
-        });
-      } else if (touches.length === 1) {
-        console.log("only one finger detected");
-
+      } else if (e.pointerType === "touch" || e.pointerType === "mouse") {
+        console.error("Pointer type is touch or mouse");
+        canvas.isDrawingMode = false;
         canvas.selection = true;
-        canvas.forEachObject(function (o) {
-          o.lockMovementX = false;
-          o.lockMovementY = false;
-          o.selectable = true;
-        });
-        if (mode.value === "draw") {
-          canvas.isDrawingMode = true;
-        }
       }
+    }
+  });
 
-      if (touches.length > 0) {
-        const touch = touches[0];
-
-        if ("force" in touch) {
-          console.log("Touch pressure (force):", touch.force);
-        }
-        if (touch.force > 0) {
-          console.log("Apple Pencil detected");
-          if (mode.value === "draw") {
-            canvas.isDrawingMode = true;
-          }
-        } else {
-          console.log("Finger detected");
-          canvas.isDrawingMode = false;
-        }
-      }
-    },
-    true
-  );
   const hammer = new Hammer(canvas.wrapperEl);
-  hammer.get("pan").set({ direction: Hammer.DIRECTION_ALL, pointers: 2 });
+  hammer
+    .get("pan")
+    .set({ direction: Hammer.DIRECTION_ALL, pointers: 2, threshold: 10 }); //threshod 10 to minimise accidental pans
   hammer.get("pinch").set({ enable: true });
   hammer.get("press").set({ time: 0 });
   hammer.get("pinch").recognizeWith(hammer.get("pan"));
@@ -804,6 +838,16 @@ function initaliseCanvas() {
   hammer.on("pinchstart", function (e) {
     canvas._zoomStartScale = canvas.getZoom(); // Record the initial zoom level
     lastScale = 1; // Reset the last scale for the new gesture
+
+    console.error("touch pinch start detected:", e); // Debugging log
+    e.preventDefault();
+    canvas.isDrawingMode = false;
+    canvas.selection = false;
+    canvas.forEachObject(function (o) {
+      o.lockMovementX = true;
+      o.lockMovementY = true;
+      o.selectable = false;
+    });
   });
 
   hammer.on("pinchmove", function (e) {
@@ -827,12 +871,43 @@ function initaliseCanvas() {
 
   hammer.on("pinchend", function () {
     lastScale = 1; // Reset scale tracking after the pinch gesture ends
+    //restore canvas interaction
+    if (mode == "draw") {
+      canvas.isDrawingMode = true;
+    }
+    canvas.selection = true;
+    canvas.forEachObject(function (o) {
+      o.lockMovementX = false;
+      o.lockMovementY = false;
+      o.selectable = true;
+    });
   });
+
   let lastDeltaX = 0;
   let lastDeltaY = 0;
 
+  hammer.on("panstart", function (e) {
+    console.error("touch Pan start detected:", e); // Debugging log
+    e.preventDefault();
+    canvas.isDrawingMode = false;
+    canvas.selection = false;
+    canvas.forEachObject(function (o) {
+      o.lockMovementX = true;
+      o.lockMovementY = true;
+      o.selectable = false;
+    });
+  });
+
   hammer.on("panmove", function (e) {
-    console.log("Pan move detected:", e); // Debugging log
+    console.error("touch Pan move detected:", e); // Debugging log
+    e.preventDefault();
+    canvas.isDrawingMode = false;
+    canvas.selection = false;
+    canvas.forEachObject(function (o) {
+      o.lockMovementX = true;
+      o.lockMovementY = true;
+      o.selectable = false;
+    });
 
     const vpt = canvas.viewportTransform;
 
@@ -860,6 +935,16 @@ function initaliseCanvas() {
     // Reset last delta values when the pan gesture ends
     lastDeltaX = 0;
     lastDeltaY = 0;
+    //restore canvas interaction
+    if (mode == "draw") {
+      canvas.isDrawingMode = true;
+    }
+    canvas.selection = true;
+    canvas.forEachObject(function (o) {
+      o.lockMovementX = false;
+      o.lockMovementY = false;
+      o.selectable = true;
+    });
   });
 }
 
@@ -1017,8 +1102,10 @@ watch(mode, (newMode) => {
   //   canvas.isDrawingMode = newMode === "draw";
   if (newMode == "draw") {
     canvas.isDrawingMode = true;
-  } else {
+    canvas.selection = false;
+  } else if (newMode == "type") {
     canvas.isDrawingMode = false;
+    canvas.selection = true;
   }
 });
 
@@ -1044,7 +1131,7 @@ watch(penWidth, (newWidth) => {
 
     if (obj.type === "path") {
       obj.set("strokeWidth", newWidth);
-    } 
+    }
     canvas.renderAll();
   });
 });
