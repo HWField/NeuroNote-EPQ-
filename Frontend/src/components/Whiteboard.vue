@@ -1,5 +1,68 @@
 <template>
   <div class="flex w-full h-full flex-col">
+    <!-- Image Modal -->
+    <Dialog :open="showImageModal" @update:open="closeImageModal">
+      <DialogContent class="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Insert Image</DialogTitle>
+        </DialogHeader>
+        <div class="grid gap-4 py-4">
+          <!-- File Upload Section -->
+          <div class="grid grid-cols-4 items-center gap-4">
+            <label class="col-span-4 font-medium">Upload Image</label>
+            <div class="col-span-4">
+              <input
+                ref="fileInputRef"
+                type="file"
+                accept="image/*"
+                class="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary hover:file:bg-primary-100"
+              />
+              <Button
+                class="mt-2 w-full bg-green-600 hover:bg-green-700 text-white"
+                @click="handleFileSelected"
+              >
+                <UploadIcon class="h-4 w-4 mr-2" />Upload
+              </Button>
+            </div>
+          </div>
+
+          <!-- Simple Camera Button -->
+          <div class="grid grid-cols-4 items-center gap-4">
+            <label class="col-span-4 font-medium">Take a Photo</label>
+            <div class="col-span-4">
+              <input
+                ref="cameraInputRef"
+                type="file"
+                accept="image/*"
+                capture="user"
+                class="hidden"
+                @change="handleCameraCapture"
+              />
+              <Button
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                @click="triggerCamera"
+              >
+                <Camera class="h-4 w-4 mr-2" />Take Photo
+              </Button>
+            </div>
+          </div>
+
+          <!-- Image URL Section -->
+          <div class="flex flex-col gap-2 mt-4">
+            <label class="font-medium">Or insert image URL</label>
+            <input
+              v-model="imageUrlInput"
+              type="text"
+              placeholder="https://example.com/image.jpg"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            />
+            <Button class="mt-2" @click="handleUrlSubmit"
+              >Insert Image URL</Button
+            >
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
     <!-- Floating Toolbar -->
     <Loading v-if="isLoading" />
     <div v-else>
@@ -112,8 +175,16 @@
                     <Type class="h-4 w-4 mr-2" />
                     <span>Text</span>
                   </DropdownMenuItem>
+                  <DropdownMenuItem @click="openImageModal()">
+                    <Type class="h-4 w-4 mr-2" />
+                    <span>Image</span>
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <Separator orientation="vertical" class="h-6 mx-1" />
+              
+              <Button @click="centerWhiteboard()" variant="ghost" class=""> <Home  class="h-4 w-4" /> Home</Button>
 
               <Separator orientation="vertical" class="h-6 mx-1" />
 
@@ -353,7 +424,7 @@ import { useGraphStore } from "@/stores/useGraphStore";
 import { useUserStore } from "@/stores/useUserStore";
 import Loading from "@/components/Loading.vue";
 import NoteHeader from "@/components/Document Editor/NoteHeader.vue";
-import { Bot, FileText, Info } from "lucide-vue-next";
+import { Bot, FileText, Home, Info } from "lucide-vue-next";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -361,6 +432,13 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -810,15 +888,11 @@ function initaliseCanvas() {
   // );
   //mode switching if auto
   canvas.wrapperEl.addEventListener("pointerdown", (e) => {
-    console.error("Pointer down event detected:", e, "mode is", mode.value); // Debugging log
     if (mode.value == "auto") {
-
       if (e.pointerType === "pen") {
-        console.error("Pointer type is pen");
         canvas.isDrawingMode = true;
         canvas.selection = false;
       } else if (e.pointerType === "touch" || e.pointerType === "mouse") {
-        console.error("Pointer type is touch or mouse");
         canvas.isDrawingMode = false;
         canvas.selection = true;
       }
@@ -839,7 +913,6 @@ function initaliseCanvas() {
     canvas._zoomStartScale = canvas.getZoom(); // Record the initial zoom level
     lastScale = 1; // Reset the last scale for the new gesture
 
-    console.error("touch pinch start detected:", e); // Debugging log
     e.preventDefault();
     canvas.isDrawingMode = false;
     canvas.selection = false;
@@ -887,7 +960,6 @@ function initaliseCanvas() {
   let lastDeltaY = 0;
 
   hammer.on("panstart", function (e) {
-    console.error("touch Pan start detected:", e); // Debugging log
     e.preventDefault();
     canvas.isDrawingMode = false;
     canvas.selection = false;
@@ -899,7 +971,6 @@ function initaliseCanvas() {
   });
 
   hammer.on("panmove", function (e) {
-    console.error("touch Pan move detected:", e); // Debugging log
     e.preventDefault();
     canvas.isDrawingMode = false;
     canvas.selection = false;
@@ -1151,7 +1222,26 @@ watch(background, (newBackground) => {
 //     canvas.getZoom()
 //   );
 // });
+function centerWhiteboard() {
 
+  if (!canvas) return;
+
+  const zoom = canvas.getZoom();
+  const visibleWidth = modalContent.offsetWidth;
+  const visibleHeight = modalContent.offsetHeight;
+
+  // Calculate the offsets to center (0, 0) in the visible area
+  const offsetX = visibleWidth / 2 - (0 * zoom);
+  const offsetY = visibleHeight / 2 - (0 * zoom);
+
+  // Update the viewport transform
+  canvas.viewportTransform = [zoom, 0, 0, zoom, offsetX, offsetY];
+
+  // Redraw the grid and canvas
+  drawGrid(offsetX, offsetY, zoom);
+  canvas.requestRenderAll();
+
+}
 function addShape(shapeType) {
   // Calculate the center of the current viewport in canvas coordinates
   const vpt = canvas.viewportTransform;
@@ -1228,4 +1318,147 @@ function deleteSelected() {
   activeObjects.forEach((obj) => canvas.remove(obj));
   canvas.discardActiveObject().renderAll();
 }
+
+import { Camera } from "lucide-vue-next"; // You already have UploadIcon
+
+// Add these refs
+const cameraInputRef = ref(null);
+
+// Simple function to trigger the camera
+const triggerCamera = () => {
+  cameraInputRef.value.click();
+};
+
+// Handle the photo capture
+const handleCameraCapture = () => {
+  if (cameraInputRef.value && cameraInputRef.value.files?.length) {
+    const file = cameraInputRef.value.files[0];
+    uploadImageFile(file)
+      .then(() => {
+        closeImageModal();
+        // Reset input so the same file can be selected again
+        cameraInputRef.value.value = "";
+      })
+      .catch((error) => console.error("Error uploading camera image:", error));
+  }
+};
+
+const imageUrlInput = ref("");
+const showImageModal = ref(false);
+const fileInputRef = ref(null);
+
+const uploadImageFile = (file) => {
+  
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  // Use your existing endpoint
+  return axios
+    .post("/upload-file", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then((response) => {
+      if (response.data && response.data.url) {
+        // Insert the image at at the middle of the fabric canvas and select it use src - src: getBaseUrl() + response.data.url
+        const fullImageUrl = getBaseUrl() + response.data.url;
+        console.error("Image URL:", fullImageUrl);
+        addImageToCanvas(fullImageUrl);
+        return response.data.url; // Return something for chaining
+      } else {
+        console.error("Invalid response format:", response.data);
+        throw new Error("Invalid response format");
+      }
+    })
+    .catch((error) => {
+      console.error("Error uploading image:", error);
+      throw error; // Re-throw to propagate the error
+    });
+};
+
+const openImageModal = () => {
+  imageUrlInput.value = "";
+  showImageModal.value = true;
+};
+
+const closeImageModal = () => {
+  showImageModal.value = false;
+  imageUrlInput.value = "";
+};
+
+const handleFileSelected = () => {
+  if (fileInputRef.value && fileInputRef.value.files?.length) {
+    const file = fileInputRef.value.files[0];
+    uploadImageFile(file)
+      .then(() => {
+        closeImageModal();
+      })
+      .catch((error) => {
+        console.error("Error in file upload:", error);
+        // You might want to show an error message to the user here
+      });
+  }
+};
+
+const handleUrlSubmit = () => {
+  if (imageUrlInput.value) {
+    // add the selected url as an image to center of fabric src - src: getBaseUrl() + response.data.url
+    addImageToCanvas(imageUrlInput.value);
+    closeImageModal();
+  }
+};
+const addImageToCanvas = (imageUrl) => {
+  if (!canvas) return;
+  
+  // Calculate the center of the current viewport in canvas coordinates
+  const vpt = canvas.viewportTransform;
+  const zoom = canvas.getZoom();
+  const visibleWidth = modalContent.offsetWidth;
+  const visibleHeight = modalContent.offsetHeight;
+  const centerX = -vpt[4] / zoom + visibleWidth / (2 * zoom);
+  const centerY = -vpt[5] / zoom + visibleHeight / (2 * zoom);
+console.error("Adding image to canvas at:", centerX, centerY);
+  // Create a fabric image object
+  // fabric.Image.fromURL(imageUrl, (img) => {
+  //   // Scale image if it's too large
+  //   const maxSize = 300;
+  //   if (img.width > maxSize || img.height > maxSize) {
+  //     const scale = maxSize / Math.max(img.width, img.height);
+  //     img.scale(scale);
+  //   }
+    
+    // Position at center
+    // img.set({
+    //   left: centerX - (img.width * (img.scaleX || 1)) / 2,
+    //   top: centerY - (img.height * (img.scaleY || 1)) / 2,
+    //   objectCaching: false,
+    // });
+    
+    // Add to canvas, select it and render
+    // canvas.add(img);
+    // canvas.setActiveObject(img);
+    // canvas.requestRenderAll();
+  // });
+
+  fabric.Image.fromURL(imageUrl, function (img) {
+      var oImg = img.set({left: 0, top: 0, angle: 0,width:100, height:100}).scale(1);
+      canvas.add(oImg).renderAll();
+      canvas.requestRenderAll();
+      var a = canvas.setActiveObject(oImg);
+      var dataURL = canvas.toDataURL({format: 'png', quality: 0.8});
+    });
+
+    // image = new fabric.Rect({
+    //   left: centerX - 50, // Center by offsetting half width
+    //   top: centerY - 30, // Center by offsetting half height
+    //   width: 100,
+    //   height: 60,
+    //   fill: colour.value,
+    //   objectCaching: false,
+    // });
+};
+
+
 </script>

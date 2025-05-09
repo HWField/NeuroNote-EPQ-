@@ -1313,7 +1313,6 @@ let editor = new Editor({
   </div>
 
   <!-- Image Modal -->
-  <!-- Image Modal -->
   <Dialog :open="showImageModal" @update:open="closeImageModal">
     <DialogContent class="sm:max-w-[425px]">
       <DialogHeader>

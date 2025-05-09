@@ -433,7 +433,15 @@ const stats = computed(() => {
                   <div
                     class="mr-3 flex-shrink-0 text-primary transition-transform group-hover:rotate-12"
                   >
-                    <FileText class="w-4 h-4" />
+                  <FileText
+                          v-if="note.format === 'document'"
+                          class="w-4 h-4"
+                        />
+                        <Presentation
+                          v-else-if="note.format === 'whiteboard'"
+                          class="w-4 h-4"
+                        />
+                        <Presentation v-else class="w-4 h-4" />
                   </div>
                   <div class="truncate font-medium">{{ note.title }}</div>
                 </li>
