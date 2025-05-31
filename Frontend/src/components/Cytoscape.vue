@@ -110,12 +110,30 @@ const dialogueType = ref("");
 const dialogueData = ref({});
 let dialogueResolve = null;
 let dialogueReject = null;
+async function confirmAction(
+  message,
+  title = "Confirm Action",
+  dangerousAction = false
+) {
+  try {
+    await openDialogue("confirm", {
+      message,
+      title,
+      dangerousAction,
+    });
+    return true; // User confirmed
+  } catch (e) {
+    return false; // User cancelled
+  }
+}
 function openDialogue(type, options = {}) {
   // Reset data object for fresh input
   dialogueData.value = { ...options }; // insert any provided default values
   // Set dialog properties
   dialogueType.value = type;
   dialogueOpen.value = true;
+  // hide the red popper handle if it exists
+  removeHandle();
 
   if (type === "newNote") {
     setTimeout(() => {
@@ -609,7 +627,6 @@ function initializeCytoscape() {
             "tag",
             ele.data("label").toLowerCase(),
             ele.data("label")
-   
           );
           //           async function addFilter(
           //   type,
@@ -622,8 +639,13 @@ function initializeCytoscape() {
       },
       {
         content: "Delete",
-        select: function (ele) {
-          if (confirm("Are you sure you want to delete this node?")) {
+        select: async function (ele) {
+          if (
+            await confirmAction(
+              `Are you sure you want to delete "${ele.data("label")}"?`,
+              "Delete Node"
+            )
+          ) {
             // Show loading indicator
             const loadingNode = ele;
             loadingNode.data(
@@ -668,8 +690,13 @@ function initializeCytoscape() {
 
       {
         content: "Delete",
-        select: function (ele) {
-          if (confirm("Are you sure you want to delete this node?")) {
+        select: async function (ele) {
+          if (
+            await confirmAction(
+              `Are you sure you want to delete "${ele.data("label")}"?`,
+              "Delete Node"
+            )
+          ) {
             // Show loading indicator
             const loadingNode = ele;
             loadingNode.data(
@@ -1049,17 +1076,14 @@ function RunLayout(effectors) {
   // startSavingNodePositions();
 }
 
-function HandlecyClick(event) {
+async function HandlecyClick(event) {
   if (
     //chcek if in a typing scenario (e.g. search bar)
     event.target.tagName === "INPUT" ||
     event.target.tagName === "TEXTAREA" ||
-
     dialogueOpen.value || // Don't trigger shortcuts when any dialog is open
-    
     // If the SelectContent is open (search dropdown)
-    document.querySelector('.select-content-open')
-    
+    document.querySelector(".select-content-open")
   ) {
     return;
   }
@@ -1073,7 +1097,12 @@ function HandlecyClick(event) {
 
     if (nodeCount === 1) {
       const node = selectedElements[0];
-      if (confirm(`Are you sure you want to delete "${node.data("label")}"?`)) {
+      if (
+        await confirmAction(
+          `Are you sure you want to delete "${node.data("label")}"?`,
+          "Delete Node"
+        )
+      ) {
         const loadingNode = node;
         loadingNode.data(
           "originalColor",
@@ -1098,10 +1127,17 @@ function HandlecyClick(event) {
           });
       }
     } else {
-      if (confirm(`Delete ${nodeCount} selected nodes?`)) {
+      if (
+        await confirmAction(
+          `Delete ${nodeCount} selected nodes?`,
+          "Delete Multiple Nodes"
+        )
+      ) {
         if (
-          confirm(
-            `Are you REALLY sure you want to delete ${nodeCount} nodes? This cannot be undone.`
+          await confirmAction(
+            `Are you REALLY sure you want to delete ${nodeCount} nodes? This cannot be undone.`,
+            "Confirm Deletion",
+            true
           )
         ) {
           // Process nodes in sequence to avoid backend conflicts
@@ -1268,12 +1304,11 @@ function HandlecyClick(event) {
   } else if (event.key === "i") {
     event.preventDefault();
     Spotlight();
-  }
-  else if (event.key === "f") {
+  } else if (event.key === "f") {
     // stackableSearch();
     event.preventDefault();
     addFilter();
-  } 
+  }
   // else if (event.key === "t") {
   //   searchByTag();
   // } else if (event.key === "g") {
@@ -1331,14 +1366,14 @@ async function CreateNote(format) {
   let response;
   if (!format) {
     console.error("No format provided for CreateNote");
-    response = (await openDialogue("newNote"));
+    response = await openDialogue("newNote");
   } else {
     console.error(" format provided for CreateNote");
-    response = (await openDialogue("newNote", { type: format }));
+    response = await openDialogue("newNote", { type: format });
   }
   noteName = response.name;
   noteFormat = response.type;
-  console.errror
+  console.errror;
   console.error("noteName is", noteName);
   console.error("noteFormat is", noteFormat);
   if (!noteName || noteName.trim() === "") return;
@@ -1516,13 +1551,12 @@ async function addFilter(
       const tagname = result.value;
       console.error("detected tagname is", tagname);
 
-        newFilter = {
-          id: Date.now().toString(),
-          type: "tag",
-          value: tagname.toLowerCase(),
-          label: `Tag: ${tagname}`,
-        };
-      
+      newFilter = {
+        id: Date.now().toString(),
+        type: "tag",
+        value: tagname.toLowerCase(),
+        label: `Tag: ${tagname}`,
+      };
     } else if (result.type === "text" && result.value) {
       // Handle text filter
       newFilter = {
@@ -1611,7 +1645,7 @@ function applyFilters() {
       tag.children.forEach((childId) => {
         const childTag = allElements.find(
           (el) => el.type === "tag" && el.id === childId
-        );  
+        );
         if (childTag) {
           descendants.push(childTag);
           descendants.push(...getDescendants(childTag));
@@ -1714,12 +1748,12 @@ function applyFilters() {
         ),
         ...allHierarchyNotes,
       ];
-    }else if (filter.type === "nodeType") {
+    } else if (filter.type === "nodeType") {
       // Node type filter - only show nodes of the specified type
       filteredElements = filteredElements.filter(
         (element) => element.type === filter.value
       );
-      
+
       // Highlight all nodes that match this type
       filteredElements.forEach((element) => {
         highlightedNodeIds.add(`${element.type}_${element.id}`);
@@ -1968,7 +2002,7 @@ function loadData() {
 }
 
 onMounted(() => {
-  console.log("Cytoscape mounted");
+  console.error("Cytoscape mounted");
   initializeCytoscape();
   let state = loadState();
   loadData();
@@ -2037,9 +2071,12 @@ onBeforeUnmount(() => {
 </style>
 <template>
   <Dialog :open="dialogueOpen" @update:open="(val) => !val && cancelDialogue()">
-    <DialogContent>
-
-
+    <DialogContent 
+  :onEscapeKeyDown="(event) => {
+    event.preventDefault();
+    closeDialogue();
+  }"
+>
       <!-- Rename dialog -->
       <div v-if="dialogueType === 'rename'">
         <DialogHeader>
@@ -2049,9 +2086,7 @@ onBeforeUnmount(() => {
 
         <div class="grid gap-4 py-4">
           <div class="flex flex-col space-y-2">
-            <label for="name" class="text-sm font-medium"
-              >Name:</label
-            >
+            <label for="name" class="text-sm font-medium">Name:</label>
             <Input
               id="name"
               v-model="dialogueData.name"
@@ -2070,13 +2105,10 @@ onBeforeUnmount(() => {
 
         <div class="grid gap-4 py-4">
           <div class="flex flex-col space-y-2">
-            <label for="name" class=" text-sm font-medium"
-              >Name:</label
-            >
+            <label for="name" class="text-sm font-medium">Name:</label>
             <Input
               id="name"
               v-model="dialogueData.name"
-
               autofocus
               @keyup.enter="submitDialogue"
             />
@@ -2092,9 +2124,7 @@ onBeforeUnmount(() => {
 
         <div class="grid gap-4 py-4">
           <div class="flex flex-col space-y-2">
-            <label for="name" class=" text-sm font-medium"
-              >Keyword:</label
-            >
+            <label for="name" class="text-sm font-medium">Keyword:</label>
             <Input
               id="value"
               v-model="dialogueData.value"
@@ -2114,9 +2144,7 @@ onBeforeUnmount(() => {
 
         <div class="grid gap-4 py-4">
           <div class="flex flex-col space-y-2">
-            <label for="name" class=" text-sm font-medium"
-              >Name:</label
-            >
+            <label for="name" class="text-sm font-medium">Name:</label>
             <Input
               id="name"
               v-model="dialogueData.name"
@@ -2125,9 +2153,7 @@ onBeforeUnmount(() => {
               placeholder="Untitled note"
               @keyup.enter="submitDialogue"
             />
-            <label for="type" class=" text-sm font-medium"
-              >Type:</label
-            >
+            <label for="type" class="text-sm font-medium">Type:</label>
             <Select id="type" v-model="dialogueData.type">
               <SelectTrigger class="col-span-3">
                 <SelectValue placeholder="Default" />
@@ -2152,10 +2178,8 @@ onBeforeUnmount(() => {
         <div class="grid gap-4 py-4">
           <!-- Row 1: Filter Type Selection -->
           <div class="flex flex-col space-y-2">
-            <label for="type" class=" text-sm font-medium"
-              >Type:</label
-            >
-            <Select id="type" v-model="dialogueData.type" >
+            <label for="type" class="text-sm font-medium">Type:</label>
+            <Select id="type" v-model="dialogueData.type">
               <SelectTrigger class="col-span-3">
                 <SelectValue placeholder="Choose filter type" />
               </SelectTrigger>
@@ -2174,9 +2198,7 @@ onBeforeUnmount(() => {
             v-if="dialogueData.type === 'text'"
             class="flex flex-col space-y-2"
           >
-            <label for="textValue" class=" text-sm font-medium"
-              >Keyword:</label
-            >
+            <label for="textValue" class="text-sm font-medium">Keyword:</label>
             <Input
               id="textValue"
               v-model="dialogueData.value"
@@ -2191,9 +2213,7 @@ onBeforeUnmount(() => {
             v-if="dialogueData.type === 'type'"
             class="flex flex-col space-y-2"
           >
-            <label for="value" class=" text-sm font-medium"
-              >Type:</label
-            >
+            <label for="value" class="text-sm font-medium">Type:</label>
             <Select id="value" v-model="dialogueData.value">
               <SelectTrigger class="col-span-3">
                 <SelectValue placeholder="..." />
@@ -2213,9 +2233,7 @@ onBeforeUnmount(() => {
             v-if="dialogueData.type === 'tag'"
             class="flex flex-col space-y-2"
           >
-            <label for="tagSelector" class="text-sm font-medium"
-              >Tag:</label
-            >
+            <label for="tagSelector" class="text-sm font-medium">Tag:</label>
             <div class="col-span-3">
               <Select id="tagSelector" v-model="dialogueData.value">
                 <SelectTrigger>
@@ -2246,6 +2264,24 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
+      <div v-if="dialogueType === 'confirm'">
+        <DialogHeader>
+          <DialogTitle>{{
+            dialogueData.title || "Confirm Action"
+          }}</DialogTitle>
+          <DialogDescription>{{ dialogueData.message }}</DialogDescription>
+        </DialogHeader>
+
+        <div
+          v-if="dialogueData.dangerousAction"
+          class="my-4 p-3 bg-red-50 text-red-700 rounded border border-red-200"
+        >
+          <p>
+            This action cannot be undone. Please confirm you want to proceed.
+          </p>
+        </div>
+      </div>
+
       <DialogFooter>
         <Button variant="outline" @click="cancelDialogue">Cancel</Button>
         <Button type="submit" @click="submitDialogue">Submit</Button>
@@ -2258,7 +2294,9 @@ onBeforeUnmount(() => {
     <div ref="navbarContainer" class="h-full w-full relative">
       <!-- Large toolbar -->
 
-      <div  v-if="hasControls && isLargeNavbarVisible" class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
+      <div
+        v-if="hasControls && isLargeNavbarVisible"
+        class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
       >
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
@@ -2351,118 +2389,118 @@ onBeforeUnmount(() => {
 
       <!-- Small toolbar -->
       <div
-  v-else
-  v-if="hasControls"
-  class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
->
-  <DropdownMenu>
-    <DropdownMenuTrigger as-child>
-      <Button class="">
-        <Filter></Filter>
-        <span>Filter</span>
-      </Button>
-    </DropdownMenuTrigger>
+        v-else
+        v-if="hasControls"
+        class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
+      >
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button class="">
+              <Filter></Filter>
+              <span>Filter</span>
+            </Button>
+          </DropdownMenuTrigger>
 
-    <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-      <DropdownMenuItem
-        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        @click="addFilter('text')"
-      >
-        <CaseSensitive class="w-5 h-5 text-gray-600" />
-        <span>Filter by Name</span>
-      </DropdownMenuItem>
+          <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="addFilter('text')"
+            >
+              <CaseSensitive class="w-5 h-5 text-gray-600" />
+              <span>Filter by Name</span>
+            </DropdownMenuItem>
 
-      <DropdownMenuItem
-        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        @click="addFilter('tag')"
-      >
-        <Tag class="w-5 h-5 text-gray-600" />
-        <span>Filter by Tag</span>
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        @click="addFilter('type')"
-      >
-        <FileText class="w-5 h-5 text-gray-600" />
-        <span>Filter by Type</span>
-      </DropdownMenuItem>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem
-        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        @click="clearAllFilters()"
-      >
-        <Eye class="w-5 h-5 text-gray-600" />
-        <span>Show All</span>
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="addFilter('tag')"
+            >
+              <Tag class="w-5 h-5 text-gray-600" />
+              <span>Filter by Tag</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="addFilter('type')"
+            >
+              <FileText class="w-5 h-5 text-gray-600" />
+              <span>Filter by Type</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="clearAllFilters()"
+            >
+              <Eye class="w-5 h-5 text-gray-600" />
+              <span>Show All</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-  <DropdownMenu>
-    <DropdownMenuTrigger as-child>
-      <Button class="">
-        <Plus></Plus>
-        <span>New</span>
-      </Button>
-    </DropdownMenuTrigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button class="">
+              <Plus></Plus>
+              <span>New</span>
+            </Button>
+          </DropdownMenuTrigger>
 
-    <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-      <DropdownMenuItem
-        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        @click="CreateTag()"
-      >
-        <Tag class="w-5 h-5 text-gray-600" />
-        <span>Tag</span>
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        @click="CreateNote('document')"
-      >
-        <FileText class="w-5 h-5 text-gray-600" />
-        <span>Document</span>
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        @click="CreateNote('whiteboard')"
-      >
-        <LayoutGrid class="w-5 h-5 text-gray-600" />
-        <span>Whiteboard</span>
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
+          <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="CreateTag()"
+            >
+              <Tag class="w-5 h-5 text-gray-600" />
+              <span>Tag</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="CreateNote('document')"
+            >
+              <FileText class="w-5 h-5 text-gray-600" />
+              <span>Document</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="CreateNote('whiteboard')"
+            >
+              <LayoutGrid class="w-5 h-5 text-gray-600" />
+              <span>Whiteboard</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-  <DropdownMenu>
-    <DropdownMenuTrigger as-child>
-      <Button class="">
-        <Ellipsis></Ellipsis>
-        <span>More</span>
-      </Button>
-    </DropdownMenuTrigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button class="">
+              <Ellipsis></Ellipsis>
+              <span>More</span>
+            </Button>
+          </DropdownMenuTrigger>
 
-    <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
-      <DropdownMenuItem
-        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        @click="Spotlight()"
-      >
-        <Search class="w-5 h-5 text-gray-600" />
-        <span>Spotlight</span>
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        @click="centerGraph()"
-      >
-        <House class="w-5 h-5 text-gray-600" />
-        <span>Center</span>
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
-        @click="ShuffleGraph()"
-      >
-        <Shuffle class="w-5 h-5 text-gray-600" />
-        <span>Shuffle</span>
-      </DropdownMenuItem>
-    </DropdownMenuContent>
-  </DropdownMenu>
-</div>
+          <DropdownMenuContent class="w-48 mt-2 shadow-lg rounded-lg">
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="Spotlight()"
+            >
+              <Search class="w-5 h-5 text-gray-600" />
+              <span>Spotlight</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="centerGraph()"
+            >
+              <House class="w-5 h-5 text-gray-600" />
+              <span>Center</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              class="flex items-center space-x-2 p-2 hover:bg-gray-100 cursor-pointer"
+              @click="ShuffleGraph()"
+            >
+              <Shuffle class="w-5 h-5 text-gray-600" />
+              <span>Shuffle</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <!-- tagbar -->
       <div
@@ -2502,7 +2540,7 @@ onBeforeUnmount(() => {
         </button>
       </div>
 
-      <div id="cy" class="w-full h-full absolute"></div>
+      <div id="cy" class="w-full h-full absolute overflow-hidden"></div>
     </div>
   </div>
   <!-- </div> -->

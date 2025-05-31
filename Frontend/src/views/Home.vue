@@ -11,6 +11,7 @@ import tabview from "@/components/GenericTab.vue";
 import Note from "@/components/Note.vue";
 import LightDark from "@/components/LightDark.vue";
 import TreeView from "@/components/TreeView/TreeView.vue";
+import { onMounted, onBeforeUnmount } from "vue";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Toaster from "@/components/ui/toast/Toaster.vue";
@@ -297,20 +298,17 @@ function getTabIcon(tab) {
   if (tab.type === "graph") {
     return Globe;
   } else if (tab.type === "note") {
-
     const noteType = graphStore.elements.find(
-    el => el.type === 'note' && el.id === parseInt(tab.state.noteId)
-  ).format;
+      (el) => el.type === "note" && el.id === parseInt(tab.state.noteId)
+    ).format;
 
-  console.error("Note type:", noteType);
-  
+    console.error("Note type:", noteType);
 
     if (noteType === "document") {
       return FileText;
     } else if (noteType === "whiteboard") {
       return Presentation;
     }
-
   } else if (tab.type === "settings") {
     return Settings;
   } else if (tab.type === "feedback") {
@@ -408,17 +406,76 @@ function openTagGraph(tagId) {
 function updateSearchQuery(event) {
   searchQuery.value = event.target.value;
 }
+
+const recentNotes = computed(() => {
+  // Get recent note IDs from user store
+  const recentNoteIds = userStore.recentNotes;
+
+  // Map IDs to actual note objects from graph store
+  return recentNoteIds
+    .map((id) =>
+      graphStore.elements.find((item) => item.type === "note" && item.id === id)
+    )
+    .filter((note) => note !== undefined) // Filter out any notes that don't exist anymore
+    .slice(0, 3); // Limit to first 3 for display
+});
 </script>
 
 <template>
   <Toaster />
 
   <CommandDialog v-model:open="open">
-    <CommandInput placeholder="Search notes and tags..." />
+    <div class="flex items-center border-b px-3">
+      <!-- <Search class="mr-2 h-4 w-4 shrink-0 opacity-50" /> -->
+      <CommandInput
+        placeholder="Search notes, tags, or type a command..."
+        class="flex h-11 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+        @input="updateSearchQuery"
+      />
+    </div>
 
     <CommandList class="overflow-hidden">
-      <CommandEmpty>No results found.</CommandEmpty>
+      <CommandEmpty>
+        <div class="flex flex-col items-center justify-center py-6 text-center">
+          <div class="mb-2 rounded-full bg-muted p-2">
+            <Search class="h-6 w-6 text-muted-foreground" />
+          </div>
+          <p class="mb-1 text-sm font-medium">No results found</p>
+          <p class="text-xs text-muted-foreground">
+            Try a different search term or create a new item
+          </p>
+        </div>
+      </CommandEmpty>
+
       <ScrollArea class="h-[300px] overflow-hidden">
+        <!-- Recent Items (Always visible) -->
+        <CommandGroup heading="Recent">
+          <CommandItem
+            v-for="(note, index) in recentNotes"
+            :key="'recent_' + note.id"
+            :value="'recent_' + note.name"
+            @select="openNoteTab(note.id)"
+          >
+            <FileText v-if="note.format === 'document'" class="mr-2 h-4 w-4" />
+            <Presentation
+              v-else-if="note.format === 'whiteboard'"
+              class="mr-2 h-4 w-4"
+            />
+            <span>{{ note.name }}</span>
+            <!-- <CommandShortcut v-if="index < 3">⌘{{ index + 1 }}</CommandShortcut> -->
+          </CommandItem>
+
+          <!-- Show message if no recent notes -->
+          <div
+            v-if="recentNotes.length === 0"
+            class="px-2 py-3 text-sm text-muted-foreground"
+          >
+            No recent notes found. Start by opening a note!
+          </div>
+        </CommandGroup>
+
+        <CommandSeparator />
+
         <!-- Notes Group -->
         <CommandGroup heading="Notes">
           <CommandItem
@@ -432,7 +489,7 @@ function updateSearchQuery(event) {
               v-else-if="note.format === 'whiteboard'"
               class="mr-2 h-4 w-4"
             />
-            {{ note.name }}
+            <span>{{ note.name }}</span>
           </CommandItem>
         </CommandGroup>
 
@@ -445,17 +502,50 @@ function updateSearchQuery(event) {
             @select="openTagGraph(tag.id)"
           >
             <Tag class="mr-2 h-4 w-4" />
-            {{ tag.name }}
+            <span>{{ tag.name }}</span>
           </CommandItem>
         </CommandGroup>
+
+        <CommandSeparator />
+
+        <!-- Actions Group -->
+        <!-- <CommandGroup heading="Actions">
+          <CommandItem @select="CreateNewNote">
+            <FileText class="mr-2 h-4 w-4" />
+            <span>New Document</span>
+            <CommandShortcut>⌘N</CommandShortcut>
+          </CommandItem>
+          <CommandItem @select="CreateNewWhiteboard">
+            <Presentation class="mr-2 h-4 w-4" />
+            <span>New Whiteboard</span>
+            <CommandShortcut>⌘⇧N</CommandShortcut>
+          </CommandItem>
+          <CommandItem @select="CreateNewTag">
+            <Tag class="mr-2 h-4 w-4" />
+            <span>New Tag</span>
+            <CommandShortcut>⌘T</CommandShortcut>
+          </CommandItem>
+        </CommandGroup> -->
+
+        <!-- Settings Group -->
+        <!-- <CommandSeparator />
+        <CommandGroup heading="Settings">
+          <CommandItem @select="openNewTab('Settings')">
+            <Settings class="mr-2 h-4 w-4" />
+            <span>Settings</span>
+          </CommandItem>
+          <CommandItem @select="Sync">
+            <RefreshCcw class="mr-2 h-4 w-4" />
+            <span>Sync Data</span>
+          </CommandItem>
+          <CommandItem @select="toggleDarkMode">
+            <Moon v-if="isDarkMode" class="mr-2 h-4 w-4" />
+            <Sun v-else class="mr-2 h-4 w-4" />
+            <span>{{ isDarkMode ? "Light Mode" : "Dark Mode" }}</span>
+            <CommandShortcut>⌘D</CommandShortcut>a
+          </CommandItem>
+        </CommandGroup> -->
       </ScrollArea>
-      <!-- Settings Group (keep existing items) -->
-      <!-- <CommandSeparator />
-    <CommandGroup heading="Settings">
-      <CommandItem value="profile"> Profile </CommandItem>
-      <CommandItem value="billing"> Billing </CommandItem>
-      <CommandItem value="settings"> Settings </CommandItem>
-    </CommandGroup> -->
     </CommandList>
   </CommandDialog>
 
@@ -601,8 +691,8 @@ function updateSearchQuery(event) {
             </SidebarGroupContent>
           </ScrollArea>
         </SidebarGroup>
-        <!-- 
-        <SidebarSeparator />
+
+        <!-- <SidebarSeparator />
 
         <SidebarGroup class="flex flex-col h-full overflow-hidden">
           <SidebarGroupLabel>Tree:</SidebarGroupLabel>

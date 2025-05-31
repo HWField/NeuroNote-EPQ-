@@ -312,6 +312,7 @@ def login():
     # print(data)
     email = data.get('email').lower()
     password = data.get('password')
+    # print("################### recieved login request for", email)
   
     
     # Query the user from the database

@@ -6,6 +6,8 @@ import { useTabStore } from "@/stores/useTabStore";
 import { useRouter, useRoute } from "vue-router"; // Vue Router for navigation
 import axios from "../axios"; // Import the Axios instance
 
+import { useToast } from "@/components/ui/toast/use-toast";
+const { toast } = useToast();
 export const useUserStore = defineStore(
   "userStore",
   () => {
@@ -18,11 +20,12 @@ export const useUserStore = defineStore(
     const refreshToken = ref("");
     const preferences = ref({}); // User preferences
     const recentNotes = ref([]); // Array to store recent note IDs
-    const theme = useColorMode({emitAuto: true});
+    const theme = useColorMode({ emitAuto: true });
     const streamerMode = ref("");
+
+    const shortcuts = ref([]); // User shortcuts
     theme.value = "auto";
     // const theme = ref("auto"); // Default theme is "auto"
-    
 
     watch(theme, (newTheme) => {
       console.error("Theme changed:", newTheme);
@@ -57,6 +60,11 @@ export const useUserStore = defineStore(
           tabStore.loadTabsFromPreferences(data.preferences.tabs);
         }
 
+        // Load shortcuts if available
+        if (data.preferences?.shortcuts) {
+          shortcuts.value = data.preferences.shortcuts;
+        }
+
         // Load avatar if available
         if (data.preferences?.avatar) {
           avatar.value = data.preferences.avatar;
@@ -64,7 +72,10 @@ export const useUserStore = defineStore(
 
         // Load streamer mode if available
         if (data.preferences?.streamerMode) {
-          console.error("streamermode found on load:", data.preferences.streamerMode);
+          console.error(
+            "streamermode found on load:",
+            data.preferences.streamerMode
+          );
           streamerMode.value = data.preferences.streamerMode;
         }
       }
@@ -84,16 +95,16 @@ export const useUserStore = defineStore(
               username.value = updates.username;
             } else if (key === "email" && updates.email) {
               email.value = updates.email;
-            // } else if (key === "avatar" && updates.avatar) {
-            //   console.error("Avatar update acknowledged:", updates.avatar);
-            //   avatar.value = updates.avatar.avatar; //no not a mistake intentional
+              // } else if (key === "avatar" && updates.avatar) {
+              //   console.error("Avatar update acknowledged:", updates.avatar);
+              //   avatar.value = updates.avatar.avatar; //no not a mistake intentional
             } else if (key === "preferences" && updates.preferences) {
               // preferences.value = {...preferences.value, ...updates.preferences};
             } else if (key === "recentNotes" && updates.recentNotes) {
               // recentNotes.value = updates.recentNotes;
-            // } else if (key === "streamerMode" && updates.streamerMode) {
-            //   console.error("streamermodeupdate update: acknowledged", updates.streamerMode);
-            //   streamerMode.value = updates.streamerMode;
+              // } else if (key === "streamerMode" && updates.streamerMode) {
+              //   console.error("streamermodeupdate update: acknowledged", updates.streamerMode);
+              //   streamerMode.value = updates.streamerMode;
             }
             //do nothing for password
           });
@@ -173,6 +184,7 @@ export const useUserStore = defineStore(
       role.value = "";
       token.value = "";
       refreshToken.value = "";
+      shortcuts.value = [];
       isAuthenticated.value = false;
       recentNotes.value = [];
       avatar.value = "";
@@ -184,6 +196,7 @@ export const useUserStore = defineStore(
 
     function addToRecentNotes(noteId) {
       // Convert to number if it's not already
+      console.error("ADDING TO RECENT noteS")
       noteId = Number(noteId);
 
       // Remove the note if it already exists in the list
@@ -199,6 +212,65 @@ export const useUserStore = defineStore(
       console.log("Recent Notes after update:", recentNotes.value);
     }
 
+    function runShortcut(shortcut) {
+      // const shortcut = shortcuts.value[key];
+      // if (shortcut) {
+      //   const { action, params } = shortcut;
+      //   if (action === "openNote") {
+      //     const noteId = params.noteId;
+      //     const tabStore = useTabStore();
+      //     tabStore.openNoteInNewTab(noteId);
+      //   } else if (action === "openGraph") {
+      //     const graphStore = useGraphStore();
+      //     graphStore.openGraph(params.graphId);
+      //   }
+      // }
+      console.error("Running shortcut:", shortcut.params.noteId);
+      if (shortcut.action == "Note") {
+        let Id = shortcut.params.noteId;
+        const note = useGraphStore().elements.find(
+          (el) => el.id === parseInt(Id)
+        );
+
+        if (!note) {
+          toast({
+            title: "Oops something went wrong",
+            description: `that note doesn't seem to exist?`,
+            variant: "destructive",
+          });
+          return;
+        }
+        useTabStore().addTab(note.name, "note", { noteId: Id, creationTabId: 1 });
+
+        
+      } else if (shortcut.action == "Tag") {
+        let Id = shortcut.params.tagId;
+        const tag = useGraphStore().elements.find(
+          (el) => el.id === parseInt(Id)
+        );
+
+        if (!tag) {
+          toast({
+            title: "Oops something went wrong",
+            description: `that tag doesn't seem to exist?`,
+            variant: "destructive",
+          });
+          return;
+        }
+        useTabStore().addTab("Graph", "graph", {
+          filters: [
+            {
+              id: Date.now().toString(),
+              label: "Tag: " + tag.name,
+              value: tag.name.toLowerCase(),
+              type: "tag",
+            },
+          ],
+          creationTabId: 0,
+        });
+      }
+    }
+
     return {
       isAuthenticated,
       username,
@@ -209,6 +281,7 @@ export const useUserStore = defineStore(
       recentNotes,
       avatar,
       theme,
+      shortcuts,
       streamerMode,
       Login,
       Logout,
@@ -217,6 +290,7 @@ export const useUserStore = defineStore(
       FetchUser,
       addToRecentNotes,
       saveUser,
+      runShortcut,
     };
   },
   // ✅ Enable persistence
