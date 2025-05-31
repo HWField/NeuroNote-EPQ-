@@ -1077,6 +1077,7 @@ function HandleWhiteboardClick(event) {
     canvas.requestRenderAll();
   }
 }
+
 onMounted(async () => {
   // Wait for content to load before proceeding
   initaliseCanvas();
@@ -1087,10 +1088,10 @@ onMounted(async () => {
     useUserStore().addToRecentNotes(props.noteId);
     useTabStore().RenameTab(props.tabId, noteTitle); //update tab live
 
-    // Full save every minute
+    // Full save every 15seconds
     saveInterval.value = setInterval(async () => {
       await SaveToBackend();
-    }, 60000);
+    }, 15000);
     window.addEventListener("keydown", HandleWhiteboardClick);
     // initaliseCanvas();
     // console.error("Editor loaded successfully", isLoading.value);
