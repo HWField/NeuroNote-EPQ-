@@ -165,6 +165,8 @@ export const useUserStore = defineStore(
       recentNotes.value = [];
       avatar.value = "";
       streamerMode.value = "";
+      shortcuts.value = [];
+      
 
       theme.value = "auto";
       router.replace("/login");

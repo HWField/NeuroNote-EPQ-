@@ -63,6 +63,134 @@
         </div>
       </DialogContent>
     </Dialog>
+
+      <!-- Version History Modal -->
+  <Dialog
+    :open="showVersionHistoryModal"
+    @update:open="closeVersionHistoryModal"
+  >
+    <DialogContent class="sm:max-w-[800px]">
+      <DialogHeader>
+        <DialogTitle>
+          <div class="flex items-center">
+            <History class="h-5 w-5 mr-2" />
+            Version History
+          </div>
+        </DialogTitle>
+      </DialogHeader>
+      <div class="mb-4 mt-2">
+        <Button variant="default" class="w-full" @click="createManualVersion">
+          <Clock class="h-4 w-4 mr-2" />
+          Create New Restore Point
+        </Button>
+      </div>
+      <div class="py-4 flex flex-col sm:flex-row gap-4 h-[500px]">
+        <!-- Versions List on the left -->
+        <div class="w-full sm:w-1/3 border-r pr-4">
+          <h3 class="font-medium mb-2">Versions</h3>
+
+          <div v-if="loadingVersions" class="flex justify-center py-8">
+            <div
+              class="animate-spin h-8 w-8 border-4 border-primary/20 border-t-primary rounded-full"
+            ></div>
+          </div>
+
+          <div
+            v-else-if="versionHistory.length === 0"
+            class="text-center py-8 text-muted-foreground"
+          >
+            No version history available
+          </div>
+
+          <div v-else class="flex overflow- max-h-[420px] pr-2">
+            <ScrollArea class="flex-1 min-h-0 overflow-y-auto pr-2">
+              <div
+                v-for="(version, index) in versionHistory"
+                :key="index"
+                @click="selectedVersion = version"
+                class="p-3 border rounded-md hover:bg-muted/50 mb-2 transition-colors cursor-pointer"
+                :class="{
+                  'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800':
+                    selectedVersion === version,
+                }"
+              >
+                <div class="font-medium">
+                  {{ version.version_name || `Version ${index + 1}` }}
+
+                  <!-- Badge for manual versions -->
+                  <span
+                    v-if="version.version_type === 'manual'"
+                    class="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+                  >
+                    Manual
+                  </span>
+
+                  <!-- Badge for auto versions -->
+                  <span
+                    v-else-if="version.version_type === 'auto'"
+                    class="ml-2 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                  >
+                    Auto
+                  </span>
+
+                  <!-- Badge for restored versions -->
+                  <span
+                    v-else-if="version.version_type === 'restored'"
+                    class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300"
+                  >
+                    Restored
+                  </span>
+                </div>
+                <div class="text-sm text-muted-foreground mt-1">
+                  {{ version.friendly_time || " " }}
+                </div>
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+
+        <!-- Content Display on the right -->
+        <div class="w-full sm:w-2/3">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="font-medium">Content</h3>
+            <Button
+              v-if="selectedVersion"
+              variant="default"
+              size="sm"
+              @click="restoreVersion(selectedVersion)"
+            >
+              <RotateCcw class="h-3 w-3 mr-1" />
+              Restore This Version
+            </Button>
+          </div>
+
+          <div
+            v-if="!selectedVersion"
+            class="flex items-center justify-center h-[420px] text-muted-foreground border rounded-md p-4"
+          >
+            Select a version to view its content
+          </div>
+
+          <div v-else class="border rounded-md p-2 h-[420px]">
+            <ScrollArea class="h-full w-full" orientation="both">
+              <pre
+                class="text-xs font-mono p-2 whitespace-pre-wrap break-all"
+                >{{ selectedVersion.content || "No content available" }}</pre
+              >
+            </ScrollArea>
+          </div>
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" @click="closeVersionHistoryModal"
+          >Close</Button
+        >
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+
+
     <!-- Floating Toolbar -->
     <Loading v-if="isLoading" />
     <div v-else>
@@ -352,6 +480,28 @@
                   <TooltipContent>Delete Selected</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+
+
+              <Separator orientation="vertical" class="h-6 mx-1" />
+
+<!-- Version History Button -->
+<TooltipProvider>
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <Button
+        variant="ghost"
+        size="sm"
+        @click="openVersionHistoryModal"
+        class="flex gap-1 items-center"
+      >
+        <History class="h-4 w-4 mr-1" />
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent>Version History</TooltipContent>
+  </Tooltip>
+</TooltipProvider>
+
+
             </div>
           </div>
         </div>
@@ -425,6 +575,7 @@ import { useUserStore } from "@/stores/useUserStore";
 import Loading from "@/components/Loading.vue";
 import NoteHeader from "@/components/Document Editor/NoteHeader.vue";
 import { Bot, FileText, Home, Info } from "lucide-vue-next";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -475,6 +626,9 @@ import {
   Rows3Icon,
   Move,
   Check,
+  History,
+  RotateCcw,
+  Clock,
 } from "lucide-vue-next";
 import { useToast } from "@/components/ui/toast/use-toast";
 
@@ -1461,5 +1615,106 @@ console.error("Adding image to canvas at:", centerX, centerY);
     // });
 };
 
+// Version history methods
+const openVersionHistoryModal = async () => {
+  showVersionHistoryModal.value = true;
+  await fetchVersionHistory();
+};
+
+const closeVersionHistoryModal = () => {
+  showVersionHistoryModal.value = false;
+  selectedVersion.value = null;
+};
+
+const fetchVersionHistory = async () => {
+  loadingVersions.value = true;
+  try {
+    const response = await axios.post("/load", {
+      operation: "versions",
+      note_id: props.noteId,
+    });
+    versionHistory.value = response.data.versions || [];
+  } catch (error) {
+    console.error("Error fetching version history:", error);
+    toast({
+      title: "Error",
+      description: "Failed to load version history",
+      variant: "destructive",
+    });
+  } finally {
+    loadingVersions.value = false;
+  }
+};
+const restoreVersion = async (version) => {
+  if (!confirm("Are you sure you want to restore this version?")) {
+    return;
+  }
+
+  try {
+    // await axios.post(`/restore-version/${props.noteId}/${version.id}`);
+
+    const response = await axios.post("/update", {
+      operation: "restore",
+      note_id: props.noteId,
+      version_index: version.index,
+    });
+
+    // Reload content
+    await LoadFromBackend();
+
+    toast({
+      title: "Success",
+      description: "Version restored successfully",
+       variant: "success",
+    });
+
+    // Close the modal
+    closeVersionHistoryModal();
+  } catch (error) {
+    console.error("Error restoring version:", error);
+    toast({
+      title: "Error",
+      description: "Failed to restore version",
+      variant: "destructive",
+    });
+  }
+};
+const createManualVersion = async () => {
+  // Get a name for this version from the user
+  const versionName = prompt("Enter a name for this restore point:", 
+                           `Manual save ${new Date().toLocaleString()}`);
+  
+  if (versionName === null) return; // User cancelled
+  
+  try {
+    // Make the API call to create a manual version
+    const response = await axios.post("/create", {
+      type: "version",
+      note_id: props.noteId,
+      version_name: versionName,
+    });
+
+    // Show success message
+    toast({
+      title: "Restore Point Created",
+      description: `Version "${versionName}" created successfully`,
+      variant: "success",
+    });
+    
+    // Refresh version history to show the new version
+    await fetchVersionHistory();
+  } catch (error) {
+    console.error("Error creating manual version:", error);
+    toast({
+      title: "Error",
+      description: "Failed to create restore point",
+      variant: "destructive",
+    });
+  }
+};
+const showVersionHistoryModal = ref(false);
+const selectedVersion = ref(null);
+const versionHistory = ref([]);
+const loadingVersions = ref(false);
 
 </script>

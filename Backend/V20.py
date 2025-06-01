@@ -162,7 +162,7 @@ class Note(Base):
     format = Column(String, default="document")
     name = Column(String, nullable=False)
     colour = Column(String, default="")
-    content = Column(JSONB, default="")
+    content = Column(JSONB, default=lambda:[])
     viewport = Column(String, default="")
     background = Column(String, default="")
     tags = relationship('Tag', secondary=note_tag_association, backref=backref('notes', lazy='dynamic'))
@@ -532,7 +532,52 @@ def create():
             dbsession.rollback()
             # print(f"Error creating note: {e}")
             return jsonify({'status': 'error', 'message': 'Failed to create note}'}), 500
+ 
+    elif type == 'version':
+        note_id = data.get('note_id')    
+        user_id = get_jwt_identity()
+        version_name = data.get('version_name', f"Manual save {datetime.now().strftime('%H:%M:%S')}")
         
+        # Find the note
+        note = dbsession.query(Note).join(Entity).filter(
+            Entity.user_id == int(user_id),
+            Entity.user_specific_id == note_id
+        ).first()
+        
+        if note is None:
+            return jsonify({'status': 'error', 'message': 'Note not found'}), 404
+        
+        try:
+            # Get current content (most recent version)
+            if not note.content or not isinstance(note.content, list):
+                return jsonify({'status': 'error', 'message': 'No content to version'}), 400
+                
+            current_version = note.content[0]
+            current_content = current_version.get("content") if isinstance(current_version, dict) else current_version
+            
+            # Create new manual version
+            version_entry = {
+                "content": current_content,
+                "timestamp": datetime.now().isoformat(),
+                "version_type": "manual",
+                "version_name": version_name
+            }
+            
+            # Add to versions
+            note.content = [version_entry] + note.content
+            
+            # Apply smart pruning
+            note.content = smart_prune_versions(note.content)
+            
+            dbsession.commit()
+            return jsonify({
+                'status': 'success', 
+                'message': 'Manual version created successfully',
+                'version_name': version_name
+            })
+        except Exception as e:
+            dbsession.rollback()
+            return jsonify({'status': 'error', 'message': f'Failed to create version: {str(e)}'}), 500
  
     
 
@@ -664,6 +709,54 @@ def  delete():
         
     
     
+    
+def smart_prune_versions(versions, max_total=100):
+    """
+    Smart pruning of versions to keep meaningful history:
+    - Always keeps all manual versions when possible
+    - Keeps more recent automatic versions 
+    - Spaces out older versions to maintain coverage
+    """
+    if len(versions) <= max_total:
+        return versions
+    
+    # Separate manual and auto versions
+    manual_versions = [v for v in versions if v.get("version_type") == "manual"]
+    auto_versions = [v for v in versions if v.get("version_type") != "manual"]
+    
+    # If we have too many manual versions already, keep the most recent ones
+    if len(manual_versions) >= max_total:
+        return manual_versions[:max_total]
+    
+    # Calculate how many auto versions we can keep
+    remaining_slots = max_total - len(manual_versions)
+    
+    # If we can keep all auto versions, return all versions
+    if len(auto_versions) <= remaining_slots:
+        return manual_versions + auto_versions
+    
+    # Keep more recent auto versions (2/3 of slots) and sample older ones (1/3 of slots)
+    recent_count = min(int(remaining_slots * 0.67), len(auto_versions))
+    historical_count = remaining_slots - recent_count
+    
+    # Get recent versions
+    recent_auto_versions = auto_versions[:recent_count]
+    
+    # Sample from older versions at regular intervals for historical perspective
+    older_auto_versions = auto_versions[recent_count:]
+    historical_versions = []
+    
+    if historical_count > 0 and older_auto_versions:
+        # Space them out evenly
+        indices = [int(i * len(older_auto_versions) / historical_count) for i in range(historical_count)]
+        historical_versions = [older_auto_versions[i] for i in indices]
+    
+    # Combine all versions
+    result = manual_versions + recent_auto_versions + historical_versions
+    
+    # Sort by recency (newest first)
+    return sorted(result, key=lambda v: v.get("timestamp", ""), reverse=True)
+
 @app.route('/update', methods=['POST'])
 @jwt_required()
 def update():   
@@ -737,47 +830,133 @@ def update():
     elif operation == "content":
         data = request.json
         note_id = data.get('id')
-        # print("########################## saving", note_id)
-        # note_id = int(note_id.split('_')[1])
-        # viewport = data.get('viewport')
-        content = (data.get('content'))
+        new_content = data.get('content')
         tags_ids = data.get('tags', [])
-        # background = data.get('background')
-       
         name = data.get('name')
-    
-        name = data.get('name')
-
+        
         # Validate input
         if note_id is None:
-            # print("------- note", note_id, "has invalid input data")
             return jsonify({'status': 'error', 'message': 'Invalid input data'}), 400
 
         # Query the note
         note = dbsession.query(Note).join(Entity).filter(
-            Entity.user_id == int(user),  # Ensure it belongs to the logged-in user
-            Entity.user_specific_id == note_id  # Find using per-user unique ID
+            Entity.user_id == int(user),
+            Entity.user_specific_id == note_id
             ).first()
-        if note is None:
-            # print("------- user tried to access", int(user), "user and note", note_id, "has not been found")
-            return jsonify({'status': 'error', 'message': 'Note not found'}), 404
-        else:
-            print("------- note", note.name, "has been found")
-
-        # Update the content
-        # note.viewport = viewport
-        note.content = content
-        # note.background = background
-        note.name = name
-        # print("------- note: ", note.name, ", has had content, viewport and background set")
-
         
-        # Get all Tag objects for the provided IDs
+        if note is None:
+            return jsonify({'status': 'error', 'message': 'Note not found'}), 404
+        
+        print("------- note", note.name, "has been found with content type:")
+        
+        # Initialize content properly
+        if note.content is None:
+            print("------- Initializing empty content array")
+            note.content = []
+        elif not isinstance(note.content, list):
+            print("------- Converting legacy content to versioned format")
+            old_content = note.content
+            note.content = [{
+                "content": old_content,
+                "timestamp": datetime.now().isoformat(),
+                "version_type": "legacy"
+            }]
+        
+        # Constants for versioning thresholds
+        MIN_VERSION_TIME_INTERVAL = 5 * 60  # 5 minutes between auto versions
+        MIN_CHANGE_THRESHOLD = 0.15  # 15% content change threshold
+        
+        # Check if content has actually changed
+        has_changed = False
+        should_create_version = False
+        force_manual_version = data.get('create_manual_version', False)
+        version_name = data.get('version_name', None)
+        if force_manual_version:
+            # Always create a version if manually requested
+            should_create_version = True
+            has_changed = True
+            
+            
+        elif not note.content:
+            # No existing versions
+            should_create_version = True
+            has_changed = True
+            # print("###### making the first version")
+        else:
+            try:
+                # Safely get the current content
+                current_version = note.content[0] if note.content else None
+                current_content = current_version.get("content") if isinstance(current_version, dict) else current_version
+                
+                # Compare as strings to handle complex structures
+                current_json = json.dumps(current_content, sort_keys=True) if current_content else ""
+                new_json = json.dumps(new_content, sort_keys=True) if new_content else ""
+                has_changed = current_json != new_json
+                
+                if has_changed:
+                    # Check if we should create a new version based on time threshold
+                    time_threshold_met = True
+                    if isinstance(current_version, dict) and "timestamp" in current_version:
+                        last_time = datetime.fromisoformat(current_version["timestamp"])
+                        time_diff = (datetime.now() - last_time).total_seconds()
+                        time_threshold_met = time_diff > MIN_VERSION_TIME_INTERVAL
+                    
+                    # Check if change is significant enough (based on content size difference)
+                    change_size_threshold_met = True
+                    if current_json and new_json:
+                        # Calculate difference magnitude (simple approach using length difference)
+                        size_diff_ratio = abs(len(new_json) - len(current_json)) / max(len(current_json), 1)
+                        change_size_threshold_met = size_diff_ratio > MIN_CHANGE_THRESHOLD
+                    
+                    # Only create a version if either threshold is met
+                    should_create_version = time_threshold_met or change_size_threshold_met
+                    
+                    print(f"------- Time threshold met: {time_threshold_met}, Change threshold met: {change_size_threshold_met}")
+                
+                print(f"------- Content changed? {has_changed}, Creating new version? {should_create_version}")
+            except Exception as e:
+                print(f"------- Error comparing content: {e}")
+                should_create_version = True  # Assume we should version if comparison fails
+
+        if has_changed:
+            if should_create_version:
+                # Create a new version
+                print("------- Creating new version entry")
+                version_entry = {
+                    "content": new_content,
+                    "timestamp": datetime.now().isoformat(),
+                    "version_type": "manual" if force_manual_version else "auto"
+                }
+                
+                # Add version name if provided (for manual versions)
+                if version_name:
+                    version_entry["version_name"] = version_name
+                
+                # Create a new list instead of modifying the existing one in-place
+                new_content_array = [version_entry] + note.content
+            else:
+                # Just update the current version instead of creating a new one
+                print("------- Updating existing version entry")
+                # Create a new list with updated first element
+                current_version = note.content[0].copy() if isinstance(note.content[0], dict) else {"content": note.content[0]}
+                current_version["content"] = new_content
+                current_version["timestamp"] = datetime.now().isoformat()
+                new_content_array = [current_version] + note.content[1:]
+            
+            # Apply smart pruning
+            new_content_array = smart_prune_versions(new_content_array)
+            
+            # IMPORTANT: Assign the entire new array to trigger SQLAlchemy change detection
+            note.content = new_content_array
+        # Update other fields
+        note.name = name
+        
+        # Update tags
         new_tags = []
         for tag_id in tags_ids:
             tag = dbsession.query(Tag).join(Entity).filter(
-                Entity.user_id == int(user),  # Match user
-                Entity.user_specific_id == tag_id  # Match tag's user-specific ID
+                Entity.user_id == int(user),
+                Entity.user_specific_id == tag_id
             ).first()
             
             if tag:
@@ -785,26 +964,71 @@ def update():
             else:
                 print(f"Warning: Tag with ID {tag_id} not found for user {user}")
         
-        # Replace all tag associations in one operation
-        # SQLAlchemy handles adding new ones and removing old ones automatically
+        # Replace all tag associations
         note.tags = new_tags
-        # print(f"------- set {len(new_tags)} tags on note {note_id}")
+        
+        # Handle whiteboard-specific fields
         if note.format == "whiteboard":
             print("------- note is a whiteboard, setting viewport")
             note.viewport = data.get('viewport')
             note.background = data.get('background')
+        
+        try:
+            # Explicitly commit and refresh
+            dbsession.commit()
+            dbsession.refresh(note)
             
+            # Verify the update worked
+            print(f"------- After update: note has {len(note.content)} versions")
             
-        dbsession.commit()
-          # IMPORTANT: Explicitly refresh the object from DB to ensure latest state
-        dbsession.refresh(note)
-        # print(f"Updated note {note_id} to database")
-        return jsonify({'status': 'success', 'message': 'Note content updated successfully.'})
+            return jsonify({'status': 'success', 'message': 'Note content updated successfully.'})
+        except Exception as e:
+            dbsession.rollback()
+            print(f"Error updating note {note_id} content: {e}")
+            return jsonify({'status': 'error', 'message': f'Failed to update note content: {str(e)}'}), 500
+    
+    elif operation == "restore":
+        note_id = data.get('note_id')
+        version_index = data.get('version_index')
+        user_id = get_jwt_identity()
+        # print("########################## restoring version", version_index, "of note", note_id, "for user", user_id)
+        note = dbsession.query(Note).join(Entity).filter(
+            Entity.user_id == int(user_id),
+            Entity.user_specific_id == note_id
+        ).first()
+        
+        if note is None:
+            return jsonify({'status': 'error', 'message': 'Note not found'}), 404
+        
+        if not note.content or not isinstance(note.content, list) or version_index >= len(note.content):
+            return jsonify({'status': 'error', 'message': 'Version not found'}), 404
+        
+        try:
+            # Get the version to restore
+            version_to_restore = note.content[version_index]
+            restored_content = version_to_restore.get("content") if isinstance(version_to_restore, dict) else version_to_restore
             
-        # except Exception as e:
-        #     dbsession.rollback()
-        #     print(f"Error updating note {note_id} content: {e}")
-        #     return jsonify({'status': 'error', 'message': 'Failed to update note content'}), 500
+            # Create a new version with the restored content
+            restored_version = {
+                "content": restored_content,
+                "timestamp": datetime.now().isoformat(),
+                "version_type": "restored",
+                "version_name": ""
+            }
+            
+            # Move the restored version to the front
+            new_content_array = [restored_version] + note.content
+            note.content = new_content_array
+            
+            # Apply smart pruning
+            note.content = smart_prune_versions(note.content)
+            
+            dbsession.commit()
+            return jsonify({'status': 'success', 'message': 'Version restored successfully'})
+        except Exception as e:
+            dbsession.rollback()
+            return jsonify({'status': 'error', 'message': f'Failed to restore version: {str(e)}'}), 500
+        
         
     elif operation == "rename":
         data = request.json
@@ -1002,13 +1226,22 @@ def load():
         if note is None:
             return jsonify({'status': 'error', 'message': 'Note not found'}), 404
         
+        current_content = None
+        if note.content:
+            if isinstance(note.content, list):
+                if note.content and isinstance(note.content[0], dict):
+                    current_content = note.content[0].get("content")  # Extract content from versioned format
+                else:
+                    current_content = note.content[0]  # Handle older array format
+            else:
+                current_content = note.content  # Handle legacy format
+                
         return jsonify({
             'status': 'success', 
-            'content': note.content, 
+            'content': current_content, 
             'viewport': note.viewport, 
             'background': note.background, 
             'name': note.name, 
-            # Change this line to use user_specific_id
             'tags': [tag.entity.user_specific_id for tag in note.tags]
         })
     
@@ -1022,6 +1255,60 @@ def load():
         # print("sent tabs", tabs)
         return jsonify(tabs)
     
+    elif operation == "versions":
+        note_id = data.get('note_id')
+        user_id = get_jwt_identity()
+    
+        note = dbsession.query(Note).join(Entity).filter(
+            Entity.user_id == int(user_id),
+            Entity.user_specific_id == note_id
+        ).first()
+        
+        if note is None:
+            return jsonify({'status': 'error', 'message': 'Note not found'}), 404
+        
+        versions = []
+        if note.content and isinstance(note.content, list):
+            for i, version in enumerate(note.content):
+                version_info = {
+                    "index": i,
+                    "is_current": i == 0
+                }
+                
+                if isinstance(version, dict):
+                    # Format the timestamp for display
+                    timestamp = version.get("timestamp")
+                    if timestamp:
+                        try:
+                            dt = datetime.fromisoformat(timestamp)
+                            friendly_time = dt.strftime("%b %d, %Y %I:%M %p")
+                        except:
+                            friendly_time = timestamp
+                    else:
+                        friendly_time = "Unknown date"
+                    
+                    version_info.update({
+                        "timestamp": timestamp,
+                        "friendly_time": friendly_time,
+                        "version_type": version.get("version_type", "auto"),
+                        "version_name": version.get("version_name", f"Version {i+1}"),
+                        "content": version.get("content", "")
+                    })
+                else:
+                    version_info.update({
+                        "timestamp": "Unknown",
+                        "friendly_time": "Unknown date",
+                        "version_type": "legacy",
+                        "version_name": f"Version {i+1}",
+                        "content": "none"
+                    })
+                
+                versions.append(version_info)
+        
+        return jsonify({
+            'status': 'success',
+            'versions': versions
+        })
     
  # Add image upload endpoint
  
