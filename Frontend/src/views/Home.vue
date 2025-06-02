@@ -225,7 +225,7 @@ const data = {
   },
   teams: [
     {
-      name: "School",
+      name: "Vault",
       logo: GalleryVerticalEnd,
       plan: "Personal",
     },

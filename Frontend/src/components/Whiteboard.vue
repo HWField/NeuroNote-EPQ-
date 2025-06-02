@@ -530,10 +530,10 @@
           :class="[
             !embedded
               ? showNoteHeader
-          ? 'h-[calc(100vh-24rem)]'
-          : 'h-[calc(100vh-12rem)]'
+                ? 'h-[calc(100vh-24rem)]'
+                : 'h-[calc(100vh-12rem)]'
               : 'h-full',
-            !embedded ? 'shadow-md' : ''
+            !embedded ? 'shadow-md' : '',
           ]"
         >
           <!-- Grid canvas (bottom layer) -->
@@ -651,6 +651,10 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  initialViewport: {
+    type: [String, Array],
+    default: null,
+  },
 });
 
 const instanceId = ref(
@@ -671,7 +675,7 @@ const gridCanvasId = computed(() =>
 );
 
 const showNoteHeader = ref(false);
-const emit = defineEmits(["note-closed"]);
+const emit = defineEmits(["note-closed", "viewport-changed"]);
 const saveInterval = ref(null);
 const noteTitle = ref("Untitled Note");
 const noteTags = ref([]);
@@ -745,6 +749,7 @@ async function SaveToBackend() {
 }
 async function LoadFromBackend() {
   console.error("Loading note:", props.noteId);
+  console.log("Initial viewport prop:", props.initialViewport);
   try {
     const response = await axios.post("/load", {
       id: props.noteId,
@@ -767,9 +772,70 @@ async function LoadFromBackend() {
       return;
     }
 
-    if (response.data.viewport) {
-      viewport.value = JSON.parse(response.data.viewport);
-      canvas.setViewportTransform(viewport.value);
+    // Handle viewport with priority: initialViewport > backend viewport
+    let viewportToUse = null;
+
+    //makes remembering preview work
+
+    // makes opening note behaviour work
+
+    if (props.embedded) {
+      if (props.initialViewport) {
+        // Priority 1: Use initialViewport prop (from preview)
+        if (typeof props.initialViewport === "string") {
+          viewportToUse = JSON.parse(props.initialViewport);
+        } else if (Array.isArray(props.initialViewport)) {
+          viewportToUse = props.initialViewport;
+        }
+      }
+    } else {
+      if (useTabStore().getTab(useTabStore().activeTab).state.initialViewport) {
+        // Priority 1: Use initialViewport prop (from preview)
+        if (
+          typeof useTabStore().getTab(useTabStore().activeTab).state
+            .initialViewport === "string"
+        ) {
+          console.error("aaaaaaaa is a string");
+          viewportToUse = JSON.parse(
+            useTabStore().getTab(useTabStore().activeTab).state.initialViewport
+          );
+        } else if (
+          Array.isArray(
+            useTabStore().getTab(useTabStore().activeTab).state.initialViewport
+          )
+        ) {
+          console.error("aaaaaaaa is an array");
+          viewportToUse = useTabStore().getTab(useTabStore().activeTab).state
+            .initialViewport;
+        }
+        console.error(
+          "!!!!!!!!Using custom preview sent viewport:",
+          useTabStore().getTab(useTabStore().activeTab).state.initialViewport
+        );
+
+        const previewHeight = 265;
+        const fullEditorHeight = modalContent.offsetHeight;
+        const heightDifference = (fullEditorHeight - previewHeight) / 2;
+
+        // Adjust the Y translation (index 5) to center the content
+        // Move the viewport down by half the height difference
+        viewportToUse[5] += heightDifference;
+
+        console.error("Adjusted viewport for full editor:", viewportToUse);
+        console.error("Height difference compensation:", heightDifference);
+      } else if (response.data.viewport) {
+        console.error(
+          "!!!!!!!!Using loaded viewport:",
+          useTabStore().getTab(useTabStore().activeTab).state.initialViewport
+        );
+        // Priority 2: Use backend viewport (for full editor only)
+        viewportToUse = JSON.parse(response.data.viewport);
+        console.log("Using backend viewport:", viewportToUse);
+      }
+    }
+
+    if (viewportToUse) {
+      canvas.setViewportTransform(viewportToUse);
     }
 
     if (response.data.background) {
@@ -921,7 +987,17 @@ function resizeCanvasToContainer() {
 
   // console.error(`After resize - Fabric: ${canvas.getWidth()}x${canvas.getHeight()}, Grid: ${gridCanvas.width}x${gridCanvas.height}`);
 }
+let viewportChangeTimeout = null;
+function emitViewportChange() {
+  if (!props.embedded || !canvas) return;
 
+  // Throttle viewport change emissions to avoid performance issues
+  clearTimeout(viewportChangeTimeout);
+  viewportChangeTimeout = setTimeout(() => {
+    const currentViewport = canvas.viewportTransform;
+    emit("viewport-changed", [...currentViewport]); // Clone the array
+  }, 500); // Emit after 500ms of no changes
+}
 // Add a watcher for showNoteHeader
 watch(showNoteHeader, () => {
   // Use setTimeout to ensure the DOM has updated before measuring
@@ -1041,6 +1117,11 @@ function initaliseCanvas() {
       function syncGridWithCanvas() {
         const vpt = canvas.viewportTransform;
         drawGrid(vpt[4], vpt[5], canvas.getZoom());
+
+        // Only emit viewport changes for embedded previews
+        if (props.embedded) {
+          emitViewportChange();
+        }
       }
 
       // Attach the sync function to the after:render event
@@ -1341,6 +1422,11 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(async () => {
+  // Clear viewport change timeout
+  if (viewportChangeTimeout) {
+    clearTimeout(viewportChangeTimeout);
+    viewportChangeTimeout = null;
+  }
   // Clean up ResizeObserver
   if (canvas && canvas.__resizeObserver) {
     canvas.__resizeObserver.disconnect();

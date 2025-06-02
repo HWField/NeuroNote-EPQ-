@@ -5,48 +5,63 @@ import WhiteboardNodeView from './WhiteboardPreview.vue'
 export const WhiteboardExtension = Node.create({
   name: 'whiteboard',
   
-  // Group it with other block elements like paragraphs, headings, etc.
   group: 'block',
-  
-  // Make it a self-contained element
   atom: true,
-  
-  // It should be selectable as one unit
   selectable: true,
-  
-  // Prevent dragging content into or out of this node
   draggable: true,
   
-  // Define HTML parsing rules
   parseHTML() {
     return [
       { 
         tag: 'div[data-type="whiteboard"]',
-        getAttrs: element => ({
-          id: element.getAttribute('data-id'),
-          name: element.getAttribute('data-name'),
-          background: element.getAttribute('data-background')
-        }),
+        getAttrs: element => {
+          // Parse viewport if it exists
+          let viewport = null;
+          const viewportAttr = element.getAttribute('data-viewport');
+          if (viewportAttr) {
+            try {
+              viewport = JSON.parse(viewportAttr);
+            } catch (e) {
+              viewport = null;
+            }
+          }
+          
+          return {
+            id: element.getAttribute('data-id'),
+            name: element.getAttribute('data-name'),
+            background: element.getAttribute('data-background'),
+            parentTab: element.getAttribute('data-parent-tab'),
+            viewport: viewport
+          };
+        },
       },
     ]
   },
   
-  // Define how to render the node to HTML
   renderHTML({ HTMLAttributes }) {
+    const attrs = { 
+      'data-type': 'whiteboard',
+      'data-id': HTMLAttributes.id,
+      'data-name': HTMLAttributes.name,
+      'data-background': HTMLAttributes.background,
+      class: 'whiteboard-node'
+    };
+    
+    if (HTMLAttributes.parentTab) {
+      attrs['data-parent-tab'] = HTMLAttributes.parentTab;
+    }
+    
+    if (HTMLAttributes.viewport) {
+      attrs['data-viewport'] = JSON.stringify(HTMLAttributes.viewport);
+    }
+    
     return [
       'div', 
-      { 
-        'data-type': 'whiteboard',
-        'data-id': HTMLAttributes.id,
-        'data-name': HTMLAttributes.name,
-        'data-background': HTMLAttributes.background,
-        class: 'whiteboard-node'
-      },
+      attrs,
       ['div', { class: 'whiteboard-container' }]
-    ]
+    ];
   },
   
-  // Define attributes that can be stored with the node
   addAttributes() {
     return {
       id: {
@@ -60,11 +75,13 @@ export const WhiteboardExtension = Node.create({
       },
       parentTab: {
         default: null,
+      },
+      viewport: {
+        default: null,
       }
     }
   },
   
-  // Define how to render this node in the editor using the Vue component
   addNodeView() {
     return VueNodeViewRenderer(WhiteboardNodeView)
   },

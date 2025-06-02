@@ -713,6 +713,7 @@ const openTag = ref(null);
               :tabId="1"
               class="overflow-hidden"
             />
+            
           </div>
 
           <!-- Right Column (Two Short Divs) -->

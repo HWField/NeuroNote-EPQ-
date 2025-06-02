@@ -346,7 +346,7 @@
                 <CardHeader>
                   <CardTitle>Extensions</CardTitle>
                   <CardDescription>
-                    Manage and customize installed extensions
+                    Manage and customize installed extensions (coming soon)
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -367,7 +367,7 @@
                           <h3 class="font-medium text-base">
                             {{ extension.name }}
                           </h3>
-                          <Switch v-model="extension.enabled" />
+                          <Switch disabled v-model:checked="extension.enabled" />
                         </div>
                         <p class="text-sm text-muted-foreground">
                           {{ extension.description }}
@@ -393,7 +393,20 @@
             </div>
 
             <!-- Advanced Settings -->
+
+
+
+            <!-- temp blur on advanced settings until developed -->
             <div v-if="currentTab === 'advanced'" class="space-y-6">
+              <div class="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+                <div class="text-center">
+                  <h3 class="text-2xl font-semibold text-muted-foreground mb-2">Coming Soon</h3>
+                  <p class="text-sm text-muted-foreground">Advanced settings will be available in a future update</p>
+                </div>
+              </div>
+
+
+              
               <Card>
                 <CardHeader>
                   <CardTitle>Data Management</CardTitle>
@@ -538,6 +551,11 @@ import {
   Calendar,
   Clock,
   Code,
+  Presentation,
+  FileVideo,
+  Diff,
+  TestTube2,
+  Code2,
 } from "lucide-vue-next";
 
 const graphStore = useGraphStore();
@@ -770,47 +788,57 @@ const extensions = ref([
     icon: FileText,
     version: "v1.3.2",
     // author:
-    enabled: true,
+    enabled: ref(true),
   },
   {
-    id: "focus-mode",
-    name: "Focus Mode",
+    id: "whiteboard-preview",
+    name: "Whiteboard Preview",
     description:
-      "Distraction-free writing environment with pomodoro timer and goals tracking",
-    icon: Eye,
+      "Visualise your handwritten notes within your docuements with an interactive whiteboard preview",
+    icon: Presentation,
     version: "v2.0.1",
 
-    enabled: true,
+    enabled: ref(true),
   },
   {
-    id: "ai-assistant",
-    name: "AI Assistant",
+    id: "youtube",
+    name: "Youtube Integration",
     description:
-      "Smart content suggestions and automated note organization using AI",
-    icon: Brain,
+      "Embed and interact with YouTube videos directly in your notes",
+    icon: FileVideo,
     version: "v0.9.5",
 
-    enabled: false,
+    enabled: ref(true),
   },
   {
-    id: "calculator",
-    name: "Calculator",
+    id: "maths-script",
+    name: "Maths Script",
     description:
-      "Inline calculations in your notes with support for unit conversions",
-    icon: Calculator,
+      "Type beautiful, complex, mathematical equations within your notes",
+    icon: Diff,
     version: "v1.1.0",
 
-    enabled: false,
+    enabled: ref(true),
   },
   {
-    id: "calendar-integration",
-    name: "Calendar Integration",
+    id: "chemistry-script",
+    name: "Chemistry Script",
     description:
-      "Link notes to calendar events and get reminders for related content",
-    icon: Calendar,
+      "Type chemical equations and visualise molecules directly within your notes",
+    icon: TestTube2,
+    version: "v1.1.0",
+
+    enabled: ref(true),
+  },
+  {
+    id: "code-block",
+    name: "Code Block",
+    description:
+      "Syntax highlighting for various programming languages",
+    icon: Code2,
     version: "v2.2.1",
 
-    enabled: true,
+    enabled: ref(true),
   },
 ]);
 

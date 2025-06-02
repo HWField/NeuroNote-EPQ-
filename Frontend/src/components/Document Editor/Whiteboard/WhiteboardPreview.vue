@@ -11,9 +11,10 @@
           :embedded="true"
           :parentTab="useTabStore().activeTab.value"
           :instanceKey="instanceKey"
+          :initialViewport="node.attrs.viewport"
+          @viewport-changed="handleViewportChange"
           class="w-full max-h-full"
         />
-        <!-- :parentTab="node.attrs.parentTab" -->
       </div>
     </div>
   </NodeViewWrapper>
@@ -26,7 +27,7 @@ import { Pencil } from "lucide-vue-next";
 import { useTabStore } from "@/stores/useTabStore";
 import { useToast } from "@/components/ui/toast/use-toast";
 import Whiteboard from "@/components/Whiteboard.vue";
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 
 const props = defineProps({
   editor: Object,
@@ -38,12 +39,32 @@ const props = defineProps({
 const { toast } = useToast();
 const instanceKey = ref(`preview-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
 
-// Function to open the full whiteboard editor
+onMounted(() => {
+  console.log("WhiteboardPreview mounted with viewport:", props.node.attrs.viewport);
+});
+
+// Handle viewport changes from the whiteboard preview
+function handleViewportChange(viewport) {
+  console.log("Preview viewport changed:", viewport);
+  
+  // Update the TipTap node attributes with the new viewport
+  props.updateAttributes({
+    viewport: viewport
+  });
+  
+  console.log("Updated node attrs:", props.node.attrs);
+}
+
+// Function to open the full whiteboard editor with the preview's current viewport
 function openFullWhiteboard() {
   if (props.node.attrs.id) {
+    console.error("Opening full whiteboard with preview viewport:", props.node.attrs.viewport);
+    
+    // Pass the current preview viewport to the full editor
     useTabStore().addTab("note", "note", {
       noteId: props.node.attrs.id,
       creationTabId: useTabStore().activeTab,
+      initialViewport: props.node.attrs.viewport, // Pass the preview's viewport
     });
   } else {
     toast({
@@ -63,10 +84,8 @@ function openFullWhiteboard() {
 .whiteboard-embed.ProseMirror-selectednode {
   outline: 3px solid #6a00f5;
   border-radius: 0.5rem;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); /* Subtle glow */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
-
-
 
 .whiteboard-container {
   height: 300px;
