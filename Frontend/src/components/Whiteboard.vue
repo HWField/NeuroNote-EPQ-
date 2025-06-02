@@ -524,26 +524,26 @@
       </Transition>
 
       <div class="flex justify-center h-full flex-1">
-       
         <div
-          id="canvas-container"
-          class="canvas-container w-full overflow-hidden bg-none shadow-md  m-4 relative"
-          :class="
+          :id="canvasContainerId"
+          class="canvas-container w-full overflow-hidden bg-none m-4 relative"
+          :class="[
             !embedded
               ? showNoteHeader
-                ? 'h-[calc(100vh-24rem)]'
-                : 'h-[calc(100vh-12rem)]'
-              : 'h-full'
-          "
+          ? 'h-[calc(100vh-24rem)]'
+          : 'h-[calc(100vh-12rem)]'
+              : 'h-full',
+            !embedded ? 'shadow-md' : ''
+          ]"
         >
           <!-- Grid canvas (bottom layer) -->
           <canvas
-            id="grid-canvas"
-            class="absolute top-0 left-0 w-full rounded-lg h-full bg-white "
+            :id="gridCanvasId"
+            class="absolute top-0 left-0 w-full rounded-lg h-full bg-white"
           ></canvas>
           <!-- Main canvas (top layer) -->
           <canvas
-            id="fabricCanvas"
+            :id="fabricCanvasId"
             class="absolute top-0 left-0 w-full rounded-lg h-full"
           ></canvas>
         </div>
@@ -569,7 +569,7 @@
 </style>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
 import * as fabric from "fabric";
 import Hammer from "hammerjs";
 import axios, { getBaseUrl } from "../axios.js";
@@ -647,7 +647,29 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  instanceKey: {
+    type: String,
+    default: null,
+  },
 });
+
+const instanceId = ref(
+  props.instanceKey ||
+    `${props.noteId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+);
+
+const canvasContainerId = computed(() =>
+  props.embedded ? `canvas-container-${instanceId.value}` : `canvas-container`
+);
+
+const fabricCanvasId = computed(() =>
+  props.embedded ? `fabricCanvas-${instanceId.value}` : `fabricCanvas`
+);
+
+const gridCanvasId = computed(() =>
+  props.embedded ? `grid-canvas-${instanceId.value}` : `grid-canvas`
+);
+
 const showNoteHeader = ref(false);
 const emit = defineEmits(["note-closed"]);
 const saveInterval = ref(null);
@@ -846,7 +868,6 @@ async function closeNote() {
   }
 }
 function resizeCanvasToContainer() {
-  
   console.error("Resizing canvas to container dimensions");
 
   // Guard against accessing canvas before it's initialized
@@ -918,9 +939,9 @@ function updateNoteTitle(newTitle) {
 function initaliseCanvas() {
   return new Promise((resolve, reject) => {
     // Get DOM elements with proper null checks
-    modalContent = document.getElementById("canvas-container");
-    fabricCanvasEl = document.getElementById("fabricCanvas");
-    gridCanvas = document.getElementById("grid-canvas");
+    modalContent = document.getElementById(canvasContainerId.value);
+    fabricCanvasEl = document.getElementById(fabricCanvasId.value);
+    gridCanvas = document.getElementById(gridCanvasId.value);
 
     // Check if elements exist before proceeding
     if (!modalContent || !fabricCanvasEl || !gridCanvas) {
@@ -933,287 +954,287 @@ function initaliseCanvas() {
     }
 
     try {
-    // Now we can safely get the context
-    gridContext = gridCanvas.getContext("2d");
+      // Now we can safely get the context
+      gridContext = gridCanvas.getContext("2d");
 
-    // Continue with canvas initialization
-    canvas = new fabric.Canvas(fabricCanvasEl, {
-      width: modalContent.offsetWidth,
-      height: modalContent.offsetHeight,
-      backgroundColor: "transparent",
-    });
+      // Continue with canvas initialization
+      canvas = new fabric.Canvas(fabricCanvasEl, {
+        width: modalContent.offsetWidth,
+        height: modalContent.offsetHeight,
+        backgroundColor: "transparent",
+      });
 
-    // Add ResizeObserver to watch for container size changes
+      // Add ResizeObserver to watch for container size changes
 
-    // Add ResizeObserver to watch for container size changes
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        // Debounce the resize to avoid too many calls
-        clearTimeout(canvas.__resizeTimeout);
-        canvas.__resizeTimeout = setTimeout(() => {
-          resizeCanvasToContainer();
-        }, 100);
-      }
-    });
+      // Add ResizeObserver to watch for container size changes
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          // Debounce the resize to avoid too many calls
+          clearTimeout(canvas.__resizeTimeout);
+          canvas.__resizeTimeout = setTimeout(() => {
+            resizeCanvasToContainer();
+          }, 100);
+        }
+      });
 
-    // Store observer reference for cleanup
-    canvas.__resizeObserver = resizeObserver;
+      // Store observer reference for cleanup
+      canvas.__resizeObserver = resizeObserver;
 
-    // Start observing the container
-    resizeObserver.observe(modalContent);
+      // Start observing the container
+      resizeObserver.observe(modalContent);
 
-    //   function onObjectSelected(e) {
-    //     object = e.selected[0]
-    //     console.error("Object selected:", object).type;
-    //     canvas.bringObjectToFront(object);
-    //     object.bringObjectToFront();
-    //     object.bringToFront();
-    //     canvas.renderAll();
+      //   function onObjectSelected(e) {
+      //     object = e.selected[0]
+      //     console.error("Object selected:", object).type;
+      //     canvas.bringObjectToFront(object);
+      //     object.bringObjectToFront();
+      //     object.bringToFront();
+      //     canvas.renderAll();
 
-    // }
-    // canvas.on('selection:created', onObjectSelected);
+      // }
+      // canvas.on('selection:created', onObjectSelected);
 
-    console.error("Canvas initialized:", canvas);
-    //might need changing in future but prevents blurry edges for now
-    // Disable object caching for better performance
-    fabric.Object.prototype.objectCaching = false;
+      console.error("Canvas initialized:", canvas);
+      //might need changing in future but prevents blurry edges for now
+      // Disable object caching for better performance
+      fabric.Object.prototype.objectCaching = false;
 
-    // IMPORTANT: Create a drawing brush first
-    canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-    canvas.freeDrawingBrush.width = penWidth.value;
-    canvas.freeDrawingBrush.color = colour.value;
+      // IMPORTANT: Create a drawing brush first
+      canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+      canvas.freeDrawingBrush.width = penWidth.value;
+      canvas.freeDrawingBrush.color = colour.value;
 
-    // Override the createPath method to disable caching
-    const originalCreatePath = canvas.freeDrawingBrush.createPath;
-    canvas.freeDrawingBrush.createPath = function (pathData) {
-      const path = originalCreatePath.call(this, pathData);
-      path.objectCaching = false;
-      path.strokeLineCap = "round";
-      path.strokeLineJoin = "round";
-      return path;
-    };
+      // Override the createPath method to disable caching
+      const originalCreatePath = canvas.freeDrawingBrush.createPath;
+      canvas.freeDrawingBrush.createPath = function (pathData) {
+        const path = originalCreatePath.call(this, pathData);
+        path.objectCaching = false;
+        path.strokeLineCap = "round";
+        path.strokeLineJoin = "round";
+        return path;
+      };
 
-    // Set drawing mode based on your current mode
-    canvas.isDrawingMode = mode.value === "draw";
+      // Set drawing mode based on your current mode
+      canvas.isDrawingMode = mode.value === "draw";
 
-    width = modalContent.offsetWidth;
-    height = modalContent.offsetHeight;
+      width = modalContent.offsetWidth;
+      height = modalContent.offsetHeight;
 
-    // canvas.setWidth(width);
-    // canvas.setHeight(height);
+      // canvas.setWidth(width);
+      // canvas.setHeight(height);
 
-    canvas.width = width;
-    canvas.height = height;
+      canvas.width = width;
+      canvas.height = height;
 
-    gridCanvas.width = width;
-    gridCanvas.height = height;
+      gridCanvas.width = width;
+      gridCanvas.height = height;
 
-    //drawgrid function here???
-    gridSize = 20;
-    vertical = true;
-    horizontal = true;
+      //drawgrid function here???
+      gridSize = 20;
+      vertical = true;
+      horizontal = true;
 
-    isPanning = false;
-    lastPosX = 0;
-    lastPosY = 0;
-    // Sync grid with canvas after every render
-    function syncGridWithCanvas() {
-      const vpt = canvas.viewportTransform;
-      drawGrid(vpt[4], vpt[5], canvas.getZoom());
-    }
-
-    // Attach the sync function to the after:render event
-    canvas.on("after:render", syncGridWithCanvas);
-
-    canvas.on("mouse:down", function (opt) {
-      const evt = opt.e;
-      if (evt.button === 1) {
-        // Middle mouse button pressed
-        isPanning = true;
-        // canvas.isDrawingMode = false; // Temporarily disable drawing
-        lastPosX = evt.clientX;
-        lastPosY = evt.clientY;
-      }
-    });
-    canvas.on("mouse:move", function (opt) {
-      if (isPanning) {
-        const evt = opt.e;
-        const deltaX = evt.clientX - lastPosX;
-        const deltaY = evt.clientY - lastPosY;
-        const vpt = canvas.viewportTransform;
-        vpt[4] += deltaX; // Update x-axis pan
-        vpt[5] += deltaY; // Update y-axis pan
-        drawGrid(vpt[4], vpt[5], canvas.getZoom());
-        lastPosX = evt.clientX;
-        lastPosY = evt.clientY;
-      }
-    });
-    canvas.on("mouse:up", function () {
       isPanning = false;
-    });
-    canvas.on("mouse:wheel", function (opt) {
-      const evt = opt.e;
+      lastPosX = 0;
+      lastPosY = 0;
+      // Sync grid with canvas after every render
+      function syncGridWithCanvas() {
+        const vpt = canvas.viewportTransform;
+        drawGrid(vpt[4], vpt[5], canvas.getZoom());
+      }
 
-      // Check for Ctrl key or pinch-to-zoom gesture
-      if (evt.ctrlKey) {
-        // Zoom behavior
-        let zoom = canvas.getZoom();
-        zoom *= 0.99 ** evt.deltaY; // Adjust zoom level
-        zoom = Math.min(Math.max(zoom, 0.1), 50); // Limit zoom levels
-        canvas.zoomToPoint({ x: evt.offsetX, y: evt.offsetY }, zoom);
+      // Attach the sync function to the after:render event
+      canvas.on("after:render", syncGridWithCanvas);
+
+      canvas.on("mouse:down", function (opt) {
+        const evt = opt.e;
+        if (evt.button === 1) {
+          // Middle mouse button pressed
+          isPanning = true;
+          // canvas.isDrawingMode = false; // Temporarily disable drawing
+          lastPosX = evt.clientX;
+          lastPosY = evt.clientY;
+        }
+      });
+      canvas.on("mouse:move", function (opt) {
+        if (isPanning) {
+          const evt = opt.e;
+          const deltaX = evt.clientX - lastPosX;
+          const deltaY = evt.clientY - lastPosY;
+          const vpt = canvas.viewportTransform;
+          vpt[4] += deltaX; // Update x-axis pan
+          vpt[5] += deltaY; // Update y-axis pan
+          drawGrid(vpt[4], vpt[5], canvas.getZoom());
+          lastPosX = evt.clientX;
+          lastPosY = evt.clientY;
+        }
+      });
+      canvas.on("mouse:up", function () {
+        isPanning = false;
+      });
+      canvas.on("mouse:wheel", function (opt) {
+        const evt = opt.e;
+
+        // Check for Ctrl key or pinch-to-zoom gesture
+        if (evt.ctrlKey) {
+          // Zoom behavior
+          let zoom = canvas.getZoom();
+          zoom *= 0.99 ** evt.deltaY; // Adjust zoom level
+          zoom = Math.min(Math.max(zoom, 0.1), 50); // Limit zoom levels
+          canvas.zoomToPoint({ x: evt.offsetX, y: evt.offsetY }, zoom);
+          drawGrid(
+            canvas.viewportTransform[4],
+            canvas.viewportTransform[5],
+            zoom
+          ); // Redraw grid on zoom
+        } else {
+          // Panning behavior
+          const deltaX = evt.deltaX;
+          const deltaY = evt.deltaY;
+          const vpt = canvas.viewportTransform;
+
+          vpt[4] -= deltaX; // Horizontal panning
+          vpt[5] -= deltaY; // Vertical panning
+          drawGrid(vpt[4], vpt[5], canvas.getZoom()); // Redraw grid during panning
+          canvas.requestRenderAll();
+        }
+
+        evt.preventDefault(); // Prevent default scrolling behavior
+      });
+
+      //mode switching if auto
+      canvas.wrapperEl.addEventListener("pointerdown", (e) => {
+        if (mode.value == "auto") {
+          if (e.pointerType === "pen") {
+            canvas.isDrawingMode = true;
+            canvas.selection = false;
+          } else if (e.pointerType === "touch" || e.pointerType === "mouse") {
+            canvas.isDrawingMode = false;
+            canvas.selection = true;
+          }
+        }
+      });
+
+      const hammer = new Hammer(canvas.wrapperEl);
+      hammer
+        .get("pan")
+        .set({ direction: Hammer.DIRECTION_ALL, pointers: 2, threshold: 10 }); //threshod 10 to minimise accidental pans
+      hammer.get("pinch").set({ enable: true });
+      hammer.get("press").set({ time: 0 });
+      hammer.get("pinch").recognizeWith(hammer.get("pan"));
+
+      let lastScale = 1;
+
+      hammer.on("pinchstart", function (e) {
+        canvas._zoomStartScale = canvas.getZoom(); // Record the initial zoom level
+        lastScale = 1; // Reset the last scale for the new gesture
+
+        e.preventDefault();
+        canvas.isDrawingMode = false;
+        canvas.selection = false;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = true;
+          o.lockMovementY = true;
+          o.selectable = false;
+        });
+      });
+
+      hammer.on("pinchmove", function (e) {
+        const scaleChange = e.scale / lastScale; // Calculate incremental scale change
+        lastScale = e.scale; // Update last scale for the next move event
+
+        const newZoom = canvas.getZoom() * scaleChange; // Apply incremental zoom
+        const boundedZoom = Math.min(Math.max(newZoom, 0.1), 50); // Clamp zoom level
+
+        const center = { x: e.center.x, y: e.center.y }; // Zoom relative to touch center
+        canvas.zoomToPoint(center, boundedZoom); // Apply zoom at the given point
+
+        // Redraw grid and canvas
         drawGrid(
           canvas.viewportTransform[4],
           canvas.viewportTransform[5],
-          zoom
-        ); // Redraw grid on zoom
-      } else {
-        // Panning behavior
-        const deltaX = evt.deltaX;
-        const deltaY = evt.deltaY;
+          boundedZoom
+        );
+        canvas.requestRenderAll();
+      });
+
+      hammer.on("pinchend", function () {
+        lastScale = 1; // Reset scale tracking after the pinch gesture ends
+        //restore canvas interaction
+        if (mode == "draw") {
+          canvas.isDrawingMode = true;
+        }
+        canvas.selection = true;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = false;
+          o.lockMovementY = false;
+          o.selectable = true;
+        });
+      });
+
+      let lastDeltaX = 0;
+      let lastDeltaY = 0;
+
+      hammer.on("panstart", function (e) {
+        e.preventDefault();
+        canvas.isDrawingMode = false;
+        canvas.selection = false;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = true;
+          o.lockMovementY = true;
+          o.selectable = false;
+        });
+      });
+
+      hammer.on("panmove", function (e) {
+        e.preventDefault();
+        canvas.isDrawingMode = false;
+        canvas.selection = false;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = true;
+          o.lockMovementY = true;
+          o.selectable = false;
+        });
+
         const vpt = canvas.viewportTransform;
 
-        vpt[4] -= deltaX; // Horizontal panning
-        vpt[5] -= deltaY; // Vertical panning
-        drawGrid(vpt[4], vpt[5], canvas.getZoom()); // Redraw grid during panning
+        // Calculate the incremental delta values
+        const deltaX = e.deltaX - lastDeltaX;
+        const deltaY = e.deltaY - lastDeltaY;
+
+        // Update last delta values
+        lastDeltaX = e.deltaX;
+        lastDeltaY = e.deltaY;
+
+        // Adjust the movement scale (optional for smoothing)
+        const movementScale = 1;
+
+        // Apply panning movement incrementally
+        vpt[4] += deltaX * movementScale;
+        vpt[5] += deltaY * movementScale;
+
+        // Re-render the canvas with the new viewport transform
         canvas.requestRenderAll();
-      }
+        drawGrid(vpt[4], vpt[5], canvas.getZoom()); // Redraw grid during panning
+      });
 
-      evt.preventDefault(); // Prevent default scrolling behavior
-    });
-
-    //mode switching if auto
-    canvas.wrapperEl.addEventListener("pointerdown", (e) => {
-      if (mode.value == "auto") {
-        if (e.pointerType === "pen") {
+      hammer.on("panend", function () {
+        // Reset last delta values when the pan gesture ends
+        lastDeltaX = 0;
+        lastDeltaY = 0;
+        //restore canvas interaction
+        if (mode == "draw") {
           canvas.isDrawingMode = true;
-          canvas.selection = false;
-        } else if (e.pointerType === "touch" || e.pointerType === "mouse") {
-          canvas.isDrawingMode = false;
-          canvas.selection = true;
         }
-      }
-    });
-
-    const hammer = new Hammer(canvas.wrapperEl);
-    hammer
-      .get("pan")
-      .set({ direction: Hammer.DIRECTION_ALL, pointers: 2, threshold: 10 }); //threshod 10 to minimise accidental pans
-    hammer.get("pinch").set({ enable: true });
-    hammer.get("press").set({ time: 0 });
-    hammer.get("pinch").recognizeWith(hammer.get("pan"));
-
-    let lastScale = 1;
-
-    hammer.on("pinchstart", function (e) {
-      canvas._zoomStartScale = canvas.getZoom(); // Record the initial zoom level
-      lastScale = 1; // Reset the last scale for the new gesture
-
-      e.preventDefault();
-      canvas.isDrawingMode = false;
-      canvas.selection = false;
-      canvas.forEachObject(function (o) {
-        o.lockMovementX = true;
-        o.lockMovementY = true;
-        o.selectable = false;
+        canvas.selection = true;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = false;
+          o.lockMovementY = false;
+          o.selectable = true;
+        });
       });
-    });
-
-    hammer.on("pinchmove", function (e) {
-      const scaleChange = e.scale / lastScale; // Calculate incremental scale change
-      lastScale = e.scale; // Update last scale for the next move event
-
-      const newZoom = canvas.getZoom() * scaleChange; // Apply incremental zoom
-      const boundedZoom = Math.min(Math.max(newZoom, 0.1), 50); // Clamp zoom level
-
-      const center = { x: e.center.x, y: e.center.y }; // Zoom relative to touch center
-      canvas.zoomToPoint(center, boundedZoom); // Apply zoom at the given point
-
-      // Redraw grid and canvas
-      drawGrid(
-        canvas.viewportTransform[4],
-        canvas.viewportTransform[5],
-        boundedZoom
-      );
-      canvas.requestRenderAll();
-    });
-
-    hammer.on("pinchend", function () {
-      lastScale = 1; // Reset scale tracking after the pinch gesture ends
-      //restore canvas interaction
-      if (mode == "draw") {
-        canvas.isDrawingMode = true;
-      }
-      canvas.selection = true;
-      canvas.forEachObject(function (o) {
-        o.lockMovementX = false;
-        o.lockMovementY = false;
-        o.selectable = true;
-      });
-    });
-
-    let lastDeltaX = 0;
-    let lastDeltaY = 0;
-
-    hammer.on("panstart", function (e) {
-      e.preventDefault();
-      canvas.isDrawingMode = false;
-      canvas.selection = false;
-      canvas.forEachObject(function (o) {
-        o.lockMovementX = true;
-        o.lockMovementY = true;
-        o.selectable = false;
-      });
-    });
-
-    hammer.on("panmove", function (e) {
-      e.preventDefault();
-      canvas.isDrawingMode = false;
-      canvas.selection = false;
-      canvas.forEachObject(function (o) {
-        o.lockMovementX = true;
-        o.lockMovementY = true;
-        o.selectable = false;
-      });
-
-      const vpt = canvas.viewportTransform;
-
-      // Calculate the incremental delta values
-      const deltaX = e.deltaX - lastDeltaX;
-      const deltaY = e.deltaY - lastDeltaY;
-
-      // Update last delta values
-      lastDeltaX = e.deltaX;
-      lastDeltaY = e.deltaY;
-
-      // Adjust the movement scale (optional for smoothing)
-      const movementScale = 1;
-
-      // Apply panning movement incrementally
-      vpt[4] += deltaX * movementScale;
-      vpt[5] += deltaY * movementScale;
-
-      // Re-render the canvas with the new viewport transform
-      canvas.requestRenderAll();
-      drawGrid(vpt[4], vpt[5], canvas.getZoom()); // Redraw grid during panning
-    });
-
-    hammer.on("panend", function () {
-      // Reset last delta values when the pan gesture ends
-      lastDeltaX = 0;
-      lastDeltaY = 0;
-      //restore canvas interaction
-      if (mode == "draw") {
-        canvas.isDrawingMode = true;
-      }
-      canvas.selection = true;
-      canvas.forEachObject(function (o) {
-        o.lockMovementX = false;
-        o.lockMovementY = false;
-        o.selectable = true;
-      });
-    });
-    resolve(canvas);
-  } catch (error) {
+      resolve(canvas);
+    } catch (error) {
       console.error("Error initializing canvas:", error);
       reject(error);
     }

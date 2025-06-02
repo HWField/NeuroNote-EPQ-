@@ -10,6 +10,7 @@
           :viewOnly="true"
           :embedded="true"
           :parentTab="useTabStore().activeTab.value"
+          :instanceKey="instanceKey"
           class="w-full max-h-full"
         />
         <!-- :parentTab="node.attrs.parentTab" -->
@@ -25,6 +26,7 @@ import { Pencil } from "lucide-vue-next";
 import { useTabStore } from "@/stores/useTabStore";
 import { useToast } from "@/components/ui/toast/use-toast";
 import Whiteboard from "@/components/Whiteboard.vue";
+import { ref } from "vue";
 
 const props = defineProps({
   editor: Object,
@@ -34,6 +36,7 @@ const props = defineProps({
 });
 
 const { toast } = useToast();
+const instanceKey = ref(`preview-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
 
 // Function to open the full whiteboard editor
 function openFullWhiteboard() {
