@@ -157,6 +157,7 @@ const noteTags = ref([]);
 const { toast } = useToast();
 // Add to your imports at the top
 import { Camera } from "lucide-vue-next"; // You already have UploadIcon
+import { Viewport } from "radix-vue";
 
 // Add these refs
 const cameraInputRef = ref(null);
@@ -427,6 +428,7 @@ async function SaveToBackend() {
       content: noteContent,
       tags: tags,
       id: props.noteId,
+      viewport: editor.state.selection.head,
     });
     return true; // Successful save
   } catch (error) {
@@ -457,6 +459,16 @@ async function LoadFromBackend() {
     // Set content
     if (response.data.content) {
       editor.commands.setContent(response.data.content);
+    }
+
+    if (response.data.viewport) {
+      // Set the editor's viewport position
+      editor.commands.focus(response.data.viewport);
+      console.error(
+        "----------------------   Editor viewport set to position:",
+        response.data.viewport
+      );
+      
     }
 
     setTimeout(() => updateWhiteboardParentTabs(), 0);

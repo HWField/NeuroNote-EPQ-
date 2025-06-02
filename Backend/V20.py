@@ -969,9 +969,13 @@ def update():
         
         # Handle whiteboard-specific fields
         if note.format == "whiteboard":
-            print("------- note is a whiteboard, setting viewport")
+            print("------- note is a whiteboard, setting viewport and background")
             note.viewport = data.get('viewport')
             note.background = data.get('background')
+        elif note.format == "document":
+            print("------- note is a document, setting viewport")
+            note.viewport = data.get('viewport')
+            
         
         try:
             # Explicitly commit and refresh

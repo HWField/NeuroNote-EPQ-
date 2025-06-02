@@ -64,137 +64,137 @@
       </DialogContent>
     </Dialog>
 
-      <!-- Version History Modal -->
-  <Dialog
-    :open="showVersionHistoryModal"
-    @update:open="closeVersionHistoryModal"
-  >
-    <DialogContent class="sm:max-w-[800px]">
-      <DialogHeader>
-        <DialogTitle>
-          <div class="flex items-center">
-            <History class="h-5 w-5 mr-2" />
-            Version History
-          </div>
-        </DialogTitle>
-      </DialogHeader>
-      <div class="mb-4 mt-2">
-        <Button variant="default" class="w-full" @click="createManualVersion">
-          <Clock class="h-4 w-4 mr-2" />
-          Create New Restore Point
-        </Button>
-      </div>
-      <div class="py-4 flex flex-col sm:flex-row gap-4 h-[500px]">
-        <!-- Versions List on the left -->
-        <div class="w-full sm:w-1/3 border-r pr-4">
-          <h3 class="font-medium mb-2">Versions</h3>
+    <!-- Version History Modal -->
+    <Dialog
+      :open="showVersionHistoryModal"
+      @update:open="closeVersionHistoryModal"
+    >
+      <DialogContent class="sm:max-w-[800px]">
+        <DialogHeader>
+          <DialogTitle>
+            <div class="flex items-center">
+              <History class="h-5 w-5 mr-2" />
+              Version History
+            </div>
+          </DialogTitle>
+        </DialogHeader>
+        <div class="mb-4 mt-2">
+          <Button variant="default" class="w-full" @click="createManualVersion">
+            <Clock class="h-4 w-4 mr-2" />
+            Create New Restore Point
+          </Button>
+        </div>
+        <div class="py-4 flex flex-col sm:flex-row gap-4 h-[500px]">
+          <!-- Versions List on the left -->
+          <div class="w-full sm:w-1/3 border-r pr-4">
+            <h3 class="font-medium mb-2">Versions</h3>
 
-          <div v-if="loadingVersions" class="flex justify-center py-8">
-            <div
-              class="animate-spin h-8 w-8 border-4 border-primary/20 border-t-primary rounded-full"
-            ></div>
-          </div>
-
-          <div
-            v-else-if="versionHistory.length === 0"
-            class="text-center py-8 text-muted-foreground"
-          >
-            No version history available
-          </div>
-
-          <div v-else class="flex overflow- max-h-[420px] pr-2">
-            <ScrollArea class="flex-1 min-h-0 overflow-y-auto pr-2">
+            <div v-if="loadingVersions" class="flex justify-center py-8">
               <div
-                v-for="(version, index) in versionHistory"
-                :key="index"
-                @click="selectedVersion = version"
-                class="p-3 border rounded-md hover:bg-muted/50 mb-2 transition-colors cursor-pointer"
-                :class="{
-                  'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800':
-                    selectedVersion === version,
-                }"
-              >
-                <div class="font-medium">
-                  {{ version.version_name || `Version ${index + 1}` }}
+                class="animate-spin h-8 w-8 border-4 border-primary/20 border-t-primary rounded-full"
+              ></div>
+            </div>
 
-                  <!-- Badge for manual versions -->
-                  <span
-                    v-if="version.version_type === 'manual'"
-                    class="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
-                  >
-                    Manual
-                  </span>
-
-                  <!-- Badge for auto versions -->
-                  <span
-                    v-else-if="version.version_type === 'auto'"
-                    class="ml-2 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
-                  >
-                    Auto
-                  </span>
-
-                  <!-- Badge for restored versions -->
-                  <span
-                    v-else-if="version.version_type === 'restored'"
-                    class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300"
-                  >
-                    Restored
-                  </span>
-                </div>
-                <div class="text-sm text-muted-foreground mt-1">
-                  {{ version.friendly_time || " " }}
-                </div>
-              </div>
-            </ScrollArea>
-          </div>
-        </div>
-
-        <!-- Content Display on the right -->
-        <div class="w-full sm:w-2/3">
-          <div class="flex justify-between items-center mb-2">
-            <h3 class="font-medium">Content</h3>
-            <Button
-              v-if="selectedVersion"
-              variant="default"
-              size="sm"
-              @click="restoreVersion(selectedVersion)"
+            <div
+              v-else-if="versionHistory.length === 0"
+              class="text-center py-8 text-muted-foreground"
             >
-              <RotateCcw class="h-3 w-3 mr-1" />
-              Restore This Version
-            </Button>
+              No version history available
+            </div>
+
+            <div v-else class="flex overflow- max-h-[420px] pr-2">
+              <ScrollArea class="flex-1 min-h-0 overflow-y-auto pr-2">
+                <div
+                  v-for="(version, index) in versionHistory"
+                  :key="index"
+                  @click="selectedVersion = version"
+                  class="p-3 border rounded-md hover:bg-muted/50 mb-2 transition-colors cursor-pointer"
+                  :class="{
+                    'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800':
+                      selectedVersion === version,
+                  }"
+                >
+                  <div class="font-medium">
+                    {{ version.version_name || `Version ${index + 1}` }}
+
+                    <!-- Badge for manual versions -->
+                    <span
+                      v-if="version.version_type === 'manual'"
+                      class="ml-2 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+                    >
+                      Manual
+                    </span>
+
+                    <!-- Badge for auto versions -->
+                    <span
+                      v-else-if="version.version_type === 'auto'"
+                      class="ml-2 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                    >
+                      Auto
+                    </span>
+
+                    <!-- Badge for restored versions -->
+                    <span
+                      v-else-if="version.version_type === 'restored'"
+                      class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300"
+                    >
+                      Restored
+                    </span>
+                  </div>
+                  <div class="text-sm text-muted-foreground mt-1">
+                    {{ version.friendly_time || " " }}
+                  </div>
+                </div>
+              </ScrollArea>
+            </div>
           </div>
 
-          <div
-            v-if="!selectedVersion"
-            class="flex items-center justify-center h-[420px] text-muted-foreground border rounded-md p-4"
-          >
-            Select a version to view its content
-          </div>
-
-          <div v-else class="border rounded-md p-2 h-[420px]">
-            <ScrollArea class="h-full w-full" orientation="both">
-              <pre
-                class="text-xs font-mono p-2 whitespace-pre-wrap break-all"
-                >{{ selectedVersion.content || "No content available" }}</pre
+          <!-- Content Display on the right -->
+          <div class="w-full sm:w-2/3">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="font-medium">Content</h3>
+              <Button
+                v-if="selectedVersion"
+                variant="default"
+                size="sm"
+                @click="restoreVersion(selectedVersion)"
               >
-            </ScrollArea>
+                <RotateCcw class="h-3 w-3 mr-1" />
+                Restore This Version
+              </Button>
+            </div>
+
+            <div
+              v-if="!selectedVersion"
+              class="flex items-center justify-center h-[420px] text-muted-foreground border rounded-md p-4"
+            >
+              Select a version to view its content
+            </div>
+
+            <div v-else class="border rounded-md p-2 h-[420px]">
+              <ScrollArea class="h-full w-full" orientation="both">
+                <pre
+                  class="text-xs font-mono p-2 whitespace-pre-wrap break-all"
+                  >{{ selectedVersion.content || "No content available" }}</pre
+                >
+              </ScrollArea>
+            </div>
           </div>
         </div>
-      </div>
 
-      <DialogFooter>
-        <Button variant="outline" @click="closeVersionHistoryModal"
-          >Close</Button
-        >
-      </DialogFooter>
-    </DialogContent>
-  </Dialog>
-
+        <DialogFooter>
+          <Button variant="outline" @click="closeVersionHistoryModal"
+            >Close</Button
+          >
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- Floating Toolbar -->
     <Loading v-if="isLoading" />
+
     <div v-else>
-      <div class="h-24 w-full mb-0 relative">
+      <div v-if="!viewOnly" class="h-24 w-full mb-0 relative">
         <div class="absolute top-6 w-full z-50 px-4 flex justify-center">
           <div
             class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
@@ -311,8 +311,10 @@
               </DropdownMenu>
 
               <Separator orientation="vertical" class="h-6 mx-1" />
-              
-              <Button @click="centerWhiteboard()" variant="ghost" class=""> <Home  class="h-4 w-4" /> Home</Button>
+
+              <Button @click="centerWhiteboard()" variant="ghost" class="">
+                <Home class="h-4 w-4" /> Home</Button
+              >
 
               <Separator orientation="vertical" class="h-6 mx-1" />
 
@@ -481,27 +483,24 @@
                 </Tooltip>
               </TooltipProvider>
 
-
               <Separator orientation="vertical" class="h-6 mx-1" />
 
-<!-- Version History Button -->
-<TooltipProvider>
-  <Tooltip>
-    <TooltipTrigger asChild>
-      <Button
-        variant="ghost"
-        size="sm"
-        @click="openVersionHistoryModal"
-        class="flex gap-1 items-center"
-      >
-        <History class="h-4 w-4 mr-1" />
-      </Button>
-    </TooltipTrigger>
-    <TooltipContent>Version History</TooltipContent>
-  </Tooltip>
-</TooltipProvider>
-
-
+              <!-- Version History Button -->
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      @click="openVersionHistoryModal"
+                      class="flex gap-1 items-center"
+                    >
+                      <History class="h-4 w-4 mr-1" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Version History</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         </div>
@@ -524,23 +523,28 @@
         </div>
       </Transition>
 
-      <div class="flex justify-center flex-1">
+      <div class="flex justify-center h-full flex-1">
+       
         <div
           id="canvas-container"
-          class="canvas-container w-full overflow-hidden bg-primary-foreground rounded-lg shadow-md border border-input m-4 relative"
+          class="canvas-container w-full overflow-hidden bg-none shadow-md  m-4 relative"
           :class="
-            showNoteHeader ? 'h-[calc(100vh-24rem)]' : 'h-[calc(100vh-12rem)]'
+            !embedded
+              ? showNoteHeader
+                ? 'h-[calc(100vh-24rem)]'
+                : 'h-[calc(100vh-12rem)]'
+              : 'h-full'
           "
         >
           <!-- Grid canvas (bottom layer) -->
           <canvas
             id="grid-canvas"
-            class="absolute top-0 left-0 w-full h-full bg-white"
+            class="absolute top-0 left-0 w-full rounded-lg h-full bg-white "
           ></canvas>
           <!-- Main canvas (top layer) -->
           <canvas
             id="fabricCanvas"
-            class="absolute top-0 left-0 w-full h-full"
+            class="absolute top-0 left-0 w-full rounded-lg h-full"
           ></canvas>
         </div>
       </div>
@@ -635,6 +639,14 @@ import { useToast } from "@/components/ui/toast/use-toast";
 const props = defineProps({
   noteId: Number || 0,
   tabId: Number || 0,
+  viewOnly: {
+    type: Boolean,
+    default: false,
+  },
+  embedded: {
+    type: Boolean,
+    default: false,
+  },
 });
 const showNoteHeader = ref(false);
 const emit = defineEmits(["note-closed"]);
@@ -711,10 +723,7 @@ async function SaveToBackend() {
 }
 async function LoadFromBackend() {
   console.error("Loading note:", props.noteId);
-  Loading.value = true;
   try {
-    // isLoading.value = true;
-
     const response = await axios.post("/load", {
       id: props.noteId,
       operation: "content",
@@ -728,6 +737,12 @@ async function LoadFromBackend() {
     // Extract tags if they exist in the response
     if (response.data.tags) {
       noteTags.value = response.data.tags;
+    }
+    if (!canvas || !gridCanvas || !modalContent) {
+      console.error("Canvas elements loading not found, retrying in 50ms");
+      // Try again after a short delay to allow DOM to render
+      setTimeout(LoadFromBackend, 50);
+      return;
     }
 
     if (response.data.viewport) {
@@ -831,25 +846,59 @@ async function closeNote() {
   }
 }
 function resizeCanvasToContainer() {
+  
+  console.error("Resizing canvas to container dimensions");
+
   // Guard against accessing canvas before it's initialized
   if (!canvas || !gridCanvas || !modalContent) return;
 
-  // Get the new container dimensions
-  const newWidth = modalContent.offsetWidth;
-  const newHeight = modalContent.offsetHeight;
+  // Get current dimensions for comparison
+  const currentFabricWidth = canvas.getWidth();
+  const currentFabricHeight = canvas.getHeight();
+  const currentGridWidth = gridCanvas.width;
+  const currentGridHeight = gridCanvas.height;
 
-  // Update both canvas sizes
+  // Calculate new dimensions based on mode
+  let newWidth, newHeight;
+  if (props.embedded) {
+    // For embedded mode, get actual container dimensions
+    // newWidth = modalContent.offsetWidth;
+    newWidth = modalContent.offsetWidth;
+    newHeight = 265;
+  } else {
+    newWidth = modalContent.offsetWidth;
+    newHeight = modalContent.offsetHeight;
+  }
+
+  // console.error(`Current sizes - Fabric: ${currentFabricWidth}x${currentFabricHeight}, Grid: ${currentGridWidth}x${currentGridHeight}, Container: ${modalContent.offsetWidth}x${modalContent.offsetHeight}`);
+  // console.error(`Target sizes: ${newWidth}x${newHeight}`);
+
+  // Store current viewport transform
+  const currentTransform = [...canvas.viewportTransform];
+
+  // Update fabric canvas size
   canvas.setWidth(newWidth);
   canvas.setHeight(newHeight);
+
+  // Update grid canvas dimensions - CRITICAL: Set both properties
   gridCanvas.width = newWidth;
   gridCanvas.height = newHeight;
 
-  // Redraw the grid with current viewport
+  // Also set CSS dimensions to ensure they match exactly
+  gridCanvas.style.width = newWidth + "px";
+  gridCanvas.style.height = newHeight + "px";
+  canvas.getElement().style.width = newWidth + "px";
+  canvas.getElement().style.height = newHeight + "px";
+
+  // Restore viewport transform
+  canvas.setViewportTransform(currentTransform);
+
+  // Redraw grid and canvas
   const vpt = canvas.viewportTransform;
   drawGrid(vpt[4], vpt[5], canvas.getZoom());
-
-  // Force canvas to render
   canvas.requestRenderAll();
+
+  // console.error(`After resize - Fabric: ${canvas.getWidth()}x${canvas.getHeight()}, Grid: ${gridCanvas.width}x${gridCanvas.height}`);
 }
 
 // Add a watcher for showNoteHeader
@@ -859,317 +908,315 @@ watch(showNoteHeader, () => {
     resizeCanvasToContainer();
   }, 50); // Small delay to ensure DOM has updated
 });
+
 function updateNoteTitle(newTitle) {
   console.error("Updating note title:", newTitle, "tab is", props.tabId);
   noteTitle.value = newTitle;
   useTabStore().RenameTab(props.tabId, newTitle); //update tab live
 }
+
 function initaliseCanvas() {
-  modalContent = document.getElementById("canvas-container");
-  fabricCanvasEl = document.getElementById("fabricCanvas");
-  gridCanvas = document.getElementById("grid-canvas");
-  gridContext = gridCanvas.getContext("2d");
+  return new Promise((resolve, reject) => {
+    // Get DOM elements with proper null checks
+    modalContent = document.getElementById("canvas-container");
+    fabricCanvasEl = document.getElementById("fabricCanvas");
+    gridCanvas = document.getElementById("grid-canvas");
 
-  canvas = new fabric.Canvas(fabricCanvasEl, {
-    width: modalContent.offsetWidth,
-    height: modalContent.offsetHeight,
-    backgroundColor: "transparent", // Ensure background is transparent
-  });
-
-  //   function onObjectSelected(e) {
-  //     object = e.selected[0]
-  //     console.error("Object selected:", object).type;
-  //     canvas.bringObjectToFront(object);
-  //     object.bringObjectToFront();
-  //     object.bringToFront();
-  //     canvas.renderAll();
-
-  // }
-  // canvas.on('selection:created', onObjectSelected);
-
-  console.error("Canvas initialized:", canvas);
-  //might need changing in future but prevents blurry edges for now
-  // Disable object caching for better performance
-  fabric.Object.prototype.objectCaching = false;
-
-  // IMPORTANT: Create a drawing brush first
-  canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-  canvas.freeDrawingBrush.width = penWidth.value;
-  canvas.freeDrawingBrush.color = colour.value;
-
-  // Override the createPath method to disable caching
-  const originalCreatePath = canvas.freeDrawingBrush.createPath;
-  canvas.freeDrawingBrush.createPath = function (pathData) {
-    const path = originalCreatePath.call(this, pathData);
-    path.objectCaching = false;
-    path.strokeLineCap = "round";
-    path.strokeLineJoin = "round";
-    return path;
-  };
-
-  // Set drawing mode based on your current mode
-  canvas.isDrawingMode = mode.value === "draw";
-
-  width = modalContent.offsetWidth;
-  height = modalContent.offsetHeight;
-
-  canvas.setWidth(width);
-  canvas.setHeight(height);
-
-  gridCanvas.width = width;
-  gridCanvas.height = height;
-
-  //drawgrid function here???
-  gridSize = 20;
-  vertical = true;
-  horizontal = true;
-
-  isPanning = false;
-  lastPosX = 0;
-  lastPosY = 0;
-  // Sync grid with canvas after every render
-  function syncGridWithCanvas() {
-    const vpt = canvas.viewportTransform;
-    drawGrid(vpt[4], vpt[5], canvas.getZoom());
-  }
-
-  // Attach the sync function to the after:render event
-  canvas.on("after:render", syncGridWithCanvas);
-
-  canvas.on("mouse:down", function (opt) {
-    const evt = opt.e;
-    if (evt.button === 1) {
-      // Middle mouse button pressed
-      isPanning = true;
-      // canvas.isDrawingMode = false; // Temporarily disable drawing
-      lastPosX = evt.clientX;
-      lastPosY = evt.clientY;
-    }
-  });
-  canvas.on("mouse:move", function (opt) {
-    if (isPanning) {
-      const evt = opt.e;
-      const deltaX = evt.clientX - lastPosX;
-      const deltaY = evt.clientY - lastPosY;
-      const vpt = canvas.viewportTransform;
-      vpt[4] += deltaX; // Update x-axis pan
-      vpt[5] += deltaY; // Update y-axis pan
-      drawGrid(vpt[4], vpt[5], canvas.getZoom());
-      lastPosX = evt.clientX;
-      lastPosY = evt.clientY;
-    }
-  });
-  canvas.on("mouse:up", function () {
-    isPanning = false;
-  });
-  canvas.on("mouse:wheel", function (opt) {
-    const evt = opt.e;
-
-    // Check for Ctrl key or pinch-to-zoom gesture
-    if (evt.ctrlKey) {
-      // Zoom behavior
-      let zoom = canvas.getZoom();
-      zoom *= 0.99 ** evt.deltaY; // Adjust zoom level
-      zoom = Math.min(Math.max(zoom, 0.1), 50); // Limit zoom levels
-      canvas.zoomToPoint({ x: evt.offsetX, y: evt.offsetY }, zoom);
-      drawGrid(canvas.viewportTransform[4], canvas.viewportTransform[5], zoom); // Redraw grid on zoom
-    } else {
-      // Panning behavior
-      const deltaX = evt.deltaX;
-      const deltaY = evt.deltaY;
-      const vpt = canvas.viewportTransform;
-
-      vpt[4] -= deltaX; // Horizontal panning
-      vpt[5] -= deltaY; // Vertical panning
-      drawGrid(vpt[4], vpt[5], canvas.getZoom()); // Redraw grid during panning
-      canvas.requestRenderAll();
+    // Check if elements exist before proceeding
+    if (!modalContent || !fabricCanvasEl || !gridCanvas) {
+      console.error("Canvas elements not found, retrying in 50ms");
+      // Try again after a short delay to allow DOM to render
+      setTimeout(() => {
+        initaliseCanvas().then(resolve).catch(reject);
+      }, 50);
+      return;
     }
 
-    evt.preventDefault(); // Prevent default scrolling behavior
-  });
+    try {
+    // Now we can safely get the context
+    gridContext = gridCanvas.getContext("2d");
 
-  // REPLCED BY HAMMER JS
-  // window.addEventListener(
-  //   "touchstart",
-  //   function (e) {
-  //     const touches = e.touches;
-  //     if (touches.length === 2) {
-  //       console.log("ultimate two fingers detected");
-  //       console.log(touches);
-  //       canvas.discardActiveObject().renderAll();
-  //       // const activ=eObject = canvas.getActiveObject();
+    // Continue with canvas initialization
+    canvas = new fabric.Canvas(fabricCanvasEl, {
+      width: modalContent.offsetWidth,
+      height: modalContent.offsetHeight,
+      backgroundColor: "transparent",
+    });
 
-  //       e.preventDefault();
-  //       canvas.isDrawingMode = false;
-  //       canvas.selection = false;
-  //       canvas.forEachObject(function (o) {
-  //         o.lockMovementX = true;
-  //         o.lockMovementY = true;
-  //         o.selectable = false;
-  //       });
-  //     } else if (touches.length === 1) {
-  //       console.log("only one finger detected");
+    // Add ResizeObserver to watch for container size changes
 
-  //       canvas.selection = true;
-  //       canvas.forEachObject(function (o) {
-  //         o.lockMovementX = false;
-  //         o.lockMovementY = false;
-  //         o.selectable = true;
-  //       });
-  //       if (mode.value === "draw") {
-  //         canvas.isDrawingMode = true;
-  //       }
-  //     }
-
-  //     if (touches.length > 0) {
-  //       const touch = touches[0];
-
-  //       if ("force" in touch) {
-  //         console.log("Touch pressure (force):", touch.force);
-  //       }
-  //       if (touch.force > 0) {
-  //         console.log("Apple Pencil detected");
-  //         if (mode.value === "draw") {
-  //           canvas.isDrawingMode = true;
-  //         }
-  //       } else {
-  //         console.log("Finger detected");
-  //         canvas.isDrawingMode = false;
-  //       }
-  //     }
-  //   },
-  //   true
-  // );
-  //mode switching if auto
-  canvas.wrapperEl.addEventListener("pointerdown", (e) => {
-    if (mode.value == "auto") {
-      if (e.pointerType === "pen") {
-        canvas.isDrawingMode = true;
-        canvas.selection = false;
-      } else if (e.pointerType === "touch" || e.pointerType === "mouse") {
-        canvas.isDrawingMode = false;
-        canvas.selection = true;
+    // Add ResizeObserver to watch for container size changes
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        // Debounce the resize to avoid too many calls
+        clearTimeout(canvas.__resizeTimeout);
+        canvas.__resizeTimeout = setTimeout(() => {
+          resizeCanvasToContainer();
+        }, 100);
       }
+    });
+
+    // Store observer reference for cleanup
+    canvas.__resizeObserver = resizeObserver;
+
+    // Start observing the container
+    resizeObserver.observe(modalContent);
+
+    //   function onObjectSelected(e) {
+    //     object = e.selected[0]
+    //     console.error("Object selected:", object).type;
+    //     canvas.bringObjectToFront(object);
+    //     object.bringObjectToFront();
+    //     object.bringToFront();
+    //     canvas.renderAll();
+
+    // }
+    // canvas.on('selection:created', onObjectSelected);
+
+    console.error("Canvas initialized:", canvas);
+    //might need changing in future but prevents blurry edges for now
+    // Disable object caching for better performance
+    fabric.Object.prototype.objectCaching = false;
+
+    // IMPORTANT: Create a drawing brush first
+    canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+    canvas.freeDrawingBrush.width = penWidth.value;
+    canvas.freeDrawingBrush.color = colour.value;
+
+    // Override the createPath method to disable caching
+    const originalCreatePath = canvas.freeDrawingBrush.createPath;
+    canvas.freeDrawingBrush.createPath = function (pathData) {
+      const path = originalCreatePath.call(this, pathData);
+      path.objectCaching = false;
+      path.strokeLineCap = "round";
+      path.strokeLineJoin = "round";
+      return path;
+    };
+
+    // Set drawing mode based on your current mode
+    canvas.isDrawingMode = mode.value === "draw";
+
+    width = modalContent.offsetWidth;
+    height = modalContent.offsetHeight;
+
+    // canvas.setWidth(width);
+    // canvas.setHeight(height);
+
+    canvas.width = width;
+    canvas.height = height;
+
+    gridCanvas.width = width;
+    gridCanvas.height = height;
+
+    //drawgrid function here???
+    gridSize = 20;
+    vertical = true;
+    horizontal = true;
+
+    isPanning = false;
+    lastPosX = 0;
+    lastPosY = 0;
+    // Sync grid with canvas after every render
+    function syncGridWithCanvas() {
+      const vpt = canvas.viewportTransform;
+      drawGrid(vpt[4], vpt[5], canvas.getZoom());
     }
-  });
 
-  const hammer = new Hammer(canvas.wrapperEl);
-  hammer
-    .get("pan")
-    .set({ direction: Hammer.DIRECTION_ALL, pointers: 2, threshold: 10 }); //threshod 10 to minimise accidental pans
-  hammer.get("pinch").set({ enable: true });
-  hammer.get("press").set({ time: 0 });
-  hammer.get("pinch").recognizeWith(hammer.get("pan"));
+    // Attach the sync function to the after:render event
+    canvas.on("after:render", syncGridWithCanvas);
 
-  let lastScale = 1;
-
-  hammer.on("pinchstart", function (e) {
-    canvas._zoomStartScale = canvas.getZoom(); // Record the initial zoom level
-    lastScale = 1; // Reset the last scale for the new gesture
-
-    e.preventDefault();
-    canvas.isDrawingMode = false;
-    canvas.selection = false;
-    canvas.forEachObject(function (o) {
-      o.lockMovementX = true;
-      o.lockMovementY = true;
-      o.selectable = false;
+    canvas.on("mouse:down", function (opt) {
+      const evt = opt.e;
+      if (evt.button === 1) {
+        // Middle mouse button pressed
+        isPanning = true;
+        // canvas.isDrawingMode = false; // Temporarily disable drawing
+        lastPosX = evt.clientX;
+        lastPosY = evt.clientY;
+      }
     });
-  });
+    canvas.on("mouse:move", function (opt) {
+      if (isPanning) {
+        const evt = opt.e;
+        const deltaX = evt.clientX - lastPosX;
+        const deltaY = evt.clientY - lastPosY;
+        const vpt = canvas.viewportTransform;
+        vpt[4] += deltaX; // Update x-axis pan
+        vpt[5] += deltaY; // Update y-axis pan
+        drawGrid(vpt[4], vpt[5], canvas.getZoom());
+        lastPosX = evt.clientX;
+        lastPosY = evt.clientY;
+      }
+    });
+    canvas.on("mouse:up", function () {
+      isPanning = false;
+    });
+    canvas.on("mouse:wheel", function (opt) {
+      const evt = opt.e;
 
-  hammer.on("pinchmove", function (e) {
-    const scaleChange = e.scale / lastScale; // Calculate incremental scale change
-    lastScale = e.scale; // Update last scale for the next move event
+      // Check for Ctrl key or pinch-to-zoom gesture
+      if (evt.ctrlKey) {
+        // Zoom behavior
+        let zoom = canvas.getZoom();
+        zoom *= 0.99 ** evt.deltaY; // Adjust zoom level
+        zoom = Math.min(Math.max(zoom, 0.1), 50); // Limit zoom levels
+        canvas.zoomToPoint({ x: evt.offsetX, y: evt.offsetY }, zoom);
+        drawGrid(
+          canvas.viewportTransform[4],
+          canvas.viewportTransform[5],
+          zoom
+        ); // Redraw grid on zoom
+      } else {
+        // Panning behavior
+        const deltaX = evt.deltaX;
+        const deltaY = evt.deltaY;
+        const vpt = canvas.viewportTransform;
 
-    const newZoom = canvas.getZoom() * scaleChange; // Apply incremental zoom
-    const boundedZoom = Math.min(Math.max(newZoom, 0.1), 50); // Clamp zoom level
+        vpt[4] -= deltaX; // Horizontal panning
+        vpt[5] -= deltaY; // Vertical panning
+        drawGrid(vpt[4], vpt[5], canvas.getZoom()); // Redraw grid during panning
+        canvas.requestRenderAll();
+      }
 
-    const center = { x: e.center.x, y: e.center.y }; // Zoom relative to touch center
-    canvas.zoomToPoint(center, boundedZoom); // Apply zoom at the given point
+      evt.preventDefault(); // Prevent default scrolling behavior
+    });
 
-    // Redraw grid and canvas
-    drawGrid(
-      canvas.viewportTransform[4],
-      canvas.viewportTransform[5],
-      boundedZoom
-    );
-    canvas.requestRenderAll();
-  });
+    //mode switching if auto
+    canvas.wrapperEl.addEventListener("pointerdown", (e) => {
+      if (mode.value == "auto") {
+        if (e.pointerType === "pen") {
+          canvas.isDrawingMode = true;
+          canvas.selection = false;
+        } else if (e.pointerType === "touch" || e.pointerType === "mouse") {
+          canvas.isDrawingMode = false;
+          canvas.selection = true;
+        }
+      }
+    });
 
-  hammer.on("pinchend", function () {
-    lastScale = 1; // Reset scale tracking after the pinch gesture ends
-    //restore canvas interaction
-    if (mode == "draw") {
-      canvas.isDrawingMode = true;
+    const hammer = new Hammer(canvas.wrapperEl);
+    hammer
+      .get("pan")
+      .set({ direction: Hammer.DIRECTION_ALL, pointers: 2, threshold: 10 }); //threshod 10 to minimise accidental pans
+    hammer.get("pinch").set({ enable: true });
+    hammer.get("press").set({ time: 0 });
+    hammer.get("pinch").recognizeWith(hammer.get("pan"));
+
+    let lastScale = 1;
+
+    hammer.on("pinchstart", function (e) {
+      canvas._zoomStartScale = canvas.getZoom(); // Record the initial zoom level
+      lastScale = 1; // Reset the last scale for the new gesture
+
+      e.preventDefault();
+      canvas.isDrawingMode = false;
+      canvas.selection = false;
+      canvas.forEachObject(function (o) {
+        o.lockMovementX = true;
+        o.lockMovementY = true;
+        o.selectable = false;
+      });
+    });
+
+    hammer.on("pinchmove", function (e) {
+      const scaleChange = e.scale / lastScale; // Calculate incremental scale change
+      lastScale = e.scale; // Update last scale for the next move event
+
+      const newZoom = canvas.getZoom() * scaleChange; // Apply incremental zoom
+      const boundedZoom = Math.min(Math.max(newZoom, 0.1), 50); // Clamp zoom level
+
+      const center = { x: e.center.x, y: e.center.y }; // Zoom relative to touch center
+      canvas.zoomToPoint(center, boundedZoom); // Apply zoom at the given point
+
+      // Redraw grid and canvas
+      drawGrid(
+        canvas.viewportTransform[4],
+        canvas.viewportTransform[5],
+        boundedZoom
+      );
+      canvas.requestRenderAll();
+    });
+
+    hammer.on("pinchend", function () {
+      lastScale = 1; // Reset scale tracking after the pinch gesture ends
+      //restore canvas interaction
+      if (mode == "draw") {
+        canvas.isDrawingMode = true;
+      }
+      canvas.selection = true;
+      canvas.forEachObject(function (o) {
+        o.lockMovementX = false;
+        o.lockMovementY = false;
+        o.selectable = true;
+      });
+    });
+
+    let lastDeltaX = 0;
+    let lastDeltaY = 0;
+
+    hammer.on("panstart", function (e) {
+      e.preventDefault();
+      canvas.isDrawingMode = false;
+      canvas.selection = false;
+      canvas.forEachObject(function (o) {
+        o.lockMovementX = true;
+        o.lockMovementY = true;
+        o.selectable = false;
+      });
+    });
+
+    hammer.on("panmove", function (e) {
+      e.preventDefault();
+      canvas.isDrawingMode = false;
+      canvas.selection = false;
+      canvas.forEachObject(function (o) {
+        o.lockMovementX = true;
+        o.lockMovementY = true;
+        o.selectable = false;
+      });
+
+      const vpt = canvas.viewportTransform;
+
+      // Calculate the incremental delta values
+      const deltaX = e.deltaX - lastDeltaX;
+      const deltaY = e.deltaY - lastDeltaY;
+
+      // Update last delta values
+      lastDeltaX = e.deltaX;
+      lastDeltaY = e.deltaY;
+
+      // Adjust the movement scale (optional for smoothing)
+      const movementScale = 1;
+
+      // Apply panning movement incrementally
+      vpt[4] += deltaX * movementScale;
+      vpt[5] += deltaY * movementScale;
+
+      // Re-render the canvas with the new viewport transform
+      canvas.requestRenderAll();
+      drawGrid(vpt[4], vpt[5], canvas.getZoom()); // Redraw grid during panning
+    });
+
+    hammer.on("panend", function () {
+      // Reset last delta values when the pan gesture ends
+      lastDeltaX = 0;
+      lastDeltaY = 0;
+      //restore canvas interaction
+      if (mode == "draw") {
+        canvas.isDrawingMode = true;
+      }
+      canvas.selection = true;
+      canvas.forEachObject(function (o) {
+        o.lockMovementX = false;
+        o.lockMovementY = false;
+        o.selectable = true;
+      });
+    });
+    resolve(canvas);
+  } catch (error) {
+      console.error("Error initializing canvas:", error);
+      reject(error);
     }
-    canvas.selection = true;
-    canvas.forEachObject(function (o) {
-      o.lockMovementX = false;
-      o.lockMovementY = false;
-      o.selectable = true;
-    });
-  });
-
-  let lastDeltaX = 0;
-  let lastDeltaY = 0;
-
-  hammer.on("panstart", function (e) {
-    e.preventDefault();
-    canvas.isDrawingMode = false;
-    canvas.selection = false;
-    canvas.forEachObject(function (o) {
-      o.lockMovementX = true;
-      o.lockMovementY = true;
-      o.selectable = false;
-    });
-  });
-
-  hammer.on("panmove", function (e) {
-    e.preventDefault();
-    canvas.isDrawingMode = false;
-    canvas.selection = false;
-    canvas.forEachObject(function (o) {
-      o.lockMovementX = true;
-      o.lockMovementY = true;
-      o.selectable = false;
-    });
-
-    const vpt = canvas.viewportTransform;
-
-    // Calculate the incremental delta values
-    const deltaX = e.deltaX - lastDeltaX;
-    const deltaY = e.deltaY - lastDeltaY;
-
-    // Update last delta values
-    lastDeltaX = e.deltaX;
-    lastDeltaY = e.deltaY;
-
-    // Adjust the movement scale (optional for smoothing)
-    const movementScale = 1;
-
-    // Apply panning movement incrementally
-    vpt[4] += deltaX * movementScale;
-    vpt[5] += deltaY * movementScale;
-
-    // Re-render the canvas with the new viewport transform
-    canvas.requestRenderAll();
-    drawGrid(vpt[4], vpt[5], canvas.getZoom()); // Redraw grid during panning
-  });
-
-  hammer.on("panend", function () {
-    // Reset last delta values when the pan gesture ends
-    lastDeltaX = 0;
-    lastDeltaY = 0;
-    //restore canvas interaction
-    if (mode == "draw") {
-      canvas.isDrawingMode = true;
-    }
-    canvas.selection = true;
-    canvas.forEachObject(function (o) {
-      o.lockMovementX = false;
-      o.lockMovementY = false;
-      o.selectable = true;
-    });
   });
 }
 
@@ -1233,45 +1280,81 @@ function HandleWhiteboardClick(event) {
 }
 
 onMounted(async () => {
-  // Wait for content to load before proceeding
-  initaliseCanvas();
+  await initaliseCanvas();
+  console.error("Canvas initialization completed");
   const loaded = await LoadFromBackend();
 
-  // Only proceed with the rest if loading was successful
   if (loaded) {
-    useUserStore().addToRecentNotes(props.noteId);
-    useTabStore().RenameTab(props.tabId, noteTitle); //update tab live
+    // Only enable editing if not in view-only mode
+    if (!props.viewOnly) {
+      console.error("#########Edit mode enabled");
+      useUserStore().addToRecentNotes(props.noteId);
+      useTabStore().RenameTab(props.tabId, noteTitle);
 
-    // Full save every 15seconds
-    saveInterval.value = setInterval(async () => {
-      await SaveToBackend();
-    }, 15000);
-    window.addEventListener("keydown", HandleWhiteboardClick);
-    // initaliseCanvas();
-    // console.error("Editor loaded successfully", isLoading.value);
+      saveInterval.value = setInterval(async () => {
+        await SaveToBackend();
+      }, 15000);
+      window.addEventListener("keydown", HandleWhiteboardClick);
+    } else {
+      // For view-only mode, disable all interactions except panning/zooming
+      mode.value = "view";
+      canvas.isDrawingMode = true;
+      canvas.selection = false;
+      canvas.forEachObject(function (e) {
+        e.selectable = false;
+        e.evented = false;
+        e.target.lockSkewingY = true;
+        e.target.lockSkewingX = true;
+        e.target.lockMovementY = true;
+        e.target.lockMovementX = true;
+        e.target.hasControls = false;
+      });
+      let canvasElement = document.getElementsByClassName("fabricCanvas")[0];
+      canvasElement.classList.add("locked");
+    }
+    // // Wait 50ms and then call the resize function
+    // setTimeout(() => {
+    //   resizeCanvasToContainer();
+    // }, 500);
   }
 });
 
 onBeforeUnmount(async () => {
-  // Wait for save to complete before destroying editor
-  window.removeEventListener("keydown", HandleWhiteboardClick);
-  if (saveInterval.value) {
-    clearInterval(saveInterval.value);
-    saveInterval.value = null;
-    console.error("Save interval cleared");
+  // Clean up ResizeObserver
+  if (canvas && canvas.__resizeObserver) {
+    canvas.__resizeObserver.disconnect();
+    canvas.__resizeObserver = null;
   }
 
-  // Only save if loading is complete
-  if (!isLoading.value) {
-    try {
-      await SaveToBackend();
-    } catch (error) {
-      console.error("Failed to save note before unmount:", error);
+  if (canvas && canvas.__resizeTimeout) {
+    clearTimeout(canvas.__resizeTimeout);
+    canvas.__resizeTimeout = null;
+  }
+  if (!props.viewOnly) {
+    // Wait for save to complete before destroying editor
+    window.removeEventListener("keydown", HandleWhiteboardClick);
+    if (saveInterval.value) {
+      clearInterval(saveInterval.value);
+      saveInterval.value = null;
+      console.error("Save interval cleared");
+    }
+
+    // Only save if loading is complete
+    if (!isLoading.value) {
+      try {
+        await SaveToBackend();
+      } catch (error) {
+        console.error("Failed to save note before unmount:", error);
+      }
     }
   }
 });
 
 function drawGrid(offsetX = 0, offsetY = 0, zoom = 1) {
+  if (!gridContext || !gridCanvas) {
+    console.error("Grid canvas not initialized");
+    return;
+  }
   if (background.value === "empty") {
     vertical = false;
     horizontal = false;
@@ -1332,6 +1415,14 @@ watch(mode, (newMode) => {
   } else if (newMode == "type") {
     canvas.isDrawingMode = false;
     canvas.selection = true;
+  } else if (newMode == "view") {
+    console.error("#########View-only mode enabled");
+    canvas.isDrawingMode = false;
+    canvas.selection = false;
+    canvas.forEachObject(function (o) {
+      o.selectable = false;
+      o.evented = false;
+    });
   }
 });
 
@@ -1378,7 +1469,6 @@ watch(background, (newBackground) => {
 //   );
 // });
 function centerWhiteboard() {
-
   if (!canvas) return;
 
   const zoom = canvas.getZoom();
@@ -1386,8 +1476,8 @@ function centerWhiteboard() {
   const visibleHeight = modalContent.offsetHeight;
 
   // Calculate the offsets to center (0, 0) in the visible area
-  const offsetX = visibleWidth / 2 - (0 * zoom);
-  const offsetY = visibleHeight / 2 - (0 * zoom);
+  const offsetX = visibleWidth / 2 - 0 * zoom;
+  const offsetY = visibleHeight / 2 - 0 * zoom;
 
   // Update the viewport transform
   canvas.viewportTransform = [zoom, 0, 0, zoom, offsetX, offsetY];
@@ -1395,7 +1485,6 @@ function centerWhiteboard() {
   // Redraw the grid and canvas
   drawGrid(offsetX, offsetY, zoom);
   canvas.requestRenderAll();
-
 }
 function addShape(shapeType) {
   // Calculate the center of the current viewport in canvas coordinates
@@ -1503,8 +1592,6 @@ const showImageModal = ref(false);
 const fileInputRef = ref(null);
 
 const uploadImageFile = (file) => {
-  
-
   const formData = new FormData();
   formData.append("file", file);
 
@@ -1566,7 +1653,7 @@ const handleUrlSubmit = () => {
 };
 const addImageToCanvas = (imageUrl) => {
   if (!canvas) return;
-  
+
   // Calculate the center of the current viewport in canvas coordinates
   const vpt = canvas.viewportTransform;
   const zoom = canvas.getZoom();
@@ -1574,7 +1661,7 @@ const addImageToCanvas = (imageUrl) => {
   const visibleHeight = modalContent.offsetHeight;
   const centerX = -vpt[4] / zoom + visibleWidth / (2 * zoom);
   const centerY = -vpt[5] / zoom + visibleHeight / (2 * zoom);
-console.error("Adding image to canvas at:", centerX, centerY);
+  console.error("Adding image to canvas at:", centerX, centerY);
   // Create a fabric image object
   // fabric.Image.fromURL(imageUrl, (img) => {
   //   // Scale image if it's too large
@@ -1583,36 +1670,38 @@ console.error("Adding image to canvas at:", centerX, centerY);
   //     const scale = maxSize / Math.max(img.width, img.height);
   //     img.scale(scale);
   //   }
-    
-    // Position at center
-    // img.set({
-    //   left: centerX - (img.width * (img.scaleX || 1)) / 2,
-    //   top: centerY - (img.height * (img.scaleY || 1)) / 2,
-    //   objectCaching: false,
-    // });
-    
-    // Add to canvas, select it and render
-    // canvas.add(img);
-    // canvas.setActiveObject(img);
-    // canvas.requestRenderAll();
+
+  // Position at center
+  // img.set({
+  //   left: centerX - (img.width * (img.scaleX || 1)) / 2,
+  //   top: centerY - (img.height * (img.scaleY || 1)) / 2,
+  //   objectCaching: false,
+  // });
+
+  // Add to canvas, select it and render
+  // canvas.add(img);
+  // canvas.setActiveObject(img);
+  // canvas.requestRenderAll();
   // });
 
   fabric.Image.fromURL(imageUrl, function (img) {
-      var oImg = img.set({left: 0, top: 0, angle: 0,width:100, height:100}).scale(1);
-      canvas.add(oImg).renderAll();
-      canvas.requestRenderAll();
-      var a = canvas.setActiveObject(oImg);
-      var dataURL = canvas.toDataURL({format: 'png', quality: 0.8});
-    });
+    var oImg = img
+      .set({ left: 0, top: 0, angle: 0, width: 100, height: 100 })
+      .scale(1);
+    canvas.add(oImg).renderAll();
+    canvas.requestRenderAll();
+    var a = canvas.setActiveObject(oImg);
+    var dataURL = canvas.toDataURL({ format: "png", quality: 0.8 });
+  });
 
-    // image = new fabric.Rect({
-    //   left: centerX - 50, // Center by offsetting half width
-    //   top: centerY - 30, // Center by offsetting half height
-    //   width: 100,
-    //   height: 60,
-    //   fill: colour.value,
-    //   objectCaching: false,
-    // });
+  // image = new fabric.Rect({
+  //   left: centerX - 50, // Center by offsetting half width
+  //   top: centerY - 30, // Center by offsetting half height
+  //   width: 100,
+  //   height: 60,
+  //   fill: colour.value,
+  //   objectCaching: false,
+  // });
 };
 
 // Version history methods
@@ -1665,7 +1754,7 @@ const restoreVersion = async (version) => {
     toast({
       title: "Success",
       description: "Version restored successfully",
-       variant: "success",
+      variant: "success",
     });
 
     // Close the modal
@@ -1681,11 +1770,13 @@ const restoreVersion = async (version) => {
 };
 const createManualVersion = async () => {
   // Get a name for this version from the user
-  const versionName = prompt("Enter a name for this restore point:", 
-                           `Manual save ${new Date().toLocaleString()}`);
-  
+  const versionName = prompt(
+    "Enter a name for this restore point:",
+    `Manual save ${new Date().toLocaleString()}`
+  );
+
   if (versionName === null) return; // User cancelled
-  
+
   try {
     // Make the API call to create a manual version
     const response = await axios.post("/create", {
@@ -1700,7 +1791,7 @@ const createManualVersion = async () => {
       description: `Version "${versionName}" created successfully`,
       variant: "success",
     });
-    
+
     // Refresh version history to show the new version
     await fetchVersionHistory();
   } catch (error) {
@@ -1716,5 +1807,4 @@ const showVersionHistoryModal = ref(false);
 const selectedVersion = ref(null);
 const versionHistory = ref([]);
 const loadingVersions = ref(false);
-
 </script>
