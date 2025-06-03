@@ -583,7 +583,7 @@ const openTag = ref(null);
     </DialogContent>
   </Dialog>
 
-  <div class="h-full w-full">
+  <div class="h-full w-full" data-tour="tabContent">
     <!-- Desktop layout -->
     <div
       v-if="screenSize === 'large'"
@@ -704,7 +704,7 @@ const openTag = ref(null);
         <div class="flex flex-row space-x-4 h-full">
           <!-- Left Column (Tall) -->
           <div
-            class="w-2/3 h-full mb-4 bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30"
+          data-tour="dashboardGraph" class="w-2/3 h-full mb-4 bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30"
           >
             <Cytoscape
               v-if="active"
@@ -720,7 +720,7 @@ const openTag = ref(null);
           <div class="relative flex w-1/3 flex-col h-full space-y-4">
             <!-- recent notes -->
             <div
-              class="bg-primary-foreground rounded-xl flex-1 h-0 min-h-0 shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col"
+            data-tour="dashboardRecentNotes" class="bg-primary-foreground rounded-xl flex-1 h-0 min-h-0 shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col"
             >
               <div class="flex items-center px-5 py-4 flex-shrink-0">
                 <div class="w-1.5 h-6 bg-primary rounded-full mr-2"></div>
@@ -768,8 +768,8 @@ const openTag = ref(null);
               </div>
             </div>
             <!-- Shortcuts -->
-            <div
-              class="bg-primary-foreground max-h-[50%] rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col flex-shrink-0"
+            <div 
+             data-tour="dashboardShortcuts" class="bg-primary-foreground max-h-[50%] rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col flex-shrink-0"
             >
               <div class="flex items-center px-5 py-4">
                 <div class="w-1.5 h-6 bg-primary rounded-full mr-2"></div>
@@ -925,7 +925,7 @@ const openTag = ref(null);
     <!-- Main content area - adjusted for medium screens -->
     <div class="flex flex-col space-y-3 h-full">
       <!-- Graph (takes full width) -->
-      <div class="w-full h-1/2 mb-3 bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30 overflow-hidden">
+      <div data-tour="dashboardGraph" class="w-full h-1/2 mb-3 bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30 overflow-hidden">
         <Cytoscape
           v-if="active"
           @note-selected="OpenNote"
@@ -938,7 +938,7 @@ const openTag = ref(null);
       <!-- Bottom row (split for recent notes and shortcuts) -->
       <div class="flex flex-row space-x-3 h-1/2">
         <!-- Recent notes -->
-        <div class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
+        <div data-tour="dashboardRecentNotes" class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
           <div class="flex items-center px-4 py-3 flex-shrink-0">
             <div class="w-1.5 h-5 bg-primary rounded-full mr-2"></div>
             <h2 class="text-lg font-bold flex-grow">Recent Notes</h2>
@@ -969,7 +969,7 @@ const openTag = ref(null);
         </div>
 
         <!-- Shortcuts -->
-        <div class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
+        <div data-tour="dashboardShortcuts" class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
           <div class="flex items-center px-4 py-3">
             <div class="w-1.5 h-5 bg-primary rounded-full mr-2"></div>
             <h2 class="text-lg font-bold flex-grow">Shortcuts</h2>
@@ -1055,7 +1055,7 @@ const openTag = ref(null);
   </div>
 
   <!-- Graph (main content - taller) -->
-  <div class="w-full flex-1 bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30 overflow-hidden min-h-[300px]">
+  <div data-tour="dashboardGraph" class="w-full flex-1 bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30 overflow-hidden min-h-[300px]">
     <Cytoscape
       v-if="active"
       @note-selected="OpenNote"
@@ -1068,7 +1068,7 @@ const openTag = ref(null);
   <!-- Bottom row with Recent Notes and Shortcuts side by side -->
   <div class="flex flex-row space-x-3">
     <!-- Recent Notes (side by side) -->
-    <div class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
+    <div data-tour="dashboardRecentNotes" class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
       <div class="flex items-center px-3 py-2 flex-shrink-0">
         <div class="w-1 h-4 bg-primary rounded-full mr-2"></div>
         <h2 class="text-sm font-bold flex-grow">Recent Notes</h2>
@@ -1099,7 +1099,7 @@ const openTag = ref(null);
     </div>
 
     <!-- Shortcuts (side by side) -->
-    <div class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
+    <div data-tour="dashboardShortcuts" class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
       <div class="flex items-center px-3 py-2">
         <div class="w-1 h-4 bg-primary rounded-full mr-2"></div>
         <h2 class="text-sm font-bold flex-grow">Shortcuts</h2>

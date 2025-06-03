@@ -743,6 +743,7 @@ const recentNotes = computed(() => {
                 <SidebarMenuButton
                   size="lg"
                   class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  data-tour="sidebar-profile"
                 >
                   <Avatar class="h-8 w-8 rounded-lg">
                     <AvatarImage
@@ -873,6 +874,7 @@ const recentNotes = computed(() => {
           v-if="getActiveComponent"
           :key="activeTabKey"
           :tab-id="activeTab"
+          
         />
         <!-- </TransitionGroup> -->
       </div>

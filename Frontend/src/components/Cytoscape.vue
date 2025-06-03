@@ -2295,7 +2295,7 @@ onBeforeUnmount(() => {
       <!-- Large toolbar -->
 
       <div
-        v-if="hasControls && isLargeNavbarVisible"
+      data-tour="CytoscapeToolbar" v-if="hasControls && isLargeNavbarVisible"
         class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
       >
         <DropdownMenu>
@@ -2389,6 +2389,7 @@ onBeforeUnmount(() => {
 
       <!-- Small toolbar -->
       <div
+      data-tour="CytoscapeToolbar"
         v-else
         v-if="hasControls"
         class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"

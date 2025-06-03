@@ -979,7 +979,7 @@ const loadingVersions = ref(false);
       <div class="h-24 w-full mb-0 relative">
         <div class="absolute top-6 w-full z-50 px-4 flex justify-center">
           <div
-            class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
+          data-tour="tiptapToolbar" class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
           >
             <div class="flex items-center gap-1">
               <!-- above flex wrap -->
@@ -1429,6 +1429,7 @@ const loadingVersions = ref(false);
 
       <div class="flex justify-center flex-1">
         <ScrollArea
+        data-tour="tiptapContent"
           class="editor w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-y-auto bg-primary-foreground rounded-lg shadow-md border border-input m-4"
           @click="focusEditor"
         >
@@ -1511,7 +1512,7 @@ const loadingVersions = ref(false);
   </Dialog>
 
   <Dialog :open="showWhiteboardModal" @update:open="closeWhiteboardModal">
-    <DialogContent class="sm:max-w-[425px]">
+    <DialogContent data-tour="tiptapWhiteboardSelect" class="sm:max-w-[425px]">
       <DialogHeader>
         <DialogTitle>Insert Whiteboard</DialogTitle>
       </DialogHeader>

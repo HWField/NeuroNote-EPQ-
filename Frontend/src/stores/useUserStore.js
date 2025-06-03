@@ -22,6 +22,7 @@ export const useUserStore = defineStore(
     const recentNotes = ref([]); // Array to store recent note IDs
     const theme = useColorMode({ emitAuto: true });
     const streamerMode = ref("");
+    const tourState = ref("none"); // Tour state to track if the user has completed the tour
 
     const shortcuts = ref([]); // User shortcuts
     theme.value = "auto";
@@ -32,6 +33,11 @@ export const useUserStore = defineStore(
       if (isAuthenticated.value) {
         saveUser({ theme: newTheme });
       }
+    });
+
+    watch(tourState, (newState, oldState) => {
+      console.error("Tour state changed from", oldState, "to", newState);
+      console.trace(); // This will show you exactly where it's being changed from
     });
 
     const router = useRouter(); // Router instance for programmatic navigation
@@ -59,6 +65,8 @@ export const useUserStore = defineStore(
           const tabStore = useTabStore();
           tabStore.loadTabsFromPreferences(data.preferences.tabs);
         }
+
+        
 
         // Load shortcuts if available
         if (data.preferences?.shortcuts) {
@@ -159,6 +167,7 @@ export const useUserStore = defineStore(
       username.value = "";
       email.value = "";
       role.value = "";
+      tourState.value = ""; // Reset tour state
       token.value = "";
       refreshToken.value = "";
       preferences.value = {};
@@ -166,7 +175,6 @@ export const useUserStore = defineStore(
       avatar.value = "";
       streamerMode.value = "";
       shortcuts.value = [];
-      
 
       theme.value = "auto";
       router.replace("/login");
@@ -178,7 +186,7 @@ export const useUserStore = defineStore(
       tabStore.setActiveTab(0); //saves current state of tab (as saves on tab change)
       saveUser({ tabs: tabStore.tabs.value });
       // saveUser({ tabs: Array.from(tabStore.tabs) });
-
+      tourState.value = ""; // Reset tour state
       tabStore.clearStore();
       graphStore.resetGraph();
       username.value = "";
@@ -198,7 +206,7 @@ export const useUserStore = defineStore(
 
     function addToRecentNotes(noteId) {
       // Convert to number if it's not already
-      console.error("ADDING TO RECENT noteS")
+      console.error("ADDING TO RECENT noteS");
       noteId = Number(noteId);
 
       // Remove the note if it already exists in the list
@@ -242,9 +250,10 @@ export const useUserStore = defineStore(
           });
           return;
         }
-        useTabStore().addTab(note.name, "note", { noteId: Id, creationTabId: 1 });
-
-        
+        useTabStore().addTab(note.name, "note", {
+          noteId: Id,
+          creationTabId: 1,
+        });
       } else if (shortcut.action == "Tag") {
         let Id = shortcut.params.tagId;
         const tag = useGraphStore().elements.find(
@@ -276,6 +285,7 @@ export const useUserStore = defineStore(
     return {
       isAuthenticated,
       username,
+      tourState,
       email,
       role,
       token,

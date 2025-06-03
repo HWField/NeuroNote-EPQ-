@@ -195,11 +195,11 @@
 
     <div v-else>
       <div v-if="!viewOnly" class="h-24 w-full mb-0 relative">
-        <div class="absolute top-6 w-full z-50 px-4 flex justify-center">
+        <div   class="absolute top-6 w-full z-50 px-4 flex justify-center">
           <div
-            class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
+          data-tour="whiteboardToolbar" class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
           >
-            <div class="flex items-center gap-1 flex-wrap">
+            <div  class="flex items-center gap-1 flex-wrap">
               <!-- Close button -->
               <TooltipProvider>
                 <Tooltip>
@@ -304,7 +304,7 @@
                     <span>Text</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem @click="openImageModal()">
-                    <Type class="h-4 w-4 mr-2" />
+                    <ImagePlus class="h-4 w-4 mr-2" />
                     <span>Image</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -525,6 +525,7 @@
 
       <div class="flex justify-center h-full flex-1">
         <div
+        data-tour="whiteboardCanvas"
           :id="canvasContainerId"
           class="canvas-container w-full overflow-hidden bg-none m-4 relative"
           :class="[
@@ -578,7 +579,7 @@ import { useGraphStore } from "@/stores/useGraphStore";
 import { useUserStore } from "@/stores/useUserStore";
 import Loading from "@/components/Loading.vue";
 import NoteHeader from "@/components/Document Editor/NoteHeader.vue";
-import { Bot, FileText, Home, Info } from "lucide-vue-next";
+import { Bot, FileText, Home, ImagePlus, Info } from "lucide-vue-next";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
