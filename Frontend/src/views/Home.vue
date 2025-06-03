@@ -6,6 +6,7 @@ export const containerClass = "w-full h-full";
 
 <script setup lang="ts">
 import axios, { getBaseUrl } from "../axios.js";
+import TourGuide from '@/components/TourGuide.vue'
 import Cytoscape from "@/components/Cytoscape.vue";
 import tabview from "@/components/GenericTab.vue";
 import Note from "@/components/Note.vue";
@@ -113,13 +114,14 @@ import { useTabStore } from "@/stores/useTabStore";
 import { useGraphStore } from "@/stores/useGraphStore";
 import { useUserStore } from "@/stores/useUserStore";
 import Input from "@/components/ui/input/Input.vue";
-
 const router = useRouter(); // Router instance for programmatic navigation
 const route = useRoute(); // Current route to access query parameters
 const { toast } = useToast();
 
 const tabStore = useTabStore();
 const userStore = useUserStore();
+
+
 
 watch(
   () => userStore.authenticated,
@@ -136,6 +138,21 @@ watch(
   },
   { immediate: true } // Check immediately when component mounts
 );
+const tourGuide = ref(null)
+function openTutorial() {
+  if (tourGuide.value) {
+    tourGuide.value.startTour()
+  }
+}
+
+// Handle tour events
+function onTourComplete() {
+  console.log('Tour completed!')
+}
+
+function onTourCancel() {
+  console.log('Tour cancelled!')
+}
 
 const tabs = computed(() => tabStore.tabs);
 const activeTab = computed(() => tabStore.activeTab);
@@ -424,6 +441,14 @@ const recentNotes = computed(() => {
 <template>
   <Toaster />
 
+    <!-- Tour Component -->
+    <TourGuide 
+    ref="tourGuide"
+    :should-start="true"
+    @tour-complete="onTourComplete"
+    @tour-cancel="onTourCancel"
+  />
+
   <CommandDialog v-model:open="open">
     <div class="flex items-center border-b px-3">
       <!-- <Search class="mr-2 h-4 w-4 shrink-0 opacity-50" /> -->
@@ -550,7 +575,7 @@ const recentNotes = computed(() => {
   </CommandDialog>
 
   <SidebarProvider>
-    <Sidebar collapsible="icon" variant="floating" side="left">
+    <Sidebar data-tour="sidebar"  collapsible="icon" variant="floating" side="left">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -614,7 +639,7 @@ const recentNotes = computed(() => {
       <SidebarSeparator />
 
       <SidebarContent>
-        <SidebarGroup>
+        <SidebarGroup data-tour="sidebar-links">
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
@@ -774,7 +799,7 @@ const recentNotes = computed(() => {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem @click="openNewTab('Feedback')">
+                  <DropdownMenuItem @click="openTutorial()">
                     <BookOpenText />
                     Tutorial
                   </DropdownMenuItem>
@@ -820,7 +845,7 @@ const recentNotes = computed(() => {
       <!-- Header -->
       <header class="flex h-16 shrink-0 items-center gap-2 border-b">
         <div class="flex items-center">
-          <SidebarTrigger class="ml-1" />
+          <SidebarTrigger data-tour="sidebar-trigger"  class="ml-1" />
           <Separator orientation="vertical" class="mx-2" />
           <span class="text-lg font-semibold">{{ activeTab.title }}</span>
 
