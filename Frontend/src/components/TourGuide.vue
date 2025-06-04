@@ -32,10 +32,8 @@ const tour = ref<Shepherd.Tour | null>(null);
 const isActive = ref(false);
 
 // Check if user is new (no graph elements)
-// const isNewUser = computed(() => {
-//   return graphStore.elements.length === 0
-// })
-const isNewUser = true;
+
+// const isNewUser = true;
 
 function createTour() {
   if (tour.value) {
@@ -737,12 +735,16 @@ function startTour() {
 }
 
 function checkAndStartTourForNewUser() {
-  if (isNewUser) {
-    console.error("New user detected, starting tour...");
+
+
+  if (graphStore.elements.length === 0) {
+    console.error("New user detected, starting tour...", graphStore.elements.length);
     setTimeout(() => {
       startTour();
     }, 1500); // Give UI time to load
   }
+
+
 }
 
 // Watch for trigger prop changes
