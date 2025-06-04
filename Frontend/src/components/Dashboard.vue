@@ -57,6 +57,7 @@ const userStore = useUserStore();
 const graphStore = useGraphStore();
 const { toast } = useToast();
 const screenSize = ref("small");
+const screenHeight = ref(0);
 let active = ref(false);
 const activeFilters = ref([]);
 const tabData = computed(() => {
@@ -90,8 +91,10 @@ const OpenNote = (noteId) => {
   tabStore.addTab(note.name, "note", { noteId: Id, creationTabId: 1 });
 };
 
+
 const updateScreenSize = () => {
   const width = window.innerWidth;
+  screenHeight.value = window.innerHeight;
   if (width >= 1024) {
     screenSize.value = "large";
   } else if (width >= 768) {
@@ -100,6 +103,16 @@ const updateScreenSize = () => {
     screenSize.value = "small";
   }
 };
+
+// Computed properties for height-based visibility
+const showBanner = computed(() => {
+  return screenHeight.value >= 650; // Hide banner if height < 650px
+});
+
+const showStats = computed(() => {
+  return screenHeight.value >= 500; // Hide stats if height < 500px
+});
+
 
 onMounted(() => {
   updateScreenSize();
@@ -585,15 +598,12 @@ const openTag = ref(null);
 
   <div class="h-full w-full" data-tour="tabContent">
     <!-- Desktop layout -->
-    <div
-      v-if="screenSize === 'large'"
-      class="flex w-full h-full flex-col p-6 space-y-4"
-    >
+    <div v-if="screenSize === 'large'" class="flex w-full h-full flex-col p-6">
       <div class="h-full flex flex-col relative w-full">
         <!-- Welcome banner -->
-
         <div
-          class="relative mb-4 rounded-xl overflow-hidden fade-in h-auto min-h-[120px]"
+        v-if="showBanner"
+          class="relative rounded-xl overflow-hidden fade-in h-auto min-h-[120px] flex-shrink-0"
         >
           <!-- Glass background with purple gradient -->
           <div
@@ -673,7 +683,7 @@ const openTag = ref(null);
 
         <!-- Stats row -->
         <div
-          class="flex flex-row w-full h-1/7 space-x-4 justify-evenly mb-4 fade-in-delay-200 opacity-0"
+        v-if="showStats" class="flex flex-row w-full space-x-4 justify-evenly my-4 fade-in-delay-200 opacity-0 flex-shrink-0"
         >
           <div class="rounded-xl p-4 w-full flex flex-col bg-primary/10">
             <span class="text-xs uppercase text-muted-foreground font-medium"
@@ -701,10 +711,12 @@ const openTag = ref(null);
           </div>
         </div>
 
-        <div class="flex flex-row space-x-4 h-full">
+        <!-- Main content area - this will expand to fill remaining space -->
+        <div class="flex flex-row space-x-4 flex-1 min-h-0">
           <!-- Left Column (Tall) -->
           <div
-          data-tour="dashboardGraph" class="w-2/3 h-full mb-4 bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30"
+            data-tour="dashboardGraph"
+            class="w-2/3 h-full bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30"
           >
             <Cytoscape
               v-if="active"
@@ -713,22 +725,35 @@ const openTag = ref(null);
               :tabId="1"
               class="overflow-hidden"
             />
-            
           </div>
 
           <!-- Right Column (Two Short Divs) -->
           <div class="relative flex w-1/3 flex-col h-full space-y-4">
             <!-- recent notes -->
             <div
-            data-tour="dashboardRecentNotes" class="bg-primary-foreground rounded-xl flex-1 h-0 min-h-0 shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col"
+              data-tour="dashboardRecentNotes"
+              class="bg-primary-foreground rounded-xl flex-1 max-h-[50%] shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col"
             >
               <div class="flex items-center px-5 py-4 flex-shrink-0">
                 <div class="w-1.5 h-6 bg-primary rounded-full mr-2"></div>
                 <h2 class="text-xl font-bold flex-grow">Recent Notes</h2>
               </div>
 
-              <div class="flex-1 min-h-0 overflow-auto px-5 pb-5">
+              <div class="flex-1 min-h-0 overflow-hidden px-5 pb-5">
+                <div
+                  v-if="recentNotes.length === 0"
+                  class="flex flex-col items-center justify-center h-full"
+                >
+                  <div class="text-center mb-2 text-muted-foreground">
+                    No Recent Notes
+                  </div>
+                  <div class="flex items-center text-sm text-primary">
+                    <span>Create a new note to get started</span>
+                  </div>
+                </div>
+
                 <ScrollArea
+                  v-else
                   className="h-full"
                   style="
                     --scrollbar-size: 5px;
@@ -767,11 +792,13 @@ const openTag = ref(null);
                 </ScrollArea>
               </div>
             </div>
+
             <!-- Shortcuts -->
-            <div 
-             data-tour="dashboardShortcuts" class="bg-primary-foreground max-h-[50%] rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col flex-shrink-0"
+            <div
+              data-tour="dashboardShortcuts"
+              class="bg-primary-foreground rounded-xl flex-1 max-h-[50%] shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col"
             >
-              <div class="flex items-center px-5 py-4">
+              <div class="flex items-center px-5 py-4 flex-shrink-0">
                 <div class="w-1.5 h-6 bg-primary rounded-full mr-2"></div>
                 <h2 class="text-xl font-bold flex-grow">Shortcuts</h2>
                 <Button
@@ -784,36 +811,12 @@ const openTag = ref(null);
                 </Button>
               </div>
 
-              <!-- bento style -->
-              <!-- <div class="flex flex-wrap gap-2 p-5">
-                <Button
-                  v-for="shortcut in userStore.shortcuts"
-                  :key="shortcut.id"
-                  @click="userStore.runShortcut(shortcut.id)"
-                  class="flex items-center justify-start p-3 h-auto border-border/30 hover:border-primary/50 group shrink-0 grow-0"
-                  style="min-width: fit-content; max-width: 180px"
-                >
-                  <div class="mr-2 rounded-md p-1.5">
-                    <FileText
-                      v-if="shortcut.action === 'Note'"
-                      class="w-4 h-4"
-                    />
-                    <Tag v-if="shortcut.action === 'Tag'" class="w-4 h-4" />
-                    <Plus v-if="shortcut.action === 'Create'" class="w-4 h-4" />
-                    <Search
-                      v-if="shortcut.action === 'Search'"
-                      class="w-4 h-4"
-                    />
-                  </div>
-                  <span class="truncate">{{ shortcut.label }}</span>
-                </Button>
-              </div> -->
-              <div class="overflow-hidden">
+              <div class="flex-1 min-h-0 overflow-hidden px-5 pb-5">
                 <div
                   v-if="
                     !userStore.shortcuts || userStore.shortcuts.length === 0
                   "
-                  class="flex flex-col items-center justify-center p-6 h-full"
+                  class="flex flex-col items-center justify-center h-full"
                 >
                   <div class="text-center mb-2 text-muted-foreground">
                     No shortcuts set up yet
@@ -837,8 +840,16 @@ const openTag = ref(null);
                   </div>
                 </div>
 
-                <ScrollArea class="h-full w-full p-5">
-                  <div class="grid grid-cols-2 gap-3">
+                <ScrollArea
+                  v-else
+                  className="h-full"
+                  style="
+                    --scrollbar-size: 5px;
+                    --scrollbar-thumb: rgb(var(--primary));
+                    --scrollbar-track: transparent;
+                  "
+                >
+                  <div class="grid grid-cols-2 gap-3 pr-4">
                     <Button
                       variant="outline"
                       :disabled="!shortcut.action || !shortcut.params"
@@ -852,15 +863,12 @@ const openTag = ref(null);
                       >
                         <FileText
                           v-if="shortcut.action === 'Note'"
-                          class="w-4 h-4 mr-2"
+                          class="w-4 h-4"
                         />
-                        <Tag
-                          v-if="shortcut.action === 'Tag'"
-                          class="w-4 h-4 mr-2"
-                        />
+                        <Tag v-if="shortcut.action === 'Tag'" class="w-4 h-4" />
                         <Plus
                           v-if="shortcut.action === 'Create'"
-                          class="w-4 h-4 mr-2"
+                          class="w-4 h-4"
                         />
                       </div>
                       <span class="truncate">{{ shortcut.label }}</span>
@@ -873,21 +881,29 @@ const openTag = ref(null);
         </div>
       </div>
     </div>
-<!-- Medium layout (tablets, smaller laptops) -->
+   <!-- Medium layout (tablets, smaller laptops) -->
 <div
   v-else-if="screenSize === 'medium'"
-  class="flex w-full h-full flex-col p-4 space-y-3"
+  class="flex w-full h-full flex-col p-4"
 >
   <div class="h-full flex flex-col relative w-full">
     <!-- Welcome banner (slightly smaller for medium screens) -->
-    <div class="relative mb-3 rounded-xl overflow-hidden fade-in h-auto min-h-[100px]">
+    <div v-if="showBanner"
+      class="relative rounded-xl overflow-hidden fade-in h-auto min-h-[100px] flex-shrink-0"
+    >
       <!-- Glass background with purple gradient -->
-      <div class="absolute inset-0 bg-gradient-to-r from-purple-600/80 via-purple-500/70 to-indigo-600/60 backdrop-blur-sm"></div>
+      <div
+        class="absolute inset-0 bg-gradient-to-r from-purple-600/80 via-purple-500/70 to-indigo-600/60 backdrop-blur-sm"
+      ></div>
 
       <!-- Decorative elements -->
-      <div class="absolute -top-10 -right-10 w-24 h-24 bg-purple-300/20 rounded-full blur-xl"></div>
-      <div class="absolute bottom-0 left-1/3 w-32 h-32 bg-indigo-300/20 rounded-full blur-xl"></div>
-      
+      <div
+        class="absolute -top-10 -right-10 w-24 h-24 bg-purple-300/20 rounded-full blur-xl"
+      ></div>
+      <div
+        class="absolute bottom-0 left-1/3 w-32 h-32 bg-indigo-300/20 rounded-full blur-xl"
+      ></div>
+
       <!-- Content with improved spacing -->
       <div class="relative z-10 px-6 py-5 flex items-center">
         <!-- Left side -->
@@ -903,29 +919,48 @@ const openTag = ref(null);
       </div>
 
       <!-- Bottom glass border -->
-      <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-300/50 via-white/30 to-indigo-300/50 backdrop-blur-md"></div>
+      <div
+        class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-300/50 via-white/30 to-indigo-300/50 backdrop-blur-md"
+      ></div>
     </div>
 
     <!-- Stats row -->
-    <div class="flex flex-row w-full space-x-3 justify-evenly mb-3 fade-in-delay-200 opacity-0">
+    <div
+     v-if="showStats" class="flex flex-row w-full space-x-3 justify-evenly my-3 fade-in-delay-200 opacity-0 flex-shrink-0"
+    >
       <div class="rounded-xl p-3 w-full flex flex-col bg-primary/10">
-        <span class="text-xs uppercase text-muted-foreground font-medium">Notes</span>
-        <span class="text-xl font-bold text-primary">{{ stats.notes }}</span>
+        <span class="text-xs uppercase text-muted-foreground font-medium"
+          >Notes</span
+        >
+        <span class="text-xl font-bold text-primary">{{
+          stats.notes
+        }}</span>
       </div>
       <div class="rounded-xl p-3 w-full flex flex-col bg-purple-500/10">
-        <span class="text-xs uppercase text-muted-foreground font-medium">Tags</span>
-        <span class="text-xl font-bold text-purple-500">{{ stats.tags }}</span>
+        <span class="text-xs uppercase text-muted-foreground font-medium"
+          >Tags</span
+        >
+        <span class="text-xl font-bold text-purple-500">{{
+          stats.tags
+        }}</span>
       </div>
       <div class="rounded-xl p-3 w-full flex flex-col bg-green-500/10">
-        <span class="text-xs uppercase text-muted-foreground font-medium">Connections</span>
-        <span class="text-xl font-bold text-green-500">{{ stats.edges }}</span>
+        <span class="text-xs uppercase text-muted-foreground font-medium"
+          >Connections</span
+        >
+        <span class="text-xl font-bold text-green-500">{{
+          stats.edges
+        }}</span>
       </div>
     </div>
 
     <!-- Main content area - adjusted for medium screens -->
-    <div class="flex flex-col space-y-3 h-full">
+    <div class="flex flex-col space-y-3 flex-1 min-h-0">
       <!-- Graph (takes full width) -->
-      <div data-tour="dashboardGraph" class="w-full h-1/2 mb-3 bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30 overflow-hidden">
+      <div
+        data-tour="dashboardGraph"
+        class="w-full h-1/2 bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30 overflow-hidden"
+      >
         <Cytoscape
           v-if="active"
           @note-selected="OpenNote"
@@ -938,14 +973,37 @@ const openTag = ref(null);
       <!-- Bottom row (split for recent notes and shortcuts) -->
       <div class="flex flex-row space-x-3 h-1/2">
         <!-- Recent notes -->
-        <div data-tour="dashboardRecentNotes" class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
+        <div
+          data-tour="dashboardRecentNotes"
+          class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col"
+        >
           <div class="flex items-center px-4 py-3 flex-shrink-0">
             <div class="w-1.5 h-5 bg-primary rounded-full mr-2"></div>
             <h2 class="text-lg font-bold flex-grow">Recent Notes</h2>
           </div>
 
-          <div class="flex-1 min-h-0 overflow-auto px-4 pb-4">
-            <ScrollArea className="h-full">
+          <div class="flex-1 min-h-0 overflow-hidden px-4 pb-4">
+            <div
+              v-if="recentNotes.length === 0"
+              class="flex flex-col items-center justify-center h-full"
+            >
+              <div class="text-center mb-2 text-muted-foreground">
+                No Recent Notes
+              </div>
+              <div class="flex items-center text-sm text-primary">
+                <span>Create a new note to get started</span>
+              </div>
+            </div>
+
+            <ScrollArea
+              v-else
+              className="h-full"
+              style="
+                --scrollbar-size: 5px;
+                --scrollbar-thumb: rgb(var(--primary));
+                --scrollbar-track: transparent;
+              "
+            >
               <ul class="pr-4 space-y-2">
                 <li
                   v-for="(note, index) in recentNotes"
@@ -953,15 +1011,27 @@ const openTag = ref(null);
                   @click="OpenNote(`note_${note.id}`)"
                   class="p-2 rounded-lg bg-background/80 backdrop-blur-sm shadow-sm border border-border/20 cursor-pointer transition-all duration-200 hover:bg-background hover:shadow-md hover:-translate-y-[2px] flex items-center group"
                 >
-                  <div class="mr-2 flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-semibold transition-transform group-hover:scale-110">
+                  <div
+                    class="mr-2 flex-shrink-0 w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-semibold transition-transform group-hover:scale-110"
+                  >
                     {{ index + 1 }}
                   </div>
-                  <div class="mr-2 flex-shrink-0 text-primary transition-transform group-hover:rotate-12">
-                    <FileText v-if="note.format === 'document'" class="w-4 h-4" />
-                    <Presentation v-else-if="note.format === 'whiteboard'" class="w-4 h-4" />
+                  <div
+                    class="mr-2 flex-shrink-0 text-primary transition-transform group-hover:rotate-12"
+                  >
+                    <FileText
+                      v-if="note.format === 'document'"
+                      class="w-4 h-4"
+                    />
+                    <Presentation
+                      v-else-if="note.format === 'whiteboard'"
+                      class="w-4 h-4"
+                    />
                     <Presentation v-else class="w-4 h-4" />
                   </div>
-                  <div class="truncate font-medium text-sm">{{ note.title }}</div>
+                  <div class="truncate font-medium text-sm">
+                    {{ note.title }}
+                  </div>
                 </li>
               </ul>
             </ScrollArea>
@@ -969,30 +1039,60 @@ const openTag = ref(null);
         </div>
 
         <!-- Shortcuts -->
-        <div data-tour="dashboardShortcuts" class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
-          <div class="flex items-center px-4 py-3">
+        <div
+          data-tour="dashboardShortcuts"
+          class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col"
+        >
+          <div class="flex items-center px-4 py-3 flex-shrink-0">
             <div class="w-1.5 h-5 bg-primary rounded-full mr-2"></div>
             <h2 class="text-lg font-bold flex-grow">Shortcuts</h2>
-            <Button variant="ghost" size="icon" class="rounded-full hover:bg-primary/10" @click="openShortcutsDialog()">
+            <Button
+              variant="ghost"
+              size="icon"
+              class="rounded-full hover:bg-primary/10"
+              @click="openShortcutsDialog()"
+            >
               <Pencil class="h-4 w-4" />
             </Button>
           </div>
 
-          <div class="overflow-hidden">
-            <div v-if="!userStore.shortcuts || userStore.shortcuts.length === 0" class="flex flex-col items-center justify-center p-4 h-full">
+          <div class="flex-1 min-h-0 overflow-hidden px-4 pb-4">
+            <div
+              v-if="!userStore.shortcuts || userStore.shortcuts.length === 0"
+              class="flex flex-col items-center justify-center h-full"
+            >
               <div class="text-center mb-2 text-muted-foreground text-sm">
                 No shortcuts set up yet
               </div>
               <div class="flex items-center text-xs text-primary">
                 <span>Click the pencil to add shortcuts</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ml-2 animate-bounce-right">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="ml-2 animate-bounce-right"
+                >
                   <path d="m18 15-6-6-6 6" />
                 </svg>
               </div>
             </div>
 
-            <ScrollArea class="h-full w-full p-3">
-              <div class="grid grid-cols-1 gap-2">
+            <ScrollArea
+              v-else
+              className="h-full"
+              style="
+                --scrollbar-size: 5px;
+                --scrollbar-thumb: rgb(var(--primary));
+                --scrollbar-track: transparent;
+              "
+            >
+              <div class="grid grid-cols-1 gap-2 pr-4">
                 <Button
                   variant="outline"
                   :disabled="!shortcut.action || !shortcut.params"
@@ -1001,10 +1101,21 @@ const openTag = ref(null);
                   :key="shortcut.id"
                   @click="userStore.runShortcut(shortcut)"
                 >
-                  <div class="mr-2 flex-shrink-0 text-primary transition-transform group-hover:rotate-12">
-                    <FileText v-if="shortcut.action === 'Note'" class="w-3 h-3 mr-1" />
-                    <Tag v-if="shortcut.action === 'Tag'" class="w-3 h-3 mr-1" />
-                    <Plus v-if="shortcut.action === 'Create'" class="w-3 h-3 mr-1" />
+                  <div
+                    class="mr-2 flex-shrink-0 text-primary transition-transform group-hover:rotate-12"
+                  >
+                    <FileText
+                      v-if="shortcut.action === 'Note'"
+                      class="w-3 h-3"
+                    />
+                    <Tag
+                      v-if="shortcut.action === 'Tag'"
+                      class="w-3 h-3"
+                    />
+                    <Plus
+                      v-if="shortcut.action === 'Create'"
+                      class="w-3 h-3"
+                    />
                   </div>
                   <span class="truncate">{{ shortcut.label }}</span>
                 </Button>
@@ -1016,130 +1127,227 @@ const openTag = ref(null);
     </div>
   </div>
 </div>
- 
+
 <!-- Small layout (mobile, small tablets) -->
-<div v-else-if="screenSize=='small'" class="flex w-full h-full flex-col p-3 space-y-3 overflow-auto">
-  <!-- Welcome banner (compact for small screens) -->
-  <div class="relative mb-3 rounded-xl overflow-hidden fade-in h-auto">
-    <!-- Glass background with purple gradient -->
-    <div class="absolute inset-0 bg-gradient-to-r from-purple-600/80 via-purple-500/70 to-indigo-600/60 backdrop-blur-sm"></div>
-    
-    <!-- Content -->
-    <div class="relative z-10 px-4 py-4 flex items-center">
-      <div class="flex-1">
-        <h1 class="text-xl font-bold text-white flex items-center">
-          Welcome, {{ userStore.username }}
-          <span class="inline-block ml-2 animate-bounce">👋</span>
-        </h1>
-        <p class="text-white/80 mt-1 text-xs">
-          Your knowledge awaits :)
-        </p>
+<div
+  v-else-if="screenSize == 'small'"
+  class="flex w-full h-full flex-col p-3"
+>
+  <div class="h-full flex flex-col relative w-full">
+    <!-- Welcome banner - conditionally shown based on height -->
+    <div
+      v-if="showBanner"
+      class="relative rounded-xl overflow-hidden fade-in h-auto min-h-[80px] flex-shrink-0"
+    >
+      <!-- Glass background with purple gradient -->
+      <div
+        class="absolute inset-0 bg-gradient-to-r from-purple-600/80 via-purple-500/70 to-indigo-600/60 backdrop-blur-sm"
+      ></div>
+
+      <!-- Content -->
+      <div class="relative z-10 px-4 py-4 flex items-center">
+        <div class="flex-1">
+          <h1 class="text-xl font-bold text-white flex items-center">
+            Welcome, {{ userStore.username }}
+            <span class="inline-block ml-2 animate-bounce">👋</span>
+          </h1>
+          <p class="text-white/80 mt-1 text-xs">Your knowledge awaits :)</p>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Stats (horizontal row) -->
-  <div class="flex flex-row w-full space-x-2 justify-evenly mb-2 fade-in-delay-200 opacity-0">
-    <div class="rounded-xl p-2 w-full flex flex-col bg-primary/10">
-      <span class="text-xs uppercase text-muted-foreground font-medium">Notes</span>
-      <span class="text-lg font-bold text-primary">{{ stats.notes }}</span>
+    <!-- Stats - conditionally shown based on height -->
+    <div
+      v-if="showStats"
+      class="flex flex-row w-full space-x-2 justify-evenly my-3 fade-in-delay-200 opacity-0 flex-shrink-0"
+    >
+      <div class="rounded-xl p-2 w-full flex flex-col bg-primary/10">
+        <span class="text-xs uppercase text-muted-foreground font-medium"
+          >Notes</span
+        >
+        <span class="text-lg font-bold text-primary">{{ stats.notes }}</span>
+      </div>
+      <div class="rounded-xl p-2 w-full flex flex-col bg-purple-500/10">
+        <span class="text-xs uppercase text-muted-foreground font-medium"
+          >Tags</span
+        >
+        <span class="text-lg font-bold text-purple-500">{{
+          stats.tags
+        }}</span>
+      </div>
+      <div class="rounded-xl p-2 w-full flex flex-col bg-green-500/10">
+        <span class="text-xs uppercase text-muted-foreground font-medium"
+          >Connections</span
+        >
+        <span class="text-lg font-bold text-green-500">{{
+          stats.edges
+        }}</span>
+      </div>
     </div>
-    <div class="rounded-xl p-2 w-full flex flex-col bg-purple-500/10">
-      <span class="text-xs uppercase text-muted-foreground font-medium">Tags</span>
-      <span class="text-lg font-bold text-purple-500">{{ stats.tags }}</span>
-    </div>
-    <div class="rounded-xl p-2 w-full flex flex-col bg-green-500/10">
-      <span class="text-xs uppercase text-muted-foreground font-medium">Connections</span>
-      <span class="text-lg font-bold text-green-500">{{ stats.edges }}</span>
-    </div>
-  </div>
 
-  <!-- Graph (main content - taller) -->
-  <div data-tour="dashboardGraph" class="w-full flex-1 bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30 overflow-hidden min-h-[300px]">
-    <Cytoscape
-      v-if="active"
-      @note-selected="OpenNote"
-      :hasControls="true"
-      :tabId="1"
-      class="overflow-hidden"
-    />
-  </div>
-
-  <!-- Bottom row with Recent Notes and Shortcuts side by side -->
-  <div class="flex flex-row space-x-3">
-    <!-- Recent Notes (side by side) -->
-    <div data-tour="dashboardRecentNotes" class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
-      <div class="flex items-center px-3 py-2 flex-shrink-0">
-        <div class="w-1 h-4 bg-primary rounded-full mr-2"></div>
-        <h2 class="text-sm font-bold flex-grow">Recent Notes</h2>
+    <!-- Main content area - this will expand to fill remaining space -->
+    <div class="flex flex-col space-y-3 flex-1 min-h-0">
+      <!-- Graph (main content) -->
+      <div
+        data-tour="dashboardGraph"
+        class="w-full flex-1 bg-primary-foreground hover:shadow-lg rounded-xl shadow-md border border-border/30 overflow-hidden min-h-[200px]"
+      >
+        <Cytoscape
+          v-if="active"
+          @note-selected="OpenNote"
+          :hasControls="true"
+          :tabId="1"
+          class="overflow-hidden"
+        />
       </div>
 
-      <div class="overflow-hidden px-3 pb-3">
-        <ScrollArea className="max-h-[120px]">
-          <ul class="space-y-1">
-            <li
-              v-for="(note, index) in recentNotes.slice(0, 3)" 
-              :key="note.id"
-              @click="OpenNote(`note_${note.id}`)"
-              class="p-2 rounded-lg bg-background/80 backdrop-blur-sm shadow-sm border border-border/20 cursor-pointer transition-all duration-200 hover:bg-background hover:shadow-md flex items-center group"
+      <!-- Bottom row with Recent Notes and Shortcuts side by side -->
+      <div class="flex flex-row space-x-3 h-auto min-h-[120px]">
+        <!-- Recent Notes -->
+        <div
+          data-tour="dashboardRecentNotes"
+          class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col"
+        >
+          <div class="flex items-center px-3 py-2 flex-shrink-0">
+            <div class="w-1 h-4 bg-primary rounded-full mr-2"></div>
+            <h2 class="text-sm font-bold flex-grow">Recent Notes</h2>
+          </div>
+
+          <div class="flex-1 min-h-0 overflow-hidden px-3 pb-3">
+            <div
+              v-if="recentNotes.length === 0"
+              class="flex flex-col items-center justify-center h-full"
             >
-              <div class="mr-1 flex-shrink-0 w-4 h-4 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[10px] font-semibold">
-                {{ index + 1 }}
+              <div class="text-center mb-1 text-muted-foreground text-xs">
+                No Recent Notes
               </div>
-              <div class="mr-1 flex-shrink-0 text-primary">
-                <FileText v-if="note.format === 'document'" class="w-3 h-3" />
-                <Presentation v-else-if="note.format === 'whiteboard'" class="w-3 h-3" />
-                <Presentation v-else class="w-3 h-3" />
+              <div class="flex items-center text-[10px] text-primary">
+                <span>Create a new note to get started</span>
               </div>
-              <div class="truncate font-medium text-xs">{{ note.title }}</div>
-            </li>
-          </ul>
-        </ScrollArea>
-      </div>
-    </div>
+            </div>
 
-    <!-- Shortcuts (side by side) -->
-    <div data-tour="dashboardShortcuts" class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col">
-      <div class="flex items-center px-3 py-2">
-        <div class="w-1 h-4 bg-primary rounded-full mr-2"></div>
-        <h2 class="text-sm font-bold flex-grow">Shortcuts</h2>
-        <Button variant="ghost" size="sm" class="rounded-full hover:bg-primary/10 h-6 w-6 p-0" @click="openShortcutsDialog()">
-          <Pencil class="h-3 w-3" />
-        </Button>
-      </div>
-
-      <div class="overflow-hidden">
-        <div v-if="!userStore.shortcuts || userStore.shortcuts.length === 0" class="flex flex-col items-center justify-center p-2 h-full">
-          <div class="text-center text-muted-foreground text-[10px]">
-            No shortcuts set up yet
+            <ScrollArea
+              v-else
+              className="h-full max-h-[100px]"
+              style="
+                --scrollbar-size: 3px;
+                --scrollbar-thumb: rgb(var(--primary));
+                --scrollbar-track: transparent;
+              "
+            >
+              <ul class="space-y-1">
+                <li
+                  v-for="(note, index) in recentNotes.slice(0, 3)"
+                  :key="note.id"
+                  @click="OpenNote(`note_${note.id}`)"
+                  class="p-2 rounded-lg bg-background/80 backdrop-blur-sm shadow-sm border border-border/20 cursor-pointer transition-all duration-200 hover:bg-background hover:shadow-md flex items-center group"
+                >
+                  <div
+                    class="mr-1 flex-shrink-0 w-4 h-4 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-[10px] font-semibold transition-transform group-hover:scale-110"
+                  >
+                    {{ index + 1 }}
+                  </div>
+                  <div class="mr-1 flex-shrink-0 text-primary transition-transform group-hover:rotate-12">
+                    <FileText
+                      v-if="note.format === 'document'"
+                      class="w-3 h-3"
+                    />
+                    <Presentation
+                      v-else-if="note.format === 'whiteboard'"
+                      class="w-3 h-3"
+                    />
+                    <Presentation v-else class="w-3 h-3" />
+                  </div>
+                  <div class="truncate font-medium text-xs">
+                    {{ note.title }}
+                  </div>
+                </li>
+              </ul>
+            </ScrollArea>
           </div>
         </div>
 
-        <ScrollArea class="max-h-[120px] w-full p-2">
-          <div class="grid grid-cols-1 gap-1">
+        <!-- Shortcuts -->
+        <div
+          data-tour="dashboardShortcuts"
+          class="w-1/2 bg-primary-foreground rounded-xl shadow-md border border-border/30 overflow-hidden transition-all duration-300 hover:shadow-lg flex flex-col"
+        >
+          <div class="flex items-center px-3 py-2 flex-shrink-0">
+            <div class="w-1 h-4 bg-primary rounded-full mr-2"></div>
+            <h2 class="text-sm font-bold flex-grow">Shortcuts</h2>
             <Button
-              variant="outline"
-              :disabled="!shortcut.action || !shortcut.params"
-              class="flex items-center justify-start p-1 h-auto border-border/30 hover:border-primary/50 text-[10px]"
-              v-for="shortcut in userStore.shortcuts.slice(0, 3)"
-              :key="shortcut.id"
-              @click="userStore.runShortcut(shortcut)"
+              variant="ghost"
+              size="sm"
+              class="rounded-full hover:bg-primary/10 h-6 w-6 p-0"
+              @click="openShortcutsDialog()"
             >
-              <div class="mr-1 flex-shrink-0 text-primary">
-                <FileText v-if="shortcut.action === 'Note'" class="w-2 h-2" />
-                <Tag v-if="shortcut.action === 'Tag'" class="w-2 h-2" />
-                <Plus v-if="shortcut.action === 'Create'" class="w-2 h-2" />
-              </div>
-              <span class="truncate">{{ shortcut.label }}</span>
+              <Pencil class="h-3 w-3" />
             </Button>
           </div>
-        </ScrollArea>
+
+          <div class="flex-1 min-h-0 overflow-hidden px-3 pb-3">
+            <div
+              v-if="!userStore.shortcuts || userStore.shortcuts.length === 0"
+              class="flex flex-col items-center justify-center h-full"
+            >
+              <div class="text-center mb-1 text-muted-foreground text-xs">
+                No shortcuts set up yet
+              </div>
+              <div class="flex items-center text-[10px] text-primary">
+                <span>Click the pencil to add shortcuts</span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="ml-1 animate-bounce-right"
+                >
+                  <path d="m18 15-6-6-6 6" />
+                </svg>
+              </div>
+            </div>
+
+            <ScrollArea
+              v-else
+              className="h-full max-h-[100px]"
+              style="
+                --scrollbar-size: 3px;
+                --scrollbar-thumb: rgb(var(--primary));
+                --scrollbar-track: transparent;
+              "
+            >
+              <div class="grid grid-cols-1 gap-1">
+                <Button
+                  variant="outline"
+                  :disabled="!shortcut.action || !shortcut.params"
+                  class="flex items-center justify-start p-1 h-auto border-border/30 hover:border-primary/50 text-[10px] group"
+                  v-for="shortcut in userStore.shortcuts.slice(0, 3)"
+                  :key="shortcut.id"
+                  @click="userStore.runShortcut(shortcut)"
+                >
+                  <div class="mr-1 flex-shrink-0 text-primary transition-transform group-hover:rotate-12">
+                    <FileText
+                      v-if="shortcut.action === 'Note'"
+                      class="w-2 h-2"
+                    />
+                    <Tag v-if="shortcut.action === 'Tag'" class="w-2 h-2" />
+                    <Plus v-if="shortcut.action === 'Create'" class="w-2 h-2" />
+                  </div>
+                  <span class="truncate">{{ shortcut.label }}</span>
+                </Button>
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
-
-
   </div>
 </template>
 
