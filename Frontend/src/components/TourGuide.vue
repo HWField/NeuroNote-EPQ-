@@ -48,16 +48,19 @@ function createTour() {
       cancelIcon: {
         enabled: true,
       },
+      modalOverlayOpeningRadius: 10,
+      modalOverlayOpeningPadding: 0,
+      
       buttons: [
         {
-          text: "Back",
+          text: "← Back",
           classes: "shepherd-button-secondary",
           action() {
             return this.back();
           },
         },
         {
-          text: "Next",
+          text: "Next →",
           classes: "shepherd-button-primary",
           action() {
             return this.next();
@@ -78,7 +81,17 @@ function createTour() {
   // Step 1: Welcome
   tour.value.addStep({
     title: "🎉 Welcome to NeuroNote!",
-    text: "Let's take a quick tour to get you started with your knowledge management system. This will only take a minute!",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">Let's take a quick tour to get you started with your knowledge management system.</p>
+    </div>
+    
+   
+    
+    <p style="margin: 16px 0 0 0; color: hsl(var(--muted-foreground)); font-size: 0.85em; text-align: center; font-style: italic;">
+      Estimated time about 2 minutes
+    </p>
+  `,
     buttons: [
       {
         text: "Skip Tour",
@@ -88,7 +101,7 @@ function createTour() {
         },
       },
       {
-        text: "Start Tour",
+        text: "Start Tour →",
         classes: "shepherd-button-primary",
         action() {
           return this.next();
@@ -100,7 +113,23 @@ function createTour() {
   // Step 2: Sidebar
   tour.value.addStep({
     title: "Navigation Sidebar",
-    text: "This is your main navigation sidebar. You can collapse it, add new views, and manage all your tabs from here.",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">This is your main navigation sidebar where you can manage all your tabs and navigate between different views.</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Collapse or expand the sidebar for more screen space</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Create new tabs and organize your workspace</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Switch between different types of content</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">💡 Quick tip:</strong> Use <kbd>Cmd/Ctrl + /</kbd> to quickly toggle the sidebar!
+      </p>
+    </div>
+  `,
     attachTo: {
       element: '[data-sidebar="sidebar"]',
       on: "right",
@@ -108,45 +137,6 @@ function createTour() {
     beforeShowPromise() {
       return new Promise((resolve) => {
         const isMobile = window.innerWidth < 768;
-
-        // if (isMobile) {
-        //   useUserStore().tourState = "sidebar";
-        //   const sidebarTrigger = document.querySelector(
-        //     '[data-tour="sidebar-trigger"]'
-        //   );
-
-        //   if (sidebarTrigger) {
-        //     console.log("Opening sidebar for mobile tour");
-        //     sidebarTrigger.click();
-
-        //     // Wait longer and check for the element repeatedly
-        //     let attempts = 0;
-        //     const maxAttempts = 100; // 1 second total
-
-        //     const checkForSidebar = () => {
-        //       const sidebar = document.querySelector(
-        //         '[data-sidebar="sidebar"]'
-        //       );
-        //       if (sidebar && sidebar.offsetWidth > 0) {
-        //         console.error("Sidebar is now visible");
-        //         resolve();
-        //       } else if (attempts < maxAttempts) {
-        //         attempts++;
-        //         setTimeout(checkForSidebar, 50);
-        //       } else {
-        //         console.error("Timeout waiting for sidebar, continuing anyway");
-        //         resolve();
-        //       }
-        //     };
-
-        //     checkForSidebar();
-        //   } else {
-        //     resolve();
-        //   }
-        // } else {
-        //   resolve();
-        // }
-
         userStore.tourState = "expanded";
         resolve();
       });
@@ -155,8 +145,23 @@ function createTour() {
 
   // Step 3: tab shortcuts
   tour.value.addStep({
-    title: "⚡ Tab Shortcuts",
-    text: "Here you can find some quick tab shortcuts you can also use <kbd>Cmd/Ctrl + J</kbd> to instantly search through all your notes and tags, or click here to open the search dialog.",
+    title: "Tab Shortcuts",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">Here you can find some quick tab shortcuts for easy navigation around your workspace.</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Click any shortcut to quickly open that section</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Use the search button to find specific notes and tags</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">⚡ Power user tip:</strong> Use <kbd>Cmd/Ctrl + J</kbd> to instantly search through all your notes and tags!
+      </p>
+    </div>
+  `,
     attachTo: {
       element: '[data-tour="sidebar-links"]',
       on: "right",
@@ -166,7 +171,23 @@ function createTour() {
   // Step 4: profile dropdown
   tour.value.addStep({
     title: "Profile",
-    text: "This dropdown gives you access to your profile, settings, other tab types and quick actions. You can also access this tour again from here.",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">This dropdown gives you access to your profile, settings, and other important features.</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Access your profile and account settings</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Give feedback and access Legal documents</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Find quick actions and help resources</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">🔄 Come back anytime:</strong> You can restart this tour from the help section in this menu!
+      </p>
+    </div>
+  `,
     attachTo: {
       element: '[data-tour="sidebar-profile"]',
       on: "auto",
@@ -204,7 +225,18 @@ function createTour() {
 
   tour.value.addStep({
     title: "Active Tab",
-    text: "This is where the magic happens! when you open a tab, it will show up here. showing you exactly what you are working on. Right now we're on the dashboard tab, lets take a look ->",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">This is where the magic happens! When you open a tab, it will show up here, showing you exactly what you are working on.</p>
+      <p style="margin: 8px 0; font-size: 0.9em;">Right now we're on the dashboard tab - let's explore what it offers!</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">💡 Navigation tip:</strong> You can switch between tabs using the sidebar
+      </p>
+    </div>
+  `,
     attachTo: {
       element: '[data-tour="tabContent"]',
       on: "left",
@@ -232,7 +264,10 @@ function createTour() {
 
   tour.value.addStep({
     title: "Recent Notes",
-    text: "This section shows your most recent notes. You can click on any of these to open them directly in a new tab.",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">This section shows your most recent notes. You can click on any of these to open them directly in a new tab.</p>
+    </div>`,
     attachTo: {
       element: '[data-tour="dashboardRecentNotes"]',
       on: "auto",
@@ -241,7 +276,23 @@ function createTour() {
 
   tour.value.addStep({
     title: "Shortcuts",
-    text: "Here you can configure some shortcut buttons for quick access to your most used notes and tags. You can add, remove, or rearrange them as you like. To start just click the pencil icon to edit your shortcuts.",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">Here you can configure some shortcut buttons for quick access to your most used notes and tags. You can add, remove, or rearrange them as you like.</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Click the pencil icon to edit your shortcuts</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Give them a fun, descriptive name</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Add your favorite notes and tags for instant access</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">⚡ Productivity boost:</strong> Create shortcuts for your most important content to save time!
+      </p>
+    </div>
+  `,
     attachTo: {
       element: '[data-tour="dashboardShortcuts"]',
       on: "auto",
@@ -250,7 +301,25 @@ function createTour() {
 
   tour.value.addStep({
     title: "Note Graph",
-    text: "This is where the magic happens! Your note graph visualizes connections between notes, tags, and ideas. As you create content, you'll see your knowledge network grow here. It might look empty now, but lets add some structure to it!",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">Ready to be amazed? Your note graph visualizes connections between notes, tags, and ideas. As you create content, you'll see your knowledge network grow here.</p>
+      <p style="margin: 8px 0; font-size: 0.9em;">It might look empty now, but let's add some structure to it!</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Watch connections form as you link notes and tags</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Use filters to find exactly what you need, and spotlight to highlight the details </p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Click on any element to open it directly</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> If you fancy a change of scenery just press shuffly and watch the engine create beautiful layouts</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">🧠 Knowledge mapping:</strong> This visual representation helps you find your notes and discover unexpected connections between your ideas!
+      </p>
+    </div>
+  `,
     attachTo: {
       element: '[data-tour="dashboardGraph"]',
       on: "auto",
@@ -258,8 +327,24 @@ function createTour() {
   });
 
   tour.value.addStep({
-    title: "Create a Tag",
-    text: "To make a tag, click the new button in the toolbar. This will open a dropdown in which you can select tag and give it a name. You can also use <kbd>T</kbd> to quickly create a new tag. The tour will automatically continue once you create a tag!",
+    title: "🏷️ Create Your First Tag",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">1.</strong> Click the <kbd>+ New</kbd> button in the toolbar above the graph</p>
+      <p style="margin: 8px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">2.</strong> Select <kbd>Tag</kbd> from the dropdown menu</p>
+      <p style="margin: 8px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">3.</strong> Give your tag a name (e.g. "My First Tag")</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">💡 Quick tip:</strong> You can also press <kbd>T</kbd> as a shortcut!
+      </p>
+    </div>
+    
+    <p style="margin: 16px 0 0 0; color: hsl(var(--muted-foreground)); font-size: 0.85em; text-align: center; font-style: italic;">
+      The tour will automatically continue once you create your tag
+    </p>
+  `,
     attachTo: {
       element: '[data-tour="dashboardGraph"]',
       on: "right",
@@ -284,7 +369,7 @@ function createTour() {
               if (tour.value && tour.value.getCurrentStep()) {
                 tour.value.next();
               }
-            }, 1500);
+            }, 300);
           }
         }, 500); // Check every 500ms
 
@@ -301,14 +386,14 @@ function createTour() {
     },
     buttons: [
       {
-        text: "Back",
+        text: "← Back",
         classes: "shepherd-button-secondary",
         action() {
           return this.back();
         },
       },
       {
-        text: "Skip / Tag Created!",
+        text: "Skip this step →",
         classes: "shepherd-button-primary",
         action() {
           return this.next();
@@ -317,10 +402,28 @@ function createTour() {
     ],
   });
 
-
   tour.value.addStep({
-    title: "Great Job!",
-    text: "You've created your first tag! Now you can start connecting it to notes and other tags. This will help you build a rich knowledge graph over time, with the tag selected we can now create a note and they will magically be connected!, to make a note, click the new button in the toolbar and select Document for now, alternatively you can use <kbd>N</kbd> to quickly create a new note.",
+    title: "📝 Create Your First Note",
+    text: `
+       <div style="margin-bottom: 20px;">
+   <p>  You've created your first tag! Now you can start connecting it to notes and other tags. This will help you build a rich knowledge graph over time lets make a note </p>
+     </div>
+   <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">1.</strong> Click the <kbd>+ New</kbd> button again</p>
+      <p style="margin: 8px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">2.</strong> Select  <kbd>Document</kbd> from the dropdown</p>
+      <p style="margin: 8px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">3.</strong> Give your note a name</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">🔗 Magic moment:</strong> Since you have a tag selected, the note will automatically connect to it!
+      </p>
+    </div>
+    
+    <p style="margin: 16px 0 0 0; color: hsl(var(--muted-foreground)); font-size: 0.85em; text-align: center; font-style: italic;">
+      The tour continues automatically when you create the note
+    </p>
+  `,
     attachTo: {
       element: '[data-tour="dashboardGraph"]',
       on: "right",
@@ -345,7 +448,7 @@ function createTour() {
               if (tour.value && tour.value.getCurrentStep()) {
                 tour.value.next();
               }
-            }, 1500);
+            }, 300);
           }
         }, 500); // Check every 500ms
 
@@ -362,14 +465,14 @@ function createTour() {
     },
     buttons: [
       {
-        text: "Back",
+        text: "← Back",
         classes: "shepherd-button-secondary",
         action() {
           return this.back();
         },
       },
       {
-        text: "Skip / Note Created!",
+        text: "Skip this step →",
         classes: "shepherd-button-primary",
         action() {
           return this.next();
@@ -380,75 +483,105 @@ function createTour() {
 
   tour.value.addStep({
     title: "Great Job!",
-    text: "With a note created you can see how it connects to the graph - if you want to make more connections later you can drag the red dot from a note to a tag or select from the dropdown in the note editor, deleting a connection is just as easy - simply hold down on the connecting line and drag to delete. Lets take a look at the note you just created! simply click on it in the graph to open it in a new tab.",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">With a note created you can see how it connects to the graph - if you want to make more connections later you can drag the red dot from a note to a tag or select from the dropdown in the note editor.</p>
+      <p style="margin: 8px 0; font-size: 0.9em;">Deleting a connection is just as easy - simply hold down on the connecting line and drag to delete.</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">1.</strong> Click on your note in the graph to open it in a new tab</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">💡 Pro tip:</strong> You can also click & hold on any element for additional options!
+      </p>
+    </div>
+    
+    <p style="margin: 16px 0 0 0; color: hsl(var(--muted-foreground)); font-size: 0.85em; text-align: center; font-style: italic;">
+      The tour continues automatically when you open the note
+    </p>
+  `,
     attachTo: {
       element: '[data-tour="dashboardGraph"]',
       on: "auto",
     },
     when: {
-    show() {
-      // Record current active tab ID when step shows
-      const initialTabId = tabStore.activeTab;
-      console.error(`Initial active tab ID: ${initialTabId}`);
-      
-      // Set up interval to check for tab changes
-      const checkInterval = setInterval(() => {
-        const currentTabId = tabStore.activeTab;
-        if (currentTabId !== initialTabId) {
-          console.log(`Active tab changed from ${initialTabId} to ${currentTabId}. Auto-progressing...`);
-          clearInterval(checkInterval);
-          
-          // Auto-progress after short delay to show the new tab
-          setTimeout(() => {
-            if (tour.value && tour.value.getCurrentStep()) {
-              tour.value.next();
-            }
-          }, 1000);
+      show() {
+        // Record current active tab ID when step shows
+        const initialTabId = tabStore.activeTab;
+        console.error(`Initial active tab ID: ${initialTabId}`);
+
+        // Set up interval to check for tab changes
+        const checkInterval = setInterval(() => {
+          const currentTabId = tabStore.activeTab;
+          if (currentTabId !== initialTabId) {
+            console.log(
+              `Active tab changed from ${initialTabId} to ${currentTabId}. Auto-progressing...`
+            );
+            clearInterval(checkInterval);
+
+            // Auto-progress after short delay to show the new tab
+            setTimeout(() => {
+              if (tour.value && tour.value.getCurrentStep()) {
+                tour.value.next();
+              }
+            }, 100);
+          }
+        }, 100); // Check every 500ms
+
+        // Store interval ID on the step for cleanup
+        this.tabCheckInterval = checkInterval;
+      },
+      hide() {
+        // Clean up interval when step is hidden
+        if (this.tabCheckInterval) {
+          clearInterval(this.tabCheckInterval);
+          this.tabCheckInterval = null;
         }
-      }, 500); // Check every 500ms
-      
-      // Store interval ID on the step for cleanup
-      this.tabCheckInterval = checkInterval;
-    },
-    hide() {
-      // Clean up interval when step is hidden
-      if (this.tabCheckInterval) {
-        clearInterval(this.tabCheckInterval);
-        this.tabCheckInterval = null;
-      }
-    }
-  },
-  buttons: [
-    {
-      text: "Back",
-      classes: "shepherd-button-secondary",
-      action() {
-        return this.back();
       },
     },
-    {
-      text: "Skip / Note Opened!",
-      classes: "shepherd-button-primary",
-      action() {
-        return this.next();
+    buttons: [
+      {
+        text: "← Back",
+        classes: "shepherd-button-secondary",
+        action() {
+          return this.back();
+        },
       },
-    },
-  ],
+      {
+        text: "Skip this step →",
+        classes: "shepherd-button-primary",
+        action() {
+          return this.next();
+        },
+      },
+    ],
   });
 
   tour.value.addStep({
     title: "Document Editor",
-    text: "Welcome to the Document Editor! This is where you can write and format your notes. You can use Markdown for formatting, and all your changes will be saved automatically. Lets explore the editor a bit!",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">Welcome to the Document Editor! This is where you can write and format your notes using rich text formatting.</p>
+      <p style="margin: 8px 0; font-size: 0.9em;">Let's explore what makes this editor so powerful!</p>
+    </div>`,
+
     attachTo: {
-      element: '',
+      element: "",
       on: "auto",
     },
   });
 
-
   tour.value.addStep({
     title: "Toolbar",
-    text: "The toolbar provides quick access to formatting options and note history",
+    text: 
+
+    `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">The toolbar provides quick access to formatting options and note history</p>
+    </div>`,
     attachTo: {
       element: '[data-tour="tiptapToolbar"]',
       on: "auto",
@@ -457,7 +590,23 @@ function createTour() {
 
   tour.value.addStep({
     title: "Main Content Area",
-    text: "This is your main content area. Here you can see the note you just created. You can get typing write away,  use  <kbd>-</kbd>tabs,  <kbd>1. </kbd> numbered lists and many other common markdown shortcuts or even use the  <kbd>/</kbd> command whilst typing to select from a wide range of options.",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">This is your main content area where you can write and format your note. You can start typing right away and use many helpful shortcuts:</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Use <kbd>-</kbd> for bullet points</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Use <kbd>1.</kbd> for numbered lists</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Use <kbd>#</kbd> to add headings</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">💡 Pro tip:</strong> Type <kbd>/</kbd> while writing to see a menu of formatting options and special blocks!
+      </p>
+    </div>
+  `,
     attachTo: {
       element: '[data-tour="tiptapContent"]',
       on: "auto",
@@ -465,186 +614,280 @@ function createTour() {
   });
 
   tour.value.addStep({
-    title: "Party Trick",
-    text: "Earlier on you may have noticed the option to create a whiteboard rather than a docuement. Whilst docuemts are great for formatting beautiful typed notes, whiteboard excel at letting your creativity flourish and are perfect for brainstorming, mind mapping and sketching out ideas. whilst you can't draw in an editor you can easily attach a whiteboard preview, making it easy to integrate the two. To get started type the <kbd>/</kbd> command and start typing whiteboard, once it appears simply click the option.",
+    title: "Content Linking",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">Earlier you may have noticed the option to create a whiteboard rather than a document. While documents are great for formatting beautiful typed notes, whiteboards excel at letting your creativity flourish!</p>
+      <p style="margin: 8px 0; font-size: 0.9em;">They're perfect for brainstorming, mind mapping, and sketching out ideas. You can easily integrate both by attaching whiteboard previews to your notes.</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">1.</strong> Type the <kbd>/</kbd> command in the editor</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">2.</strong> Start typing "whiteboard"</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">3.</strong> Click the whiteboard option when it appears</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">✨ Magic trick:</strong> This seamlessly blends visual and text-based thinking in one note!
+      </p>
+    </div>
+    
+    <p style="margin: 16px 0 0 0; color: hsl(var(--muted-foreground)); font-size: 0.85em; text-align: center; font-style: italic;">
+      The tour continues automatically when the whiteboard popup opens
+    </p>
+  `,
     attachTo: {
       element: '[data-tour="tiptapContent"]',
       on: "auto",
     },
     when: {
-    show() {
-      // Set up interval to check for whiteboard select popup
-      const checkInterval = setInterval(() => {
-        const whiteboardSelect = document.querySelector('[role="dialog"]');
-        if (whiteboardSelect) {
-          console.log('Whiteboard select popup appeared. Auto-progressing...');
-          clearInterval(checkInterval);
-          
-          // Auto-progress after short delay to show the popup
-          setTimeout(() => {
-            if (tour.value && tour.value.getCurrentStep()) {
-              tour.value.next();
-            }
-          }, 1000);
-        }
-      }, 500); // Check every 500ms
-      
-      // Store interval ID on the step for cleanup
-      this.whiteboardCheckInterval = checkInterval;
-    },
-    hide() {
-      // Clean up interval when step is hidden
-      if (this.whiteboardCheckInterval) {
-        clearInterval(this.whiteboardCheckInterval);
-        this.whiteboardCheckInterval = null;
-      }
-    }
-  },
-  buttons: [
-    {
-      text: "Back",
-      classes: "shepherd-button-secondary",
-      action() {
-        return this.back();
-      },
-    },
-    {
-      text: "Skip / Popup Opened!",
-      classes: "shepherd-button-primary",
-      action() {
-        return this.next();
-      },
-    },
-  ],
-  });
+      show() {
+        // Set up interval to check for whiteboard select popup
+        const checkInterval = setInterval(() => {
+          const whiteboardSelect = document.querySelector('[role="dialog"]');
+          if (whiteboardSelect) {
+            console.log(
+              "Whiteboard select popup appeared. Auto-progressing..."
+            );
+            clearInterval(checkInterval);
 
+            // Auto-progress after short delay to show the popup
+            setTimeout(() => {
+              if (tour.value && tour.value.getCurrentStep()) {
+                tour.value.next();
+              }
+            }, 300);
+          }
+        }, 500); // Check every 500ms
+
+        // Store interval ID on the step for cleanup
+        this.whiteboardCheckInterval = checkInterval;
+      },
+      hide() {
+        // Clean up interval when step is hidden
+        if (this.whiteboardCheckInterval) {
+          clearInterval(this.whiteboardCheckInterval);
+          this.whiteboardCheckInterval = null;
+        }
+      },
+    },
+    buttons: [
+      {
+        text: "← Back",
+        classes: "shepherd-button-secondary",
+        action() {
+          return this.back();
+        },
+      },
+      {
+        text: "Skip this step →",
+        classes: "shepherd-button-primary",
+        action() {
+          return this.next();
+        },
+      },
+    ],
+  });
 
   tour.value.addStep({
     title: "Select whiteboard",
-    text: "In this popup you can select an existing whiteboard or create a new one. As we haven't made one yet, lets create a new one. Simply type a name and click the create button and a new whiteboard will be created and attached to this note - dont worry this will automatically be added to your knowledge graph as well.",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">In this popup you can select an existing whiteboard or create a new one. As we haven't made one yet, let's create a new one.</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">1.</strong> Type a name for your whiteboard</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">2.</strong> Click the "Create" button</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">🔗 Auto-magic:</strong> The new whiteboard will automatically be added to your knowledge graph!
+      </p>
+    </div>
+    
+    <p style="margin: 16px 0 0 0; color: hsl(var(--muted-foreground)); font-size: 0.85em; text-align: center; font-style: italic;">
+      The tour continues automatically when the whiteboard is created
+    </p>
+  `,
     attachTo: {
       element: '[role="dialog"]',
       on: "auto",
     },
     when: {
-    show() {
-      // Set up interval to check for when whiteboard select popup disappears
-      const checkInterval = setInterval(() => {
-        const whiteboardSelect = document.querySelector('[role="dialog"]');
-        if (!whiteboardSelect) {
-          console.log('Whiteboard select popup disappeared. Auto-progressing...');
-          clearInterval(checkInterval);
-          
-          // Auto-progress after short delay
-          setTimeout(() => {
-            if (tour.value && tour.value.getCurrentStep()) {
-              tour.value.next();
-            }
-          }, 500);
+      show() {
+        // Set up interval to check for when whiteboard select popup disappears
+        const checkInterval = setInterval(() => {
+          const whiteboardSelect = document.querySelector('[role="dialog"]');
+          if (!whiteboardSelect) {
+            console.log(
+              "Whiteboard select popup disappeared. Auto-progressing..."
+            );
+            clearInterval(checkInterval);
+
+            // Auto-progress after short delay
+            setTimeout(() => {
+              if (tour.value && tour.value.getCurrentStep()) {
+                tour.value.next();
+              }
+            }, 300);
+          }
+        }, 500); // Check every 500ms
+
+        // Store interval ID on the step for cleanup
+        this.whiteboardCheckInterval = checkInterval;
+      },
+      hide() {
+        // Clean up interval when step is hidden
+        if (this.whiteboardCheckInterval) {
+          clearInterval(this.whiteboardCheckInterval);
+          this.whiteboardCheckInterval = null;
         }
-      }, 500); // Check every 500ms
-      
-      // Store interval ID on the step for cleanup
-      this.whiteboardCheckInterval = checkInterval;
+      },
     },
-    hide() {
-      // Clean up interval when step is hidden
-      if (this.whiteboardCheckInterval) {
-        clearInterval(this.whiteboardCheckInterval);
-        this.whiteboardCheckInterval = null;
-      }
-    }
-  },
     buttons: [
-    {
-      text: "Back",
-      classes: "shepherd-button-secondary",
-      action() {
-        return this.back();
+      {
+        text: "← Back",
+        classes: "shepherd-button-secondary",
+        action() {
+          return this.back();
+        },
       },
-    },
-    {
-      text: "Skip / Whiteboard Created!",
-      classes: "shepherd-button-primary",
-      action() {
-        return this.next();
+      {
+        text: "Skip this step →",
+        classes: "shepherd-button-primary",
+        action() {
+          return this.next();
+        },
       },
-    },
-  ],
+    ],
   });
 
   tour.value.addStep({
     title: "Whiteboard Preview",
-    text: "Great! You now have a whiteboard attached to your note.You may however notice it is looking a little blank! to solve this lets click on the edit button in the top right to open it in a new tab and start sketching out your ideas. This is a powerful way to visualize your thoughts and connect them to your notes.",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">Great! You now have a whiteboard attached to your note. You may notice it's looking a little blank - let's fix that!</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">1.</strong> Click the edit button in the top right to open it in a new tab and start sketching out your ideas</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">🎨 Visual thinking:</strong> This is a powerful way to visualize your thoughts and connect them to your notes!
+      </p>
+    </div>
+    
+    <p style="margin: 16px 0 0 0; color: hsl(var(--muted-foreground)); font-size: 0.85em; text-align: center; font-style: italic;">
+      The tour continues automatically when you open the whiteboard editor
+    </p>
+  `,
     attachTo: {
-      element: '.whiteboard-embed',
+      element: ".whiteboard-embed",
       on: "auto",
     },
     when: {
-    show() {
-      // Record current active tab ID when step shows
-      const initialTabId = tabStore.activeTab;
-      console.log(`Initial active tab ID: ${initialTabId}`);
-      
-      // Set up interval to check for tab changes (when edit button is clicked)
-      const checkInterval = setInterval(() => {
-        const currentTabId = tabStore.activeTab;
-        if (currentTabId !== initialTabId) {
-          console.log(`Active tab changed from ${initialTabId} to ${currentTabId}. Auto-progressing...`);
-          clearInterval(checkInterval);
-          
-          // Auto-progress after short delay to show the new tab
-          setTimeout(() => {
-            if (tour.value && tour.value.getCurrentStep()) {
-              tour.value.next();
-            }
-          }, 200);
+      show() {
+        // Record current active tab ID when step shows
+        const initialTabId = tabStore.activeTab;
+        console.log(`Initial active tab ID: ${initialTabId}`);
+
+        // Set up interval to check for tab changes (when edit button is clicked)
+        const checkInterval = setInterval(() => {
+          const currentTabId = tabStore.activeTab;
+          if (currentTabId !== initialTabId) {
+            console.log(
+              `Active tab changed from ${initialTabId} to ${currentTabId}. Auto-progressing...`
+            );
+            clearInterval(checkInterval);
+
+            // Auto-progress after short delay to show the new tab
+            setTimeout(() => {
+              if (tour.value && tour.value.getCurrentStep()) {
+                tour.value.next();
+              }
+            }, 100);
+          }
+        }, 100); // Check every 500ms
+
+        // Store interval ID on the step for cleanup
+        this.tabCheckInterval = checkInterval;
+      },
+      hide() {
+        // Clean up interval when step is hidden
+        if (this.tabCheckInterval) {
+          clearInterval(this.tabCheckInterval);
+          this.tabCheckInterval = null;
         }
-      }, 500); // Check every 500ms
-      
-      // Store interval ID on the step for cleanup
-      this.tabCheckInterval = checkInterval;
-    },
-    hide() {
-      // Clean up interval when step is hidden
-      if (this.tabCheckInterval) {
-        clearInterval(this.tabCheckInterval);
-        this.tabCheckInterval = null;
-      }
-    }
-  },
-  buttons: [
-    {
-      text: "Back",
-      classes: "shepherd-button-secondary",
-      action() {
-        return this.back();
       },
     },
-    {
-      text: "Skip / Whiteboard Opened!",
-      classes: "shepherd-button-primary",
-      action() {
-        return this.next();
+    buttons: [
+      {
+        text: "← Back",
+        classes: "shepherd-button-secondary",
+        action() {
+          return this.back();
+        },
       },
-    },
-  ],
+      {
+        text: "Skip this step →",
+        classes: "shepherd-button-primary",
+        action() {
+          return this.next();
+        },
+      },
+    ],
   });
 
   tour.value.addStep({
     title: "Whiteboard Editor",
-    text: "Welcome to the Whiteboard Editor! This is where you can draw, sketch, and brainstorm your ideas. You can use various tools to create shapes, draw freehand, and even add images. All your changes will be saved automatically. Lets explore the editor a bit!",
-    attachTo: {
-      element: '',
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">Welcome to the Whiteboard Editor! This is where you can draw, sketch, and brainstorm your ideas.</p>
+      <p style="margin: 8px 0; font-size: 0.9em;">Let's explore what makes this editor so powerful!</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Use various tools to create shapes and draw freehand</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Add images and text to enhance your sketches</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> All your changes are saved automatically</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">🎨 Creative freedom:</strong> Perfect for visual thinking, mind maps, and bringing your ideas to life!
+      </p>
+    </div>
+  `, attachTo: {
+      element: "",
       on: "auto",
     },
   });
 
-
   tour.value.addStep({
     title: "Toolbar",
-    text: "The toolbar provides quick access to input modes (auto to switch based on if a stylus/finger is used or a mouse, draw or select), pen controls, other tools and note history",
-    attachTo: {
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">The toolbar provides quick access to drawing tools and whiteboard controls.</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Switch between auto, draw, and select input modes</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Adjust pen controls like color and thickness</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Access shapes, text, images, and other drawing tools</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> View whiteboard history and undo changes</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">🖱️ Smart switching:</strong> Auto mode detects whether you're using a stylus or mouse and switches tools accordingly!
+      </p>
+    </div>
+  `,attachTo: {
       element: '[data-tour="whiteboardToolbar"]',
       on: "auto",
     },
@@ -653,61 +896,74 @@ function createTour() {
 
   tour.value.addStep({
     title: "Main Content Area",
-    text: "This is your main content area. Here you can see the whiteboard you just created. You can get drawing right away, use the pen tool to draw freehand, or select shapes and images from the toolbar.",
-    attachTo: {
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">This is your main content area where you can see the whiteboard you just created. You can start creating right away!</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Use the pen tool to draw freehand</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Select shapes and images from the toolbar</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Drag and resize elements to organize your ideas</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">🖊️ Start creating:</strong> Your whiteboard is ready - let your creativity flow!
+      </p>
+    </div>
+  `,attachTo: {
       element: '[data-tour="whiteboardCanvas"]',
       on: "auto",
     },
     scrollTo: false,
-    buttons: [
-    {
-      text: "Back",
-      classes: "shepherd-button-secondary",
-      action() {
-        return this.back();
-      },
-    },
-    {
-      text: "Back to the Dashboard",
-      classes: "shepherd-button-primary",
-      action() {
-        // Switch back to the dashboard tab
-        tabStore.setActiveTab(1); // Assuming 1 is the dashboard tab ID
-        setTimeout(() => {
-          return this.next();
-        }, 500);
-        // return this.next();
-      },
-    },
-  ],
   });
 
   tour.value.addStep({
-    title: "Wrapping up",
-    text: "That's it for the tour! You've learned the basics of NeuroNote, including how to create notes, tags, and whiteboards. You can always access this tour again from your profile menu if you need a refresher. We hope you enjoy using NeuroNote to manage your knowledge and ideas!, if you ever need help, you can find more resources in the help section of your profile menu and if you have any feedback or suggestions, please fill out the feedback form in the profile dropdown",
+    title: "🎉 Congratulations!",
+    text: `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">That's it for the tour! You've learned the basics of NeuroNote, including how to create notes, tags, and whiteboards.</p>
+      <p style="margin: 8px 0; font-size: 0.9em;">You now have all the tools you need to build your personal knowledge management system!</p>
+    </div>
+    
+    <div style="margin: 16px 0;">
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Access this tour again from your profile menu</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Find help resources in the profile dropdown</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Share feedback through the feedback form</p>
+    </div>
+    
+    <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
+      <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
+        <strong style="color: hsl(var(--accent-foreground));">🚀 Ready to start:</strong> Begin building your knowledge network and let your ideas flourish!
+      </p>
+    </div>
+    
+    <p style="margin: 16px 0 0 0; color: hsl(var(--muted-foreground)); font-size: 0.85em; text-align: center; font-style: italic;">
+      Happy note-taking! 📝
+    </p>
+  `,
     attachTo: {
-      element: '',
+      element: "",
       on: "auto",
     },
     buttons: [
-    {
-      text: "Back",
-      classes: "shepherd-button-secondary",
-      action() {
-        return this.back();
+      {
+        text: "← Back",
+        classes: "shepherd-button-secondary",
+        action() {
+          return this.back();
+        },
       },
-    },
-    {
-      text: "Finish Tour",
-      classes: "shepherd-button-primary",
-      action() {
-        return this.complete();
+      {
+        text: "Finish Tour",
+        classes: "shepherd-button-primary",
+        action() {
+          return this.complete();
+        },
       },
-    },
-  ],
+    ],
   });
-
-  
 
   // Tour event handlers
   tour.value.on("complete", () => {
@@ -735,16 +991,15 @@ function startTour() {
 }
 
 function checkAndStartTourForNewUser() {
-
-
   if (graphStore.elements.length === 0) {
-    console.error("New user detected, starting tour...", graphStore.elements.length);
+    console.error(
+      "New user detected, starting tour...",
+      graphStore.elements.length
+    );
     setTimeout(() => {
       startTour();
     }, 1500); // Give UI time to load
   }
-
-
 }
 
 // Watch for trigger prop changes
