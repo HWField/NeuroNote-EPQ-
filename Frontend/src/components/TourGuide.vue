@@ -270,7 +270,7 @@ function createTour() {
     </div>`,
     attachTo: {
       element: '[data-tour="dashboardRecentNotes"]',
-      on: "auto",
+      on: "left",
     },
   });
 
@@ -295,7 +295,7 @@ function createTour() {
   `,
     attachTo: {
       element: '[data-tour="dashboardShortcuts"]',
-      on: "auto",
+      on: "left",
     },
   });
 
@@ -592,7 +592,7 @@ function createTour() {
     title: "Main Content Area",
     text: `
     <div style="margin-bottom: 20px;">
-      <p style="margin: 8px 0; font-size: 0.9em;">This is your main content area where you can write and format your note. You can start typing right away and use many helpful shortcuts:</p>
+      <p style="margin: 8px 0; font-size: 0.9em;">This is your main content area where you can write and format your note. You can start typing right away and use many helpful shortcuts including:</p>
     </div>
     
     <div style="margin: 16px 0;">
@@ -600,6 +600,11 @@ function createTour() {
       <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Use <kbd>1.</kbd> for numbered lists</p>
       <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Use <kbd>#</kbd> to add headings</p>
     </div>
+
+      <div style="margin-bottom: 20px;">
+      <p style="margin: 8px 0; font-size: 0.9em;">and so many more</p>
+    </div>
+    
     
     <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">
       <p style="margin: 0; font-size: 0.85em; color: hsl(var(--foreground) / 0.9);">
@@ -609,7 +614,7 @@ function createTour() {
   `,
     attachTo: {
       element: '[data-tour="tiptapContent"]',
-      on: "auto",
+      on: "right-end",
     },
   });
 
@@ -639,7 +644,7 @@ function createTour() {
   `,
     attachTo: {
       element: '[data-tour="tiptapContent"]',
-      on: "auto",
+      on: "right-start",
     },
     when: {
       show() {
