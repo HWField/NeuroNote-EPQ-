@@ -636,7 +636,7 @@ import {
   Clock,
 } from "lucide-vue-next";
 import { useToast } from "@/components/ui/toast/use-toast";
-
+import rough from 'roughjs/bundled/rough.esm';
 const props = defineProps({
   noteId: Number || 0,
   tabId: Number || 0,
@@ -1542,12 +1542,22 @@ watch(colour, (newColor) => {
 
     if (obj.type === "path") {
       obj.set("stroke", newColor);
+    } else if (obj.rough) {
+      // Handle rough shapes - update properties and clear cache
+      if (obj.type === "rect" || obj.type === "circle") {
+        obj.set("stroke", newColor);
+        obj.set("fill", newColor);
+        // Clear the cached rough shape to force regeneration
+        obj._roughShape = null;
+      }
     } else {
       obj.set("fill", newColor);
     }
     canvas.renderAll();
   });
 });
+
+// Update the pen width watcher to handle rough shapes
 watch(penWidth, (newWidth) => {
   canvas.freeDrawingBrush.width = newWidth;
   const activeObjects = canvas.getActiveObjects();
@@ -1556,6 +1566,11 @@ watch(penWidth, (newWidth) => {
 
     if (obj.type === "path") {
       obj.set("strokeWidth", newWidth);
+    } else if (obj.rough) {
+      // Handle rough shapes - update properties and clear cache
+      obj.set("strokeWidth", newWidth);
+      // Clear the cached rough shape to force regeneration
+      obj._roughShape = null;
     }
     canvas.renderAll();
   });
@@ -1595,36 +1610,40 @@ function centerWhiteboard() {
   canvas.requestRenderAll();
 }
 function addShape(shapeType) {
-  // Calculate the center of the current viewport in canvas coordinates
   const vpt = canvas.viewportTransform;
   const zoom = canvas.getZoom();
-
-  // Get the visible area dimensions
   const visibleWidth = modalContent.offsetWidth;
   const visibleHeight = modalContent.offsetHeight;
-
-  // Calculate the center position in canvas coordinates
   const centerX = -vpt[4] / zoom + visibleWidth / (2 * zoom);
   const centerY = -vpt[5] / zoom + visibleHeight / (2 * zoom);
+  
   let shape;
-  if (shapeType === "rectangle") {
-    shape = new fabric.Rect({
-      left: centerX - 50, // Center by offsetting half width
-      top: centerY - 30, // Center by offsetting half height
-      width: 100,
-      height: 60,
-      fill: colour.value,
-      objectCaching: false,
-    });
-  } else if (shapeType === "circle") {
-    shape = new fabric.Circle({
+  
+  if (shapeType === 'rectangle') {
+    shape = createRoughShape('rectangle', {
       left: centerX - 50,
       top: centerY - 30,
-      radius: 50,
-      fill: colour.value,
-      objectCaching: false, // prevent cachnig to improve sharpnes on zoom
+      width: 100,
+      height: 60,
+      stroke: colour.value,
+      strokeWidth: penWidth.value,
+      // fill: colour.value,
+      roughness: roughness.value,
+      fillStyle: fillStyle.value,
     });
-  } else if (shapeType === "triangle") {
+  } else if (shapeType === 'circle') {
+    shape = createRoughShape('circle', {
+      left: centerX - 50,
+      top: centerY - 50,
+      radius: 50,
+      stroke: colour.value,
+      strokeWidth: penWidth.value,
+      fill: colour.value,
+      roughness: roughness.value,
+      fillStyle: fillStyle.value,
+    });
+  } else if (shapeType === 'triangle') {
+    // For triangle, you might want to use regular Fabric or create a custom rough triangle
     shape = new fabric.Triangle({
       left: centerX - 50,
       top: centerY - 30,
@@ -1634,10 +1653,150 @@ function addShape(shapeType) {
       objectCaching: false,
     });
   }
+  
   if (shape) {
     canvas.add(shape);
+    canvas.setActiveObject(shape);
+    canvas.renderAll();
   }
 }
+
+function createRoughShape(shapeType, options = {}) {
+  let shape;
+  
+  if (shapeType === 'rectangle') {
+    shape = new fabric.Rect({
+      left: options.left || 100,
+      top: options.top || 100,
+      width: options.width || 100,
+      height: options.height || 60,
+      stroke: options.stroke || colour.value,
+      strokeWidth: options.strokeWidth || penWidth.value,
+      fill: options.fill || colour.value,
+      objectCaching: false,
+      // fillStyle: options.fillStyle || fillStyle.value,
+      rough: true,
+      roughness: options.roughness || roughness.value,
+      bowing: options.bowing || 1,
+      fillStyle: options.fillStyle || fillStyle.value,
+    });
+    
+    const originalRender = shape._render;
+    shape._render = function(ctx) {
+      if (!this.rough) {
+        originalRender.call(this, ctx);
+        return;
+      }
+      
+      const rc = rough.canvas(ctx.canvas);
+      
+      // Always check if we need to regenerate the shape
+      // This happens when properties change or cache is cleared
+      if (!this._roughShape || this._needsRegeneration) {
+        this._roughShape = rc.rectangle(
+          -this.width / 2,
+          -this.height / 2,
+          this.width,
+          this.height,
+          {
+            stroke: this.stroke,
+            strokeWidth: this.strokeWidth,
+            fill: this.fill,
+            roughness: this.roughness || 1,
+            bowing: this.bowing || 1,
+            fillStyle: this.fillStyle || 'solid',
+          }
+        );
+        this._needsRegeneration = false;
+      }
+      
+      rc.draw(this._roughShape);
+    };
+    
+    // Override the set method to detect property changes
+    const originalSet = shape.set;
+    shape.set = function(key, value) {
+      const result = originalSet.call(this, key, value);
+      
+      // Check if any property that affects rough rendering has changed
+      if (typeof key === 'object') {
+        const roughProps = ['stroke', 'strokeWidth', 'fill', 'roughness', 'bowing', 'fillStyle', 'width', 'height'];
+        const hasRoughPropChange = roughProps.some(prop => key.hasOwnProperty(prop));
+        if (hasRoughPropChange) {
+          this._needsRegeneration = true;
+        }
+      } else if (['stroke', 'strokeWidth', 'fill', 'roughness', 'bowing', 'fillStyle', 'width', 'height'].includes(key)) {
+        this._needsRegeneration = true;
+      }
+      
+      return result;
+    };
+    
+  } else if (shapeType === 'circle') {
+    shape = new fabric.Circle({
+      left: options.left || 100,
+      top: options.top || 100,
+      radius: options.radius || 50,
+      stroke: options.stroke || colour.value,
+      strokeWidth: options.strokeWidth || penWidth.value,
+      fill: options.fill || colour.value,
+      objectCaching: false,
+      rough: true,
+      roughness: options.roughness || roughness.value,
+      bowing: options.bowing || 1,
+      fillStyle: options.fillStyle || fillStyle.value,
+    });
+    
+    const originalRender = shape._render;
+    shape._render = function(ctx) {
+      if (!this.rough) {
+        originalRender.call(this, ctx);
+        return;
+      }
+      
+      const rc = rough.canvas(ctx.canvas);
+      
+      if (!this._roughShape || this._needsRegeneration) {
+        this._roughShape = rc.circle(0, 0, this.radius * 2, {
+          stroke: this.stroke,
+          strokeWidth: this.strokeWidth,
+          fill: this.fill,
+          roughness: this.roughness || 1,
+          bowing: this.bowing || 1,
+          fillStyle: this.fillStyle || 'solid',
+        });
+        this._needsRegeneration = false;
+      }
+      
+      rc.draw(this._roughShape);
+    };
+    
+    // Override the set method for circles too
+    const originalSet = shape.set;
+    shape.set = function(key, value) {
+      const result = originalSet.call(this, key, value);
+      
+      if (typeof key === 'object') {
+        const roughProps = ['stroke', 'strokeWidth', 'fill', 'roughness', 'bowing', 'fillStyle', 'radius'];
+        const hasRoughPropChange = roughProps.some(prop => key.hasOwnProperty(prop));
+        if (hasRoughPropChange) {
+          this._needsRegeneration = true;
+        }
+      } else if (['stroke', 'strokeWidth', 'fill', 'roughness', 'bowing', 'fillStyle', 'radius'].includes(key)) {
+        this._needsRegeneration = true;
+      }
+      
+      return result;
+    };
+  }
+  
+  return shape;
+}
+
+// Add roughness controls
+const roughness = ref(1);
+const fillStyle = ref('hachure');
+
 
 function addText() {
   const textbox = new fabric.Textbox("Type here...", {

@@ -44,7 +44,7 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 
 app.config['SECRET_KEY'] = 'Sjd($&^(£^$(*Whfoshfjnk)))'  # Change this to a secret key of your choice
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://Henry:Naseby2411@localhost:5432/BackendDb'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://henry:Naseby2411@localhost:5432/BackendDb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # To disable modification tracking
 
 # Add after other app configurations
