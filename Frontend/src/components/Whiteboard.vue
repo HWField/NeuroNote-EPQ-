@@ -1243,7 +1243,7 @@ function initaliseCanvas() {
       hammer.on("pinchend", function () {
         lastScale = 1; // Reset scale tracking after the pinch gesture ends
         //restore canvas interaction
-        if (mode == "draw") {
+        if (mode.value == "draw") {
           canvas.isDrawingMode = true;
         }
         canvas.selection = true;
@@ -1305,7 +1305,7 @@ function initaliseCanvas() {
         lastDeltaX = 0;
         lastDeltaY = 0;
         //restore canvas interaction
-        if (mode == "draw") {
+        if (mode.value == "draw") {
           canvas.isDrawingMode = true;
         }
         canvas.selection = true;
