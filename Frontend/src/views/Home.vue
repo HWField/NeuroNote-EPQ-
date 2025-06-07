@@ -577,7 +577,7 @@ const recentNotes = computed(() => {
   <SidebarProvider>
     <Sidebar data-tour="sidebar"  collapsible="icon" variant="floating" side="left">
       <SidebarHeader>
-        <SidebarMenu>
+        <!-- <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger disabled as-child>
@@ -634,7 +634,30 @@ const recentNotes = computed(() => {
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
-        </SidebarMenu>
+        </SidebarMenu> -->
+        <SidebarMenu>
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        size="lg"
+        class="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+        
+      >
+        <div
+          class="flex aspect-square size-8 items-center justify-center"
+        >
+          <img 
+            src="/Logo.png" 
+            alt="Neuronote Logo" 
+            class="size-8 object-contain"
+          />
+        </div>
+        <div class="grid flex-1 text-left text-sm leading-tight">
+          <span class="truncate font-semibold">Neuronote</span>
+          <span class="truncate text-xs text-muted-foreground">Personal Knowledge System</span>
+        </div>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  </SidebarMenu>
       </SidebarHeader>
       <SidebarSeparator />
 

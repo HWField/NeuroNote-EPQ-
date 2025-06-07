@@ -177,7 +177,7 @@ const register = async () => {
           <p class="text-sm text-gray-500 mb-4">Last Updated: 25/4/25</p>
 
           <p class="mb-4 text-sm">
-                          Welcome to NovaNote ("the App"), provided by Henry
+                          Welcome to NeuroNote ("the App"), provided by Henry
                           Field ("Company," "we," "us," or "our"). By creating
                           an account, accessing, or using the App, you agree to
                           these Terms and Conditions ("Terms"). If you do not
@@ -351,7 +351,7 @@ const register = async () => {
           <p class="text-sm text-gray-500 mb-4">Last Updated: 28/4/25</p>
 
           <p class="mb-4 text-sm">
-                          Welcome to NovaNote (“the App”) . We respect your
+                          Welcome to NeuroNote (“the App”) . We respect your
                           privacy and are committed to protecting your personal
                           data. This Privacy Policy explains how we collect,
                           use, and store your information when you use the App.
@@ -634,7 +634,7 @@ const register = async () => {
             d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"
           />
         </svg>
-        NovaNote
+        NeuroNote
       </div>
       <div class="relative z-20 mt-auto">
         <blockquote class="space-y-2">

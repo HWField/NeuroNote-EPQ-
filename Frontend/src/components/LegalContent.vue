@@ -13,7 +13,7 @@
           <div class="flex flex-col md:flex-row md:items-start gap-8">
             <div class="pr-4 min-w-0 w-full overflow-wrap-anywhere">
               <p class="mb-4 text-sm">
-                Welcome to NovaNote ("the App"), provided by Henry Field
+                Welcome to NeuroNote ("the App"), provided by Henry Field
                 ("Company," "we," "us," or "our"). By creating an account,
                 accessing, or using the App, you agree to these Terms and
                 Conditions ("Terms"). If you do not agree, please do not use the
@@ -160,7 +160,7 @@
           <div class="flex flex-col md:flex-row md:items-start gap-8">
             <div class="pr-4 min-w-0 w-full overflow-wrap-anywhere">
               <p class="mb-4 text-sm">
-                Welcome to NovaNote (“the App”) . We respect your privacy and
+                Welcome to NeuroNote (“the App”) . We respect your privacy and
                 are committed to protecting your personal data. This Privacy
                 Policy explains how we collect, use, and store your information
                 when you use the App. The App is provided by Henry Field
