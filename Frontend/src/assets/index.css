@@ -89,11 +89,19 @@
 }
 
 html, body {
-  overflow: hidden;
   height: 100%;
-  -webkit-overflow-scrolling: none; /* Disable smooth scrolling on iOS */
-  overscroll-behavior: none; /* Prevent bounce effect */
-}
+  }
+
+  /* Add safe area support for iOS */
+  body {
+    height: 100%;
+  }
+
+  /* Ensure the app container uses the full available space */
+  #app {
+    height: 100%;
+    width: 100%;
+  }
 
 
   

@@ -62,7 +62,7 @@ jwt = JWTManager(app)
 
 
 # Create an SQLite database inside the Backend folder
-engine = create_engine('postgresql://Henry:Naseby2411@localhost:5432/BackendDb')
+engine = create_engine('postgresql://henry:Naseby2411@localhost:5432/BackendDb')
 Base = declarative_base()
 
 @app.teardown_appcontext
@@ -1460,5 +1460,8 @@ def serve_image(user_id, filename):
 #     user_folder = os.path.join(app.config['UPLOAD_FOLDER'], user_id)
 #     return send_from_directory(user_folder, filename)
     
+@app.route("/health")
+def health():
+    return jsonify(status="ok", service="flask"), 200   
 if __name__ == '__main__':
-    socketio.run(app, debug=True, host='0.0.0.0', port=8000)
+    socketio.run(app, debug=True, host='0.0.0.0', port=8000, allow_unsafe_werkzeug=True)

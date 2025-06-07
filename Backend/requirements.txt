@@ -1,0 +1,9 @@
+flask
+flask-socketio
+flask-cors
+flask-login
+flask-jwt-extended
+flask-sqlalchemy
+sqlalchemy
+psycopg2-binary
+werkzeug
