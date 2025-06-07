@@ -1,3 +1,4 @@
 Backend/Postgres
 .npmrc
 Backend/uploads
+Backend/venv
