@@ -4,14 +4,14 @@ import { useUserStore } from "@/stores/useUserStore";
 
 // Create an Axios instance
 // const BASE_URL = 'http://127.0.0.1:8000';
-const BASE_URL = 'http://192.168.1.232:8000';  // Alternate URL
-// const BASE_URL = 'https://api.henryfield.net';  // Production URL
+// const BASE_URL = 'http://192.168.1.232:8000';  // Alternate URL
+const BASE_URL = 'https://api.henryfield.net';  // Production URL
 
 const api = axios.create({
   baseURL: BASE_URL,  
   headers: {
     'Content-Type': 'application/json',
-  },
+  },  
 });
 
 // Function to get the base URL

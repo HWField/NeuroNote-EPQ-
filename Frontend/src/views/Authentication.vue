@@ -815,13 +815,22 @@ const register = async () => {
               for="terms"
               class="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              Accept
-              <a
-                href="#"
-                class="text-blue-500"
-                @click.prevent="isTermsDialogOpen = true"
-                >terms and conditions</a
-              >
+            Accept
+                <a
+                  href="#"
+                  class="text-blue-500"
+                  @click.prevent="isTermsDialogOpen = true"
+                  >Terms and Conditions</a
+                >
+
+                and 
+
+                <a
+                  href="#"
+                  class="text-blue-500"
+                  @click.prevent="isPrivacyDialogOpen = true"
+                  >Privacy Policy</a
+                >
             </label>
           </div>
         </CardContent>
