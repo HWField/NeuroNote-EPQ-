@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NeuroNote</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background-color: #0a0a0a;
+      color: white;
+      overflow-x: hidden;
+    }
+    #hero {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      display: block;
+    }
+    .overlay {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      top: 30%;
+    }
+    .overlay h1 {
+      font-size: 4em;
+      background: linear-gradient(to right, cyan, blue);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: slideDown 1s ease-out;
+    }
+    .overlay p {
+      font-size: 1.5em;
+      margin: 20px 0;
+      opacity: 0;
+      animation: fadeIn 2s forwards;
+      animation-delay: 1s;
+    }
+    .overlay button {
+      font-size: 1.2em;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 25px;
+      background-color: #0ef;
+      color: black;
+      cursor: pointer;
+      opacity: 0;
+      animation: fadeIn 2s forwards;
+      animation-delay: 2s;
+      box-shadow: 0 5px 20px rgba(0, 255, 255, 0.4);
+    }
+    @keyframes slideDown {
+      from { transform: translateY(-50px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+    .features {
+      background-color: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      color: white;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      padding: 80px 40px;
+    }
+    .feature-card {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+      padding: 24px;
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+    .feature-card:hover {
+      transform: translateY(-10px);
+    }
+    .feature-card img {
+      width: 60px;
+      height: 60px;
+      margin-bottom: 12px;
+    }
+    .feature-card h3 {
+      margin-bottom: 12px;
+      font-size: 1.5em;
+      color: #0ef;
+    }
+    .feature-card p {
+      font-size: 1em;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <section id="hero">
+    <div class="overlay">
+      <h1>NeuroNote</h1>
+      <p>Where your thoughts connect.</p>
+      <button>Get Started</button>
+    </div>
+    <canvas id="bg"></canvas>
+  </section>
+
+  <div class="features">
+    <div class="feature-card">
+      <img src="https://img.icons8.com/fluency/96/brainstorm.png" alt="Visual Network">
+      <h3>Visual Network of Notes</h3>
+      <p>Map your thoughts in an interactive node graph.</p>
+    </div>
+    <div class="feature-card">
+      <img src="https://img.icons8.com/fluency/96/link.png" alt="Linking">
+      <h3>Bi-directional Linking</h3>
+      <p>Every note connects both ways, like your brain.</p>
+    </div>
+    <div class="feature-card">
+      <img src="https://img.icons8.com/fluency/96/markdown.png" alt="Markdown">
+      <h3>Markdown & Media</h3>
+      <p>Rich notes with syntax highlighting and media support.</p>
+    </div>
+    <div class="feature-card">
+      <img src="https://img.icons8.com/fluency/96/artificial-intelligence.png" alt="AI">
+      <h3>AI-Powered Suggestions</h3>
+      <p>Smart prompts to help you connect ideas naturally.</p>
+    </div>
+    <div class="feature-card">
+      <img src="https://img.icons8.com/fluency/96/cloud-sync.png" alt="Sync">
+      <h3>Cross-Platform Sync</h3>
+      <p>Access your notes anywhere, on any device.</p>
+    </div>
+    <div class="feature-card">
+      <img src="https://img.icons8.com/fluency/96/lock-2.png" alt="Security">
+      <h3>Private & Secure</h3>
+      <p>Your ideas are encrypted and safe by default.</p>
+    </div>
+  </div>
+
+ <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg'), alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const nodes = [];
+    const links = [];
+    const group = new THREE.Group();
+    const geometry = new THREE.SphereGeometry(0.1, 12, 12);
+    const material = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+
+    for (let i = 0; i < 100; i++) {
+      const node = new THREE.Mesh(geometry, material);
+      node.position.set(
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 20
+      );
+      node.userData.velocity = new THREE.Vector3(
+        (Math.random() - 0.5) * 0.05,
+        (Math.random() - 0.5) * 0.05,
+        (Math.random() - 0.5) * 0.05
+      );
+      nodes.push(node);
+      group.add(node);
+    }
+
+    scene.add(group);
+    camera.position.z = 15;
+
+    function linkNodes(a, b) {
+      const material = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.4 });
+      const points = [a.position.clone(), b.position.clone()];
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(geometry, material);
+      group.add(line);
+      links.push({ a, b, line });
+    }
+
+    function updateLinks() {
+      links.forEach(link => {
+        const points = [link.a.position.clone(), link.b.position.clone()];
+        link.line.geometry.setFromPoints(points);
+      });
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      nodes.forEach(node => {
+        node.position.add(node.userData.velocity);
+        ['x', 'y', 'z'].forEach(axis => {
+          if (Math.abs(node.position[axis]) > 10) {
+            node.userData.velocity[axis] *= -1;
+          }
+        });
+      });
+
+      // Slowly form links between nearby nodes
+      if (links.length < 150) {
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            if (Math.random() < 0.001) {
+              const dist = nodes[i].position.distanceTo(nodes[j].position);
+              if (dist < 3) linkNodes(nodes[i], nodes[j]);
+            }
+          }
+        }
+      }
+
+      updateLinks();
+      scene.rotation.y += 0.001;
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
