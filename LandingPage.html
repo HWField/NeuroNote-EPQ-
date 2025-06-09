@@ -1,501 +1,791 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NeuroNote</title>
-  
-  <style>
-    html {
-      scroll-behavior: smooth;
-    }
-    
-    ::-webkit-scrollbar {
-      width: 6px;
-    }
-    
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-      background: rgba(147, 51, 234, 0.3);
-      border-radius: 3px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(147, 51, 234, 0.5);
-    }
-    
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    
-    body, html {
-      height: 100%;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 30%, #16213e 100%);
-      color: white;
-      overflow-x: hidden;
-    }
-    
-    #hero {
-      position: fixed;
-      width: 100%;
-      height: 100vh;
-      overflow: hidden;
-      z-index: 0;
-    }
-    
-    canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-    
-    .content-wrapper {
-      position: relative;
-      z-index: 1;
-      min-height: 200vh; /* Allow scrolling */
-    }
-    
-    .overlay {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 0 2rem;
-    }
-    
-    .overlay h1 {
-      font-size: clamp(3em, 8vw, 6em);
-      font-weight: 700;
-      background: linear-gradient(135deg, #a855f7, #c084fc, #e879f9, #fbbf24);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: slideDown 1s ease-out;
-      margin-bottom: 1rem;
-      text-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
-    }
-    
-    .overlay p {
-      font-size: clamp(1.2em, 3vw, 1.8em);
-      margin: 2rem 0;
-      opacity: 0;
-      animation: fadeIn 2s forwards;
-      animation-delay: 1s;
-      font-weight: 300;
-      color: rgba(255, 255, 255, 0.9);
-      max-width: 600px;
-      line-height: 1.5;
-    }
-    
-    .overlay button {
-      font-size: 1.1em;
-      font-weight: 600;
-      padding: 16px 32px;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(135deg, #a855f7, #c084fc);
-      color: white;
-      cursor: pointer;
-      opacity: 0;
-      animation: fadeIn 2s forwards;
-      animation-delay: 2s;
-      box-shadow: 
-        0 8px 32px rgba(168, 85, 247, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      margin-top: 2rem;
-    }
-    
-    .overlay button:hover {
-      transform: translateY(-2px);
-      box-shadow: 
-        0 12px 40px rgba(168, 85, 247, 0.5),
-        0 0 0 1px rgba(255, 255, 255, 0.2);
-      background: linear-gradient(135deg, #9333ea, #a855f7);
-    }
-    
-    @keyframes slideDown {
-      from { transform: translateY(-50px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
-    
-    .features {
-      position: relative;
-      z-index: 2;
-      padding: 120px 40px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 2rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .feature-card {
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(168, 85, 247, 0.2);
-      border-radius: 20px;
-      box-shadow: 
-        0 8px 32px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      padding: 32px 24px;
-      text-align: center;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, 
-        transparent, 
-        rgba(168, 85, 247, 0.5), 
-        transparent);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    
-    .feature-card:hover {
-      transform: translateY(-8px);
-      background: rgba(255, 255, 255, 0.08);
-      border-color: rgba(168, 85, 247, 0.4);
-      box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(168, 85, 247, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    }
-    
-    .feature-card:hover::before {
-      opacity: 1;
-    }
-    
-    .feature-card img {
-      width: 60px;
-      height: 60px;
-      margin-bottom: 20px;
-      filter: hue-rotate(270deg) saturate(1.2);
-    }
-    
-    .feature-card h3 {
-      margin: 20px 0 16px;
-      font-size: 1.4em;
-      font-weight: 600;
-      background: linear-gradient(135deg, #a855f7, #e879f9);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    
-    .feature-card p {
-      font-size: 0.95em;
-      color: rgba(255, 255, 255, 0.8);
-      line-height: 1.6;
-    }
-    
-    /* Mobile responsiveness */
-    @media (max-width: 768px) {
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type='image/x-icon' href="/favicon.ico" />
+    <title>NeuroNote</title>
+
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: rgba(147, 51, 234, 0.3);
+        border-radius: 3px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(147, 51, 234, 0.5);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body,
+      html {
+        height: 100%;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0a0a0a 0%,
+          #1a0a2e 30%,
+          #16213e 100%
+        );
+        color: white;
+        overflow-x: hidden;
+      }
+
+      #hero {
+        position: fixed;
+        width: 100%;
+        height: 100vh;
+        overflow: hidden;
+        z-index: 0;
+      }
+
+      canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .content-wrapper {
+        position: relative;
+        z-index: 1;
+        min-height: 120vh; /* Allow scrolling */
+      }
+
       .overlay {
-        padding: 0 1.5rem;
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 0 2rem;
       }
-      
+
       .overlay h1 {
-        font-size: clamp(2.5em, 12vw, 4em);
+        font-size: clamp(3em, 8vw, 6em);
+        font-weight: 700;
+        background: linear-gradient(135deg, #a855f7, #c084fc, #e879f9, #fbbf24);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: slideDown 1s ease-out;
+        margin-bottom: 1rem;
+        text-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
       }
-      
+
       .overlay p {
-        font-size: clamp(1em, 4vw, 1.4em);
-        margin: 1.5rem 0;
+        font-size: clamp(1.2em, 3vw, 1.8em);
+        margin: 2rem 0;
+        opacity: 0;
+        animation: fadeIn 2s forwards;
+        animation-delay: 1s;
+        font-weight: 300;
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 600px;
+        line-height: 1.5;
       }
-      
+
       .overlay button {
-        padding: 14px 28px;
-        font-size: 1em;
+        font-size: 1.1em;
+        font-weight: 600;
+        padding: 16px 32px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #a855f7, #c084fc);
+        color: white;
+        cursor: pointer;
+        opacity: 0;
+        animation: fadeIn 2s forwards;
+        animation-delay: 2s;
+        box-shadow: 0 8px 32px rgba(168, 85, 247, 0.4),
+          0 0 0 1px rgba(255, 255, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        margin-top: 2rem;
       }
-      
+
+      .overlay button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(168, 85, 247, 0.5),
+          0 0 0 1px rgba(255, 255, 255, 0.2);
+        background: linear-gradient(135deg, #9333ea, #a855f7);
+      }
+
+      @keyframes slideDown {
+        from {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeIn {
+        to {
+          opacity: 1;
+        }
+      }
+
       .features {
-        padding: 80px 20px;
-        gap: 1.5rem;
+        position: relative;
+        z-index: 2;
+        padding: 120px 40px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
       }
-      
+
       .feature-card {
-        padding: 24px 20px;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(168, 85, 247, 0.2);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        padding: 32px 24px;
+        text-align: center;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
       }
-    }
-      </style>
-</head>
-<body>
-  <!-- Fixed background simulation -->
-  <section id="hero">
-    <canvas id="bg"></canvas>
-  </section>
 
-  <div class="content-wrapper">
-    <div class="overlay">
-      <h1>NeuroNote</h1>
-      <p>Where your thoughts connect and evolve into brilliant ideas.</p>
-      <button onclick="window.location.href='https:note.henryfield.net'">Get Started</button>
+      .feature-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(168, 85, 247, 0.5),
+          transparent
+        );
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .feature-card:hover {
+        transform: translateY(-8px);
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(168, 85, 247, 0.4);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
+          0 0 0 1px rgba(168, 85, 247, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      }
+
+      .feature-card:hover::before {
+        opacity: 1;
+      }
+
+      .feature-card img {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 20px;
+        /* filter: hue-rotate(270deg) saturate(1.2); */
+      }
+
+      .feature-card h3 {
+        margin: 20px 0 16px;
+        font-size: 1.4em;
+        font-weight: 600;
+        background: linear-gradient(135deg, #a855f7, #e879f9);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .feature-card p {
+        font-size: 0.95em;
+        color: rgba(255, 255, 255, 0.8);
+        line-height: 1.6;
+      }
+
+      /* Mobile responsiveness */
+      @media (max-width: 768px) {
+        .overlay {
+          padding: 0 1.5rem;
+        }
+
+        .overlay h1 {
+          font-size: clamp(2.5em, 12vw, 4em);
+        }
+
+        .overlay p {
+          font-size: clamp(1em, 4vw, 1.4em);
+          margin: 1.5rem 0;
+        }
+
+        .overlay button {
+          padding: 14px 28px;
+          font-size: 1em;
+        }
+
+        .features {
+          padding: 80px 20px;
+          gap: 1.5rem;
+        }
+
+        .feature-card {
+          padding: 24px 20px;
+        }
+      }
+
+      /* Add this to your CSS */
+      .scroll-indicator {
+        position: absolute;
+        bottom: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        opacity: 0;
+        animation: fadeIn 3s forwards;
+        animation-delay: 3s;
+      }
+
+      .scroll-text {
+        font-size: 0.9em;
+        color: rgba(255, 255, 255, 0.7);
+        margin-bottom: 12px;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+      }
+
+      .chevron {
+        width: 20px;
+        height: 20px;
+        border-right: 2px solid rgba(168, 85, 247, 0.8);
+        border-bottom: 2px solid rgba(168, 85, 247, 0.8);
+        transform: rotate(45deg);
+        margin: -6px 0;
+        animation: bounce 2s infinite;
+      }
+
+      .chevron:nth-child(2) {
+        animation-delay: 0.1s;
+        opacity: 0.8;
+      }
+
+      .chevron:nth-child(3) {
+        animation-delay: 0.2s;
+        opacity: 0.6;
+      }
+
+      .about-section {
+  position: relative;
+  z-index: 2;
+  padding: 80px 40px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.about-container {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(168, 85, 247, 0.15);
+  border-radius: 24px;
+  padding: 48px 40px;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.about-content h2 {
+  font-size: 2.5em;
+  font-weight: 600;
+  background: linear-gradient(135deg, #a855f7, #e879f9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.about-content > p {
+  font-size: 1.1em;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.developer-info {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 16px;
+  border: 1px solid rgba(168, 85, 247, 0.1);
+}
+
+.developer-avatar {
+  flex-shrink: 0;
+}
+
+.avatar-placeholder {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7, #c084fc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2em;
+  font-weight: 600;
+  color: white;
+  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.3);
+}
+
+.developer-details h3 {
+  font-size: 1.4em;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.developer-title {
+  font-size: 1em;
+  color: rgba(168, 85, 247, 0.9);
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.project-context {
+  font-size: 0.95em;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.6;
+}
+
+.academic-note {
+  padding: 20px;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.academic-note p {
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+.academic-note strong {
+  color: rgba(168, 85, 247, 0.9);
+}
+
+/* Mobile responsiveness for about section */
+@media (max-width: 768px) {
+  .about-section {
+    padding: 60px 20px;
+  }
+  
+  .about-container {
+    padding: 32px 24px;
+  }
+  
+  .about-content h2 {
+    font-size: 2em;
+  }
+  
+  .developer-info {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+  
+  .avatar-placeholder {
+    width: 60px;
+    height: 60px;
+    font-size: 1.5em;
+  }
+}
+      @keyframes bounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: rotate(45deg) translateY(0);
+        }
+        40% {
+          transform: rotate(45deg) translateY(-8px);
+        }
+        60% {
+          transform: rotate(45deg) translateY(-4px);
+        }
+      }
+
+      /* Hide on mobile to avoid crowding */
+      @media (max-height: 600px) {
+        .scroll-indicator {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Fixed background simulation -->
+    <section id="hero">
+      <canvas id="bg"></canvas>
+    </section>
+
+    <div class="content-wrapper">
+      <div class="overlay">
+        <h1>NeuroNote</h1>
+        <p>Where your thoughts connect</p>
+        <button onclick="window.location.href='https://app.henryfield.net'">
+          Get Started
+        </button>
+
+        <div class="scroll-indicator">
+          <span class="scroll-text">Discover more</span>
+          <div class="chevron"></div>
+          <div class="chevron"></div>
+          <div class="chevron"></div>
+        </div>
+      </div>
     </div>
-
     <div class="features">
       <div class="feature-card">
-        <img src="https://img.icons8.com/fluency/96/brainstorm.png" alt="Visual Network">
-        <h3>Visual Network of Notes</h3>
-        <p>Map your thoughts in an interactive node graph that reveals connections you never knew existed.</p>
+        <img
+          src="https://img.icons8.com/fluency/96/mind-map.png"
+          alt="Neural Network"
+        />
+        <h3>Visualize your thoughts</h3>
+        <p>
+          Transform scattered ideas into an interconnected web of knowledge. See
+          how your thoughts naturally cluster and connect.
+        </p>
       </div>
       <div class="feature-card">
-        <img src="https://img.icons8.com/fluency/96/link.png" alt="Linking">
-        <h3>Bi-directional Linking</h3>
-        <p>Every note connects both ways, creating a web of knowledge that mirrors how your brain actually works.</p>
+        <img
+          src="https://img.icons8.com/fluency/96/pencil-tip.png"
+          alt="Handwriting"
+        />
+        <h3>Natural note-taking</h3>
+        <p>
+          Write naturally with full stylus and touch support. Your handwriting
+          flows seamlessly alongside typed text.
+        </p>
       </div>
       <div class="feature-card">
-        <img src="https://img.icons8.com/fluency/96/markdown.png" alt="Markdown">
-        <h3>Markdown & Media</h3>
-        <p>Rich notes with syntax highlighting, images, and media support for comprehensive documentation.</p>
+        <img
+          src="https://img.icons8.com/fluency/96/edit-text-file.png"
+          alt="Rich Text"
+        />
+        <h3>Rich content support</h3>
+        <p>
+          Combine text, images, code, and media in beautiful, structured notes
+          with full Markdown support.
+        </p>
       </div>
       <div class="feature-card">
-        <img src="https://img.icons8.com/fluency/96/artificial-intelligence.png" alt="AI">
-        <h3>AI-Powered Suggestions</h3>
-        <p>Smart prompts and connections suggested by AI to help you discover new relationships between ideas.</p>
+        <img
+          src="https://img.icons8.com/fluency/96/dashboard-layout.png"
+          alt="Workspace"
+        />
+        <h3>Personalized workspace</h3>
+        <p>
+          Customize your environment with shortcuts, themes, and layouts that
+          adapt to how you think.
+        </p>
       </div>
       <div class="feature-card">
-        <img src="https://img.icons8.com/fluency/96/cloud-sync.png" alt="Sync">
-        <h3>Cross-Platform Sync</h3>
-        <p>Access your notes anywhere, on any device, with real-time synchronization across all platforms.</p>
+        <img
+          src="https://img.icons8.com/fluency/96/synchronize.png"
+          alt="Sync"
+        />
+        <h3>Seamless synchronization</h3>
+        <p>
+          Your notes follow you everywhere. Real-time sync across all your
+          devices keeps your thoughts accessible.
+        </p>
       </div>
       <div class="feature-card">
-        <img src="https://img.icons8.com/fluency/96/lock-2.png" alt="Security">
-        <h3>Private & Secure</h3>
-        <p>Your ideas are encrypted and protected with enterprise-grade security. Your thoughts stay yours.</p>
+        <img
+          src="https://img.icons8.com/fluency/96/security-checked.png"
+          alt="Security"
+        />
+        <h3>Privacy focused</h3>
+        <p>
+          Built with privacy in mind. Secure login, isolated user data, and no
+          tracking of your personal content.
+        </p>
+      </div>
+    </div>
+
+    <!-- Add this after the features div and before the script tags -->
+<div class="about-section">
+  <div class="about-container">
+    <div class="about-content">
+      <h2>About the Project</h2>
+      <p>NeuroNote is an academic project exploring the intersection of note-taking, knowledge management, and interactive visualization. This project investigates how visual representations of interconnected ideas can enhance learning and creative thinking.</p>
+      
+      <div class="developer-info">
+        <div class="developer-avatar">
+          <div class="avatar-placeholder">H</div>
+        </div>
+        <div class="developer-details">
+          <h3>Henry Field</h3>
+          <p class="developer-title">Computer Science Student & Developer</p>
+          <p class="project-context">Developed as part of an Extended Project Qualification (EPQ), this application demonstrates modern web technologies and user experience design principles in creating robust tools for everyday use</p>
+        </div>
+      </div>
+      
+      <div class="academic-note">
+        <p><strong>Academic Project Notice:</strong> This is a research and educational project created to explore innovative approaches to digital note-taking and knowledge visualization.</p>
       </div>
     </div>
   </div>
+</div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+      // Wait for Three.js to load
+      function waitForThree() {
+        return new Promise((resolve) => {
+          const check = () => {
+            if (typeof THREE !== "undefined") {
+              resolve();
+            } else {
+              setTimeout(check, 50);
+            }
+          };
+          check();
+        });
+      }
 
-  <script>
-    // Wait for Three.js to load
-    function waitForThree() {
-      return new Promise((resolve) => {
-        const check = () => {
-          if (typeof THREE !== 'undefined') {
-            resolve();
-          } else {
-            setTimeout(check, 50);
-          }
-        };
-        check();
-      });
-    }
+      waitForThree().then(() => {
+        // Three.js setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(
+          75,
+          window.innerWidth / window.innerHeight,
+          0.1,
+          1000
+        );
+        const renderer = new THREE.WebGLRenderer({
+          canvas: document.getElementById("bg"),
+          alpha: true,
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
 
-    waitForThree().then(() => {
-      // Three.js setup
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('bg'), alpha: true });
-      renderer.setSize(window.innerWidth, window.innerHeight);
+        const group = new THREE.Group();
+        scene.add(group);
 
-      const group = new THREE.Group();
-      scene.add(group);
+        // Create nodes
+        const nodeCount = 1000;
+        const nodes = Array.from({ length: nodeCount }, (_, i) => ({
+          id: i,
+          x: (Math.random() - 0.5) * 20,
+          y: (Math.random() - 0.5) * 20,
+          z: (Math.random() - 0.5) * 20,
+          vx: 0,
+          vy: 0,
+          vz: 0,
+          connections: [],
+        }));
 
-      // Create nodes
-      const nodeCount = 1000;
-      const nodes = Array.from({ length: nodeCount }, (_, i) => ({
-        id: i,
-        x: (Math.random() - 0.5) * 20,
-        y: (Math.random() - 0.5) * 20,
-        z: (Math.random() - 0.5) * 20,
-        vx: 0,
-        vy: 0,
-        vz: 0,
-        connections: []
-      }));
+        const links = [];
+        const linkLines = [];
 
-      const links = [];
-      const linkLines = [];
-
-      // Create Three.js meshes for nodes
-      const sphereGeo = new THREE.SphereGeometry(0.1, 8, 8);
-      const sphereMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
-      const lineMat = new THREE.LineBasicMaterial({ 
-        color: 0xc084fc, 
-        transparent: true, 
-        opacity: 0.4 
-      });
-
-      nodes.forEach(node => {
-        const mesh = new THREE.Mesh(sphereGeo, sphereMat);
-        mesh.position.set(node.x, node.y, node.z);
-        group.add(mesh);
-        node.mesh = mesh;
-      });
-
-      // Simple force-directed layout simulation
-      function applyForces() {
-        const damping = 0.9;
-        const repulsion = 0.5;
-        const attraction = 0.002;
-        const linkDistance = 2;
-
-        // Reset forces
-        nodes.forEach(node => {
-          node.fx = 0;
-          node.fy = 0;
-          node.fz = 0;
+        // Create Three.js meshes for nodes
+        const sphereGeo = new THREE.SphereGeometry(0.1, 8, 8);
+        const sphereMat = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
+        const lineMat = new THREE.LineBasicMaterial({
+          color: 0xc084fc,
+          transparent: true,
+          opacity: 0.4,
         });
 
-        // Repulsion between all nodes
-        for (let i = 0; i < nodes.length; i++) {
-          for (let j = i + 1; j < nodes.length; j++) {
-            const dx = nodes[i].x - nodes[j].x;
-            const dy = nodes[i].y - nodes[j].y;
-            const dz = nodes[i].z - nodes[j].z;
-            const distance = Math.sqrt(dx*dx + dy*dy + dz*dz) + 0.1;
-            
-            const force = repulsion / (distance * distance);
-            
-            nodes[i].fx += (dx / distance) * force;
-            nodes[i].fy += (dy / distance) * force;
-            nodes[i].fz += (dz / distance) * force;
-            
-            nodes[j].fx -= (dx / distance) * force;
-            nodes[j].fy -= (dy / distance) * force;
-            nodes[j].fz -= (dz / distance) * force;
+        nodes.forEach((node) => {
+          const mesh = new THREE.Mesh(sphereGeo, sphereMat);
+          mesh.position.set(node.x, node.y, node.z);
+          group.add(mesh);
+          node.mesh = mesh;
+        });
+
+        // Simple force-directed layout simulation
+        function applyForces() {
+          const damping = 0.9;
+          const repulsion = 0.5;
+          const attraction = 0.002;
+          const linkDistance = 2;
+
+          // Reset forces
+          nodes.forEach((node) => {
+            node.fx = 0;
+            node.fy = 0;
+            node.fz = 0;
+          });
+
+          // Repulsion between all nodes
+          for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+              const dx = nodes[i].x - nodes[j].x;
+              const dy = nodes[i].y - nodes[j].y;
+              const dz = nodes[i].z - nodes[j].z;
+              const distance = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.1;
+
+              const force = repulsion / (distance * distance);
+
+              nodes[i].fx += (dx / distance) * force;
+              nodes[i].fy += (dy / distance) * force;
+              nodes[i].fz += (dz / distance) * force;
+
+              nodes[j].fx -= (dx / distance) * force;
+              nodes[j].fy -= (dy / distance) * force;
+              nodes[j].fz -= (dz / distance) * force;
+            }
           }
+
+          // Attraction for connected nodes
+          links.forEach((link) => {
+            const dx = link.target.x - link.source.x;
+            const dy = link.target.y - link.source.y;
+            const dz = link.target.z - link.source.z;
+            const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            const force = (distance - linkDistance) * attraction;
+
+            link.source.fx += (dx / distance) * force;
+            link.source.fy += (dy / distance) * force;
+            link.source.fz += (dz / distance) * force;
+
+            link.target.fx -= (dx / distance) * force;
+            link.target.fy -= (dy / distance) * force;
+            link.target.fz -= (dz / distance) * force;
+          });
+
+          // Apply forces and update positions
+          nodes.forEach((node) => {
+            node.vx = (node.vx + node.fx) * damping;
+            node.vy = (node.vy + node.fy) * damping;
+            node.vz = (node.vz + node.fz) * damping;
+
+            node.x += node.vx;
+            node.y += node.vy;
+            node.z += node.vz;
+
+            // Update mesh position
+            node.mesh.position.set(node.x, node.y, node.z);
+          });
+
+          // Update link lines
+          links.forEach((link, i) => {
+            if (linkLines[i]) {
+              const points = [
+                new THREE.Vector3(link.source.x, link.source.y, link.source.z),
+                new THREE.Vector3(link.target.x, link.target.y, link.target.z),
+              ];
+              linkLines[i].geometry.dispose();
+              linkLines[i].geometry = new THREE.BufferGeometry().setFromPoints(
+                points
+              );
+            }
+          });
         }
 
-        // Attraction for connected nodes
-        links.forEach(link => {
-          const dx = link.target.x - link.source.x;
-          const dy = link.target.y - link.source.y;
-          const dz = link.target.z - link.source.z;
-          const distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
-          const force = (distance - linkDistance) * attraction;
+        // Function to add a new link
+        function addRandomLink() {
+          if (links.length >= 100000) return;
 
-          link.source.fx += (dx / distance) * force;
-          link.source.fy += (dy / distance) * force;
-          link.source.fz += (dz / distance) * force;
-          
-          link.target.fx -= (dx / distance) * force;
-          link.target.fy -= (dy / distance) * force;
-          link.target.fz -= (dz / distance) * force;
+          const a = Math.floor(Math.random() * nodes.length);
+          const b = Math.floor(Math.random() * nodes.length);
+
+          if (a === b) return;
+
+          // Check if link already exists
+          const exists = links.some(
+            (link) =>
+              (link.source === nodes[a] && link.target === nodes[b]) ||
+              (link.source === nodes[b] && link.target === nodes[a])
+          );
+
+          if (exists) return;
+
+          // Add new link
+          const newLink = { source: nodes[a], target: nodes[b] };
+          links.push(newLink);
+
+          // Update node connections
+          nodes[a].connections.push(nodes[b]);
+          nodes[b].connections.push(nodes[a]);
+
+          // Create Three.js line
+          const geometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(nodes[a].x, nodes[a].y, nodes[a].z),
+            new THREE.Vector3(nodes[b].x, nodes[b].y, nodes[b].z),
+          ]);
+          const line = new THREE.Line(geometry, lineMat);
+          group.add(line);
+          linkLines.push(line);
+        }
+
+        // Gradually add links
+        setTimeout(() => {
+          const linkInterval = setInterval(addRandomLink, 60);
+          setTimeout(() => clearInterval(linkInterval), 240000);
+        }, 1000);
+
+        camera.position.z = 15;
+
+        function animate() {
+          requestAnimationFrame(animate);
+
+          // Apply physics simulation
+          applyForces();
+
+          // Gentle rotation
+          group.rotation.y += 0.003;
+          group.rotation.x += 0.001;
+
+          renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Handle window resize
+        window.addEventListener("resize", () => {
+          camera.aspect = window.innerWidth / window.innerHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(window.innerWidth, window.innerHeight);
         });
-
-        // Apply forces and update positions
-        nodes.forEach(node => {
-          node.vx = (node.vx + node.fx) * damping;
-          node.vy = (node.vy + node.fy) * damping;
-          node.vz = (node.vz + node.fz) * damping;
-          
-          node.x += node.vx;
-          node.y += node.vy;
-          node.z += node.vz;
-          
-          // Update mesh position
-          node.mesh.position.set(node.x, node.y, node.z);
-        });
-
-        // Update link lines
-        links.forEach((link, i) => {
-          if (linkLines[i]) {
-            const points = [
-              new THREE.Vector3(link.source.x, link.source.y, link.source.z),
-              new THREE.Vector3(link.target.x, link.target.y, link.target.z)
-            ];
-            linkLines[i].geometry.dispose();
-            linkLines[i].geometry = new THREE.BufferGeometry().setFromPoints(points);
-          }
-        });
-      }
-
-      // Function to add a new link
-      function addRandomLink() {
-        if (links.length >= 1000) return;
-
-        const a = Math.floor(Math.random() * nodes.length);
-        const b = Math.floor(Math.random() * nodes.length);
-
-        if (a === b) return;
-
-        // Check if link already exists
-        const exists = links.some(link => 
-          (link.source === nodes[a] && link.target === nodes[b]) ||
-          (link.source === nodes[b] && link.target === nodes[a])
-        );
-
-        if (exists) return;
-
-        // Add new link
-        const newLink = { source: nodes[a], target: nodes[b] };
-        links.push(newLink);
-
-        // Update node connections
-        nodes[a].connections.push(nodes[b]);
-        nodes[b].connections.push(nodes[a]);
-
-        // Create Three.js line
-        const geometry = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(nodes[a].x, nodes[a].y, nodes[a].z),
-          new THREE.Vector3(nodes[b].x, nodes[b].y, nodes[b].z)
-        ]);
-        const line = new THREE.Line(geometry, lineMat);
-        group.add(line);
-        linkLines.push(line);
-      }
-
-      // Gradually add links
-      setTimeout(() => {
-        const linkInterval = setInterval(addRandomLink, 60);
-        setTimeout(() => clearInterval(linkInterval), 60000);
-      }, 1000);
-
-      camera.position.z = 15;
-
-      function animate() {
-        requestAnimationFrame(animate);
-        
-        // Apply physics simulation
-        applyForces();
-        
-        // Gentle rotation
-        group.rotation.y += 0.003;
-        group.rotation.x += 0.001;
-        
-        renderer.render(scene, camera);
-      }
-
-      animate();
-
-      // Handle window resize
-      window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
       });
-    });
-  </script>
-</body>
+    </script>
+  </body>
 </html>
