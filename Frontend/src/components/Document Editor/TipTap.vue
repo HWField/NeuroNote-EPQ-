@@ -605,7 +605,7 @@ let editor = new Editor({
   }, 1000),
   extensions: [
     Document,
-    chemistry,
+    // chemistry,
     WhiteboardExtension,
     Mathematics.configure({
       // Add proper configuration

@@ -23,6 +23,7 @@ import { ref } from "vue";
 import axios from "../axios"; // Import the Axios instance
 import { useRouter, useRoute } from "vue-router"; // Vue Router for navigation
 import { useUserStore } from "@/stores/useUserStore";
+import visualisation from '@/components/visualisation.vue'
 import {
   Dialog,
   DialogContent,
@@ -594,267 +595,311 @@ const register = async () => {
   </Dialog>
   <Toaster />
   <!-- Toast component to show messages -->
-  <!-- <Button
-    variant="outline" @click="() => {
-      toast({
-        description: 'Your message has been sent.',
-         variant: 'success'
-      });
-    }"
-  >Show Toast</Button> -->
-  <div class="absolute top-4 right-4">
-    <LightDark class="bg-white p-4 rounded-lg shadow-lg"></LightDark>
-  </div>
-  <!-- Large login form -->
+  <visualisation class="fixed inset-0 w-full h-full" />
 
-  <div
-    class="container hidden h-screen flex-col lg:grid lg:max-w-none lg:grid-cols-2 lg:px-0"
-  >
-    <!-- compensate for the height of the inset -->
-    <div
-      class="relative hidden inset-5 flex-col h-[calc(100vh-2.5rem)] bg-none p-10 text-white lg:flex"
-    >
-      <img
-        class="h-full object-cover absolute rounded-2xl border-2 inset-0 drop-shadow-lg border-input bg-none"
-        src="/Images/login.jpg"
-        alt="Logo"
-      />
-      <div class="relative z-20 flex items-center text-lg font-medium">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          class="mr-2 h-6 w-6"
-        >
-          <path
-            d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"
+  <!-- Authentication overlay -->
+  <div class="relative z-10 min-h-screen flex items-center justify-center p-4">
+    <!-- Logo in top left -->
+    <div class="absolute top-6 left-6 z-20 hidden lg:blockn">
+      <div class="logo-container">
+        <img 
+            src="/Logo.png" 
+            alt="Neuronote Logo" 
+            class="size-8 object-contain"
           />
-        </svg>
-        NeuroNote
+        <span class="logo-text">NeuroNote</span>
       </div>
-      <div class="relative z-20 mt-auto">
-        <blockquote class="space-y-2">
-          <p class="text-lg">
-            &ldquo;the project is looking really good, its quite impressive what you’ve created&rdquo;
+    </div>
+
+    <!-- Dark/Light toggle in top right -->
+    <!-- <div class="absolute top-6 right-6 z-20">
+      <div class="glass-container p-2">
+        <LightDark />
+      </div>
+    </div> -->
+
+    <!-- Quote in bottom left (desktop only) -->
+    <div class="absolute bottom-6 left-6 z-20 hidden lg:block max-w-sm">
+      <div class="quote-container">
+        <blockquote class="space-y-3">
+          <p class="text-white/90 font-medium leading-relaxed">
+            "The project is looking really good, it's quite impressive what you've created"
           </p>
-          <footer class="text-sm">- Critical software developer</footer>
+          <footer class="text-sm text-purple-300">
+            — Critical Software Developer
+          </footer>
         </blockquote>
       </div>
     </div>
 
-    <div class="flex items-center justify-center">
-      <div class="w-2/3 h-fill">
-        <form @submit.prevent="isRegisterView ? register() : login()">
-          <CardHeader>
-            <CardTitle class="text-4xl pb-6">
-              {{ isRegisterView ? "Register" : "Login" }}
-            </CardTitle>
-
-            <CardDescription>
-              {{
-                isRegisterView
-                  ? "Create a new account by filling in the details below."
-                  : "Enter your email below to login to your account."
-              }}
-            </CardDescription>
-          </CardHeader>
-          <CardContent class="grid gap-8">
-            <div v-if="isRegisterView" class="grid gap-2">
-              <Label for="username">Username</Label>
-              <Input
-                class="h-14"
-                v-model:="username"
-                placeholder="Username"
-                required
-              />
-            </div>
-
-            <div class="grid gap-2">
-              <Label for="email">Email</Label>
-              <Input
-                class="h-14 text-sm"
-                v-model="email"
-                placeholder="Email"
-                required
-              />
-            </div>
-
-            <div class="grid gap-2">
-              <Label for="password">Password</Label>
-              <Input
-                class="h-14 text-sm"
-                type="password"
-                v-model="password"
-                placeholder="Password"
-                required
-              />
-            </div>
-
-            <!-- <div v-if="isRegisterView" class="grid gap-2">
-              <Label for="confirmPassword">Confirm Password</Label>
-              <Input
-                class="h-14"
-                type="password"
-                v-model="confirmPassword"
-                placeholder="Confirm Password"
-                required
-              />
-            </div> -->
-            <div v-if="isRegisterView" class="items-center flex space-x-2">
-              <Checkbox class="h-6 w-6" id="terms" v-model:checked="terms" />
-              <label
-                for="terms"
-                class="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Accept
-                <a
-                  href="#"
-                  class="text-blue-500"
-                  @click.prevent="isTermsDialogOpen = true"
-                  >Terms and Conditions</a
-                >
-
-                and 
-
-                <a
-                  href="#"
-                  class="text-blue-500"
-                  @click.prevent="isPrivacyDialogOpen = true"
-                  >Privacy Policy</a
-                >
-              </label>
-            </div>
-          </CardContent>
-          <CardFooter class="flex flex-col gap-4">
-            <Button class="w-full h-12 text-sm" type="submit">
-              {{ isRegisterView ? "Sign up" : "Sign in" }}
-            </Button>
-
-            <label class="text-center text-sm text-gray-500">
-              {{
-                isRegisterView
-                  ? "Already have an account?"
-                  : "Don't have an account?"
-              }}
-              <a
-                href="#"
-                class="text-blue-500"
-                @click.prevent="isRegisterView = !isRegisterView"
-              >
-                {{ isRegisterView ? "Login" : "Register" }}
-              </a>
-            </label>
-          </CardFooter>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <!-- small / mobile login form -->
-  <!-- <img
-      class=" inset-0 h-full w-full object-cover"
-      src="/Images/login.jpg"
-      alt="Background Image"
-    /> -->
-
-  <div
-    class="flex items-center justify-center h-screen lg:hidden bg-cover bg-center bg-[url(/Images/login.jpg)]"
-  >
-    <Card class="w-full max-w-sm rounded-2xl shadow-xl">
+    <!-- Main authentication card -->
+    <div class="auth-card">
       <form @submit.prevent="isRegisterView ? register() : login()">
-        <CardHeader>
-          <CardTitle class="text-2xl">
-            {{ isRegisterView ? "Register" : "Login" }}
-          </CardTitle>
-
-          <CardDescription>
-            {{
-              isRegisterView
-                ? "Create a new account by filling in the details below."
-                : "Enter your email below to login to your account."
+        <!-- Header -->
+        <div class="text-center space-y-3 mb-8">
+          <h1 class="auth-title">
+            {{ isRegisterView ? "Create Account" : "Welcome Back" }}
+          </h1>
+          <p class="auth-subtitle">
+            {{ isRegisterView 
+              ? "Join NeuroNote to start connecting your ideas" 
+              : "Sign in to continue your journey" 
             }}
-          </CardDescription>
-        </CardHeader>
-        <CardContent class="grid gap-4">
-          <div v-if="isRegisterView" class="grid gap-2">
-            <Label for="username">Username</Label>
-            <Input v-model:="username" placeholder="Username" required />
+          </p>
+        </div>
+
+        <!-- Form fields -->
+        <div class="space-y-5">
+          <!-- Username (registration only) -->
+          <div v-if="isRegisterView" class="form-group">
+            <label for="username" class="form-label">Username</label>
+            <input
+              id="username"
+              type="text"
+              v-model="username"
+              placeholder="Choose a username"
+              class="form-input"
+              required
+            />
           </div>
 
-          <div class="grid gap-2">
-            <Label for="email">Email</Label>
-            <Input v-model="email" placeholder="Email" required />
+          <!-- Email -->
+          <div class="form-group">
+            <label for="email" class="form-label">Email</label>
+            <input
+              id="email"
+              type="email"
+              v-model="email"
+              placeholder="Enter your email"
+              class="form-input"
+              required
+            />
           </div>
 
-          <div class="grid gap-2">
-            <Label for="password">Password</Label>
-            <Input
+          <!-- Password -->
+          <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <input
+              id="password"
               type="password"
               v-model="password"
-              placeholder="Password"
+              placeholder="Enter your password"
+              class="form-input"
               required
             />
           </div>
 
-          <!-- <div v-if="isRegisterView" class="grid gap-2">
-            <Label for="confirmPassword">Confirm Password</Label>
-            <Input
-              type="password"
-              v-model="confirmPassword"
-              placeholder="Confirm Password"
-              required
+          <!-- Terms checkbox (registration only) -->
+          <div v-if="isRegisterView" class="flex items-start space-x-3 pt-2">
+            <input
+              id="terms"
+              type="checkbox"
+              v-model="terms"
+              class="form-checkbox"
             />
-          </div> -->
-          <div v-if="isRegisterView" class="items-center flex space-x-2">
-            <Checkbox class="h-4 w-4" id="terms" v-model:checked="terms" />
-            <label
-              for="terms"
-              class="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-            >
-            Accept
-                <a
-                  href="#"
-                  class="text-blue-500"
-                  @click.prevent="isTermsDialogOpen = true"
-                  >Terms and Conditions</a
-                >
-
-                and 
-
-                <a
-                  href="#"
-                  class="text-blue-500"
-                  @click.prevent="isPrivacyDialogOpen = true"
-                  >Privacy Policy</a
-                >
+            <label for="terms" class="text-sm text-white/80 leading-relaxed">
+              I agree to the
+              <button
+                type="button"
+                class="text-purple-300 hover:text-purple-200 underline"
+                @click="isTermsDialogOpen = true"
+              >
+                Terms and Conditions
+              </button>
+              and
+              <button
+                type="button"
+                class="text-purple-300 hover:text-purple-200 underline"
+                @click="isPrivacyDialogOpen = true"
+              >
+                Privacy Policy
+              </button>
             </label>
           </div>
-        </CardContent>
-        <CardFooter class="flex flex-col gap-4">
-          <Button class="w-full" type="submit">
-            {{ isRegisterView ? "Sign up" : "Sign in" }}
-          </Button>
+        </div>
 
-          <label class="text-center text-sm text-gray-500">
-            {{
-              isRegisterView
-                ? "Already have an account?"
-                : "Don't have an account?"
-            }}
-            <a
-              href="#"
-              class="text-blue-500"
-              @click.prevent="isRegisterView = !isRegisterView"
-            >
-              {{ isRegisterView ? "Login" : "Register" }}
-            </a>
-          </label>
-        </CardFooter>
+        <!-- Submit button -->
+        <button type="submit" class="auth-button">
+          {{ isRegisterView ? "Create Account" : "Sign In" }}
+        </button>
+
+        <!-- Toggle between login/register -->
+        <div class="text-center mt-6">
+          <span class="text-sm text-white/70">
+            {{ isRegisterView ? "Already have an account?" : "Don't have an account?" }}
+          </span>
+          <button
+            type="button"
+            class="text-sm text-purple-300 hover:text-purple-200 ml-1 font-medium underline"
+            @click="isRegisterView = !isRegisterView"
+          >
+            {{ isRegisterView ? "Sign in" : "Create one" }}
+          </button>
+        </div>
       </form>
-    </Card>
+    </div>
   </div>
 </template>
+<style scoped>
+/* Glass container base */
+.glass-container {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(168, 85, 247, 0.15);
+  border-radius: 12px;
+}
+
+/* Logo styling */
+.logo-container {
+  @apply glass-container;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.logo-text {
+  font-size: 1.25rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a855f7, #e879f9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Quote styling */
+.quote-container {
+  @apply glass-container;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Main auth card */
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 24px;
+  padding: 40px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Typography */
+.auth-title {
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a855f7, #e879f9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+
+.auth-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Form elements */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.form-input {
+  height: 48px;
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 12px;
+  color: white;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.form-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: rgba(168, 85, 247, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+}
+
+.form-checkbox {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: #a855f7;
+}
+
+/* Auth button */
+.auth-button {
+  width: 100%;
+  height: 48px;
+  margin-top: 32px;
+  background: linear-gradient(135deg, #a855f7, #c084fc);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 8px 24px rgba(168, 85, 247, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.auth-button:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #9333ea, #a855f7);
+  box-shadow: 
+    0 12px 32px rgba(168, 85, 247, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.auth-button:active {
+  transform: translateY(0);
+}
+
+/* Dialog styling */
+.dialog-content {
+  background: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  color: white;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .auth-card {
+    margin: 20px;
+    padding: 32px 24px;
+  }
+  
+  .auth-title {
+    font-size: 1.75rem;
+  }
+  
+  .quote-container {
+    display: none;
+  }
+}
+</style>

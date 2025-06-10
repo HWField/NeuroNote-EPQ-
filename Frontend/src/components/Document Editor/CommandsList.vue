@@ -120,24 +120,24 @@ export const commands = [
         .run();
     },
   },
-  {
-    title: "Molecule",
-    icon: TestTube2, // Use any icon you want here
-    command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .insertContent({
-          type: "chemistry",
-          // attrs: {
-          //   mol: "", // Start with an empty molfile
-          //   viewMode: "editor", // Default to editor mode
-          // },
-        })
-        .run();
-    },
-  },
+  // {
+  //   title: "Molecule",
+  //   icon: TestTube2, // Use any icon you want here
+  //   command: ({ editor, range }) => {
+  //     editor
+  //       .chain()
+  //       .focus()
+  //       .deleteRange(range)
+  //       .insertContent({
+  //         type: "chemistry",
+  //         // attrs: {
+  //         //   mol: "", // Start with an empty molfile
+  //         //   viewMode: "editor", // Default to editor mode
+  //         // },
+  //       })
+  //       .run();
+  //   },
+  // },
 
   {
     title: "Heading 2",

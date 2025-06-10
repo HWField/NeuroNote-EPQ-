@@ -8,9 +8,9 @@
 import { onMounted, ref, watch } from "vue";
 import { nodeViewProps, NodeViewWrapper } from "@tiptap/vue-3";
 import { useUserStore } from "@/stores/useUserStore";
-import { Kekule } from "kekule";
-import "kekule/theme/default"; // if Kekule widgets is used in browser, the theme CSS should be imported as well
-console.error(Kekule.VERSION);
+// import { Kekule } from "kekule";
+// import "kekule/theme/default"; // if Kekule widgets is used in browser, the theme CSS should be imported as well
+// console.error(Kekule.VERSION);
 
 // for adding colour to 2d 
 
