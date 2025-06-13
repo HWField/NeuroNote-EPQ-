@@ -311,7 +311,7 @@ function createTour() {
       <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Watch connections form as you link notes and tags</p>
       <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Use filters to find exactly what you need, and spotlight to highlight the details </p>
       <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> Click on any element to open it directly</p>
-      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> If you fancy a change of scenery just press shuffly and watch the engine create beautiful layouts</p>
+      <p style="margin: 6px 0; font-size: 0.9em;"><strong style="color: hsl(var(--primary));">•</strong> If you fancy a change of scenery just press shuffle and watch the engine create beautiful layouts</p>
     </div>
     
     <div style="background: hsl(var(--accent) / 0.6); padding: 14px; border-radius: 8px; margin: 16px 0; border-left: 3px solid hsl(var(--accent-foreground));">

@@ -195,11 +195,12 @@
 
     <div v-else>
       <div v-if="!viewOnly" class="h-24 w-full mb-0 relative">
-        <div   class="absolute top-6 w-full z-50 px-4 flex justify-center">
+        <div class="absolute top-6 w-full z-50 px-4 flex justify-center">
           <div
-          data-tour="whiteboardToolbar" class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
+            data-tour="whiteboardToolbar"
+            class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
           >
-            <div  class="flex items-center gap-1 flex-wrap">
+            <div class="flex items-center gap-1 flex-wrap">
               <!-- Close button -->
               <TooltipProvider>
                 <Tooltip>
@@ -216,7 +217,24 @@
                   <TooltipContent>Close Whiteboard</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+              <Separator orientation="vertical" class="h-6 mx-1" />
 
+              <!-- Eraser Button -->
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      :variant="mode === 'erase' ? 'default' : 'ghost'"
+                      size="icon"
+                      @click="mode = mode === 'erase' ? 'type' : 'erase'"
+                      class="text-orange-600"
+                    >
+                      <Eraser class="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Eraser</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Separator orientation="vertical" class="h-6 mx-1" />
 
               <TooltipProvider>
@@ -525,7 +543,7 @@
 
       <div class="flex justify-center h-full flex-1">
         <div
-        data-tour="whiteboardCanvas"
+          data-tour="whiteboardCanvas"
           :id="canvasContainerId"
           class="canvas-container w-full overflow-hidden bg-none m-4 relative"
           :class="[
@@ -572,6 +590,7 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
 import * as fabric from "fabric";
+import { EraserBrush, ClippingGroup } from "@erase2d/fabric";
 import Hammer from "hammerjs";
 import axios, { getBaseUrl } from "../axios.js";
 import { useTabStore } from "@/stores/useTabStore";
@@ -616,7 +635,7 @@ import {
   Triangle,
   PlusIcon,
   Eraser,
-  Circle,
+  Circle as circle2,
   ChevronDown as ChevronDownIcon,
   TextIcon,
   Palette,
@@ -636,7 +655,7 @@ import {
   Clock,
 } from "lucide-vue-next";
 import { useToast } from "@/components/ui/toast/use-toast";
-import rough from 'roughjs/bundled/rough.esm';
+import rough from "roughjs/bundled/rough.esm";
 const props = defineProps({
   noteId: Number || 0,
   tabId: Number || 0,
@@ -857,6 +876,7 @@ async function LoadFromBackend() {
               canvas.renderAll();
               // Apply sharpness settings to all paths after loading
               canvas.getObjects().forEach((obj) => {
+                obj.erasable = true; //all over objects should be erasable might want to change this later
                 // Check if it's a path or path-like object
                 if (obj.type === "path" || obj.type === "line" || obj.path) {
                   obj.objectCaching = false;
@@ -1088,6 +1108,7 @@ function initaliseCanvas() {
         path.objectCaching = false;
         path.strokeLineCap = "round";
         path.strokeLineJoin = "round";
+        path.erasable = true; // Make paths erasable - this is crucial for erase2d
         return path;
       };
 
@@ -1342,6 +1363,14 @@ function HandleWhiteboardClick(event) {
     closeNote();
   } else if (event.key === "Backspace" || event.key === "Delete") {
     deleteSelected();
+  } else if (event.key === "e" || event.key === "E") {
+    event.preventDefault();
+    // Toggle eraser mode
+    if (mode.value === "erase") {
+      mode.value = "type";
+    } else {
+      mode.value = "erase";
+    }
   } else if (event.key === "Tab") {
     event.preventDefault(); // Prevent default tab behavior
     // Toggle between draw and type mode
@@ -1516,15 +1545,77 @@ function drawGrid(offsetX = 0, offsetY = 0, zoom = 1) {
 }
 
 watch(mode, (newMode) => {
-  //   canvas.isDrawingMode = newMode === "draw";
   if (newMode == "draw") {
     canvas.isDrawingMode = true;
+    canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+    canvas.freeDrawingBrush.width = penWidth.value;
+    canvas.freeDrawingBrush.color = colour.value;
+
+    // Apply the createPath override to pencil brush
+    const originalCreatePath = canvas.freeDrawingBrush.createPath;
+    canvas.freeDrawingBrush.createPath = function (pathData) {
+      const path = originalCreatePath.call(this, pathData);
+      path.objectCaching = false;
+      path.strokeLineCap = "round";
+      path.strokeLineJoin = "round";
+      path.erasable = true;
+      return path;
+    };
     canvas.selection = false;
+  } else if (newMode == "erase") {
+    
+    // Create the EraserBrush from erase2d
+    const eraser = new EraserBrush(canvas);
+    //eraser.width = 30;
+    eraser.width = penWidth.value * 2;
+
+    // IMPORTANT: Apply the createPath override to eraser brush too
+    // const originalCreatePath = eraserBrush.createPath;
+    // eraserBrush.createPath = function (pathData) {
+    //   const path = originalCreatePath.call(this, pathData);
+    //   path.objectCaching = false;
+    //   path.strokeLineCap = "round";
+    //   path.strokeLineJoin = "round";
+    //   path.erasable = true;
+    //   return path;
+    // };
+
+    // Set up event handlers
+    eraser.on("start", (e) => {
+      console.log("Erasing started");
+      // Debug: Log all erasable objects
+      const erasableObjects = canvas.getObjects().filter((obj) => obj.erasable);
+      console.log("Erasable objects:", erasableObjects.length);
+    });
+
+    eraser.on("end", async (e) => {
+      // prevent from committing erasing to the tree
+      e.preventDefault();
+
+      const { path, targets } = e.detail;
+      // const isErased = targets.includes(circle);
+
+      // commit erasing manually
+      const pathPerObjectMap = await eraser.commit({ path, targets });
+
+  //     const committedEraser = circle.clipPath instanceof ClippingGroup;
+
+  //     object.clipPath instanceof ClippingGroup
+  // ? object.clipPath.remove(
+  //     object.clipPath.item(0) /** the existing clip path is first */
+  //   )
+  // : delete object.clipPath;
+    });
+
+    canvas.freeDrawingBrush = eraser;
+    canvas.isDrawingMode = true;
+
+    console.log("EraserBrush activated");
   } else if (newMode == "type") {
     canvas.isDrawingMode = false;
     canvas.selection = true;
   } else if (newMode == "view") {
-    console.error("#########View-only mode enabled");
+    console.log("#########View-only mode enabled");
     canvas.isDrawingMode = false;
     canvas.selection = false;
     canvas.forEachObject(function (o) {
@@ -1559,7 +1650,7 @@ watch(colour, (newColor) => {
 
 // Update the pen width watcher to handle rough shapes
 watch(penWidth, (newWidth) => {
-  canvas.freeDrawingBrush.width = newWidth;
+      canvas.freeDrawingBrush.width = newWidth;
   const activeObjects = canvas.getActiveObjects();
   activeObjects.forEach((obj) => {
     console.error("Updating stroke width of object:", obj);
@@ -1616,11 +1707,11 @@ function addShape(shapeType) {
   const visibleHeight = modalContent.offsetHeight;
   const centerX = -vpt[4] / zoom + visibleWidth / (2 * zoom);
   const centerY = -vpt[5] / zoom + visibleHeight / (2 * zoom);
-  
+
   let shape;
-  
-  if (shapeType === 'rectangle') {
-    shape = createRoughShape('rectangle', {
+
+  if (shapeType === "rectangle") {
+    shape = createRoughShape("rectangle", {
       left: centerX - 50,
       top: centerY - 30,
       width: 100,
@@ -1631,8 +1722,8 @@ function addShape(shapeType) {
       roughness: roughness.value,
       fillStyle: fillStyle.value,
     });
-  } else if (shapeType === 'circle') {
-    shape = createRoughShape('circle', {
+  } else if (shapeType === "circle") {
+    shape = createRoughShape("circle", {
       left: centerX - 50,
       top: centerY - 50,
       radius: 50,
@@ -1642,7 +1733,7 @@ function addShape(shapeType) {
       roughness: roughness.value,
       fillStyle: fillStyle.value,
     });
-  } else if (shapeType === 'triangle') {
+  } else if (shapeType === "triangle") {
     // For triangle, you might want to use regular Fabric or create a custom rough triangle
     shape = new fabric.Triangle({
       left: centerX - 50,
@@ -1653,7 +1744,7 @@ function addShape(shapeType) {
       objectCaching: false,
     });
   }
-  
+
   if (shape) {
     canvas.add(shape);
     canvas.setActiveObject(shape);
@@ -1663,8 +1754,8 @@ function addShape(shapeType) {
 
 function createRoughShape(shapeType, options = {}) {
   let shape;
-  
-  if (shapeType === 'rectangle') {
+
+  if (shapeType === "rectangle") {
     shape = new fabric.Rect({
       left: options.left || 100,
       top: options.top || 100,
@@ -1674,22 +1765,23 @@ function createRoughShape(shapeType, options = {}) {
       strokeWidth: options.strokeWidth || penWidth.value,
       fill: options.fill || colour.value,
       objectCaching: false,
+      erasable: true, // Make the rectangle erasable
       // fillStyle: options.fillStyle || fillStyle.value,
       rough: true,
       roughness: options.roughness || roughness.value,
       bowing: options.bowing || 1,
       fillStyle: options.fillStyle || fillStyle.value,
     });
-    
+
     const originalRender = shape._render;
-    shape._render = function(ctx) {
+    shape._render = function (ctx) {
       if (!this.rough) {
         originalRender.call(this, ctx);
         return;
       }
-      
+
       const rc = rough.canvas(ctx.canvas);
-      
+
       // Always check if we need to regenerate the shape
       // This happens when properties change or cache is cleared
       if (!this._roughShape || this._needsRegeneration) {
@@ -1704,35 +1796,56 @@ function createRoughShape(shapeType, options = {}) {
             fill: this.fill,
             roughness: this.roughness || 1,
             bowing: this.bowing || 1,
-            fillStyle: this.fillStyle || 'solid',
+            fillStyle: this.fillStyle || "solid",
           }
         );
         this._needsRegeneration = false;
       }
-      
+
       rc.draw(this._roughShape);
     };
-    
+
     // Override the set method to detect property changes
     const originalSet = shape.set;
-    shape.set = function(key, value) {
+    shape.set = function (key, value) {
       const result = originalSet.call(this, key, value);
-      
+
       // Check if any property that affects rough rendering has changed
-      if (typeof key === 'object') {
-        const roughProps = ['stroke', 'strokeWidth', 'fill', 'roughness', 'bowing', 'fillStyle', 'width', 'height'];
-        const hasRoughPropChange = roughProps.some(prop => key.hasOwnProperty(prop));
+      if (typeof key === "object") {
+        const roughProps = [
+          "stroke",
+          "strokeWidth",
+          "fill",
+          "roughness",
+          "bowing",
+          "fillStyle",
+          "width",
+          "height",
+        ];
+        const hasRoughPropChange = roughProps.some((prop) =>
+          key.hasOwnProperty(prop)
+        );
         if (hasRoughPropChange) {
           this._needsRegeneration = true;
         }
-      } else if (['stroke', 'strokeWidth', 'fill', 'roughness', 'bowing', 'fillStyle', 'width', 'height'].includes(key)) {
+      } else if (
+        [
+          "stroke",
+          "strokeWidth",
+          "fill",
+          "roughness",
+          "bowing",
+          "fillStyle",
+          "width",
+          "height",
+        ].includes(key)
+      ) {
         this._needsRegeneration = true;
       }
-      
+
       return result;
     };
-    
-  } else if (shapeType === 'circle') {
+  } else if (shapeType === "circle") {
     shape = new fabric.Circle({
       left: options.left || 100,
       top: options.top || 100,
@@ -1746,16 +1859,16 @@ function createRoughShape(shapeType, options = {}) {
       bowing: options.bowing || 1,
       fillStyle: options.fillStyle || fillStyle.value,
     });
-    
+
     const originalRender = shape._render;
-    shape._render = function(ctx) {
+    shape._render = function (ctx) {
       if (!this.rough) {
         originalRender.call(this, ctx);
         return;
       }
-      
+
       const rc = rough.canvas(ctx.canvas);
-      
+
       if (!this._roughShape || this._needsRegeneration) {
         this._roughShape = rc.circle(0, 0, this.radius * 2, {
           stroke: this.stroke,
@@ -1763,40 +1876,59 @@ function createRoughShape(shapeType, options = {}) {
           fill: this.fill,
           roughness: this.roughness || 1,
           bowing: this.bowing || 1,
-          fillStyle: this.fillStyle || 'solid',
+          fillStyle: this.fillStyle || "solid",
         });
         this._needsRegeneration = false;
       }
-      
+
       rc.draw(this._roughShape);
     };
-    
+
     // Override the set method for circles too
     const originalSet = shape.set;
-    shape.set = function(key, value) {
+    shape.set = function (key, value) {
       const result = originalSet.call(this, key, value);
-      
-      if (typeof key === 'object') {
-        const roughProps = ['stroke', 'strokeWidth', 'fill', 'roughness', 'bowing', 'fillStyle', 'radius'];
-        const hasRoughPropChange = roughProps.some(prop => key.hasOwnProperty(prop));
+
+      if (typeof key === "object") {
+        const roughProps = [
+          "stroke",
+          "strokeWidth",
+          "fill",
+          "roughness",
+          "bowing",
+          "fillStyle",
+          "radius",
+        ];
+        const hasRoughPropChange = roughProps.some((prop) =>
+          key.hasOwnProperty(prop)
+        );
         if (hasRoughPropChange) {
           this._needsRegeneration = true;
         }
-      } else if (['stroke', 'strokeWidth', 'fill', 'roughness', 'bowing', 'fillStyle', 'radius'].includes(key)) {
+      } else if (
+        [
+          "stroke",
+          "strokeWidth",
+          "fill",
+          "roughness",
+          "bowing",
+          "fillStyle",
+          "radius",
+        ].includes(key)
+      ) {
         this._needsRegeneration = true;
       }
-      
+
       return result;
     };
   }
-  
+
   return shape;
 }
 
 // Add roughness controls
 const roughness = ref(1);
-const fillStyle = ref('hachure');
-
+const fillStyle = ref("hachure");
 
 function addText() {
   const textbox = new fabric.Textbox("Type here...", {
@@ -1810,6 +1942,7 @@ function addText() {
     cornerColor: "#ccc",
     hasBorders: true,
     hasControls: true,
+    erasable: true, // Make the textbox erasable
   });
 
   // Event listener for when the text box is clicked and edited
