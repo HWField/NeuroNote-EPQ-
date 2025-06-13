@@ -924,6 +924,12 @@ async function LoadFromBackend() {
                     obj.strokeLineJoin = "round";
                   }
                 }
+
+                if (obj.rough === true) {
+        console.error("Restoring rough shape for:", obj.type);
+        restoreRoughShape(obj);
+      }
+
               });
 
               // Force a second render after a brief delay
@@ -1132,6 +1138,12 @@ function restoreCanvasState(state) {
           obj.strokeLineJoin = "round";
         }
       }
+
+
+      // Restore rough shape functionality for shapes
+      if (obj.type === "Rect" || obj.type === "Circle" || obj.type === "Triangle") {
+        restoreRoughShape(obj);
+      }
     });
 
 
@@ -1155,8 +1167,9 @@ function restoreCanvasState(state) {
           obj.strokeLineJoin = "round";
         }
       }
+      
     });
-    
+
     }, 10);
   });
 }
@@ -1818,7 +1831,7 @@ watch(colour, (newColor) => {
       obj.set("stroke", newColor);
     } else if (obj.rough) {
       // Handle rough shapes - update properties and clear cache
-      if (obj.type === "rect" || obj.type === "circle") {
+      if (obj.type === "rect" || obj.type === "circle" || obj.type === "triangle") {
         obj.set("stroke", newColor);
         obj.set("fill", newColor);
         // Clear the cached rough shape to force regeneration
@@ -1917,14 +1930,16 @@ function addShape(shapeType) {
       fillStyle: fillStyle.value,
     });
   } else if (shapeType === "triangle") {
-    // For triangle, you might want to use regular Fabric or create a custom rough triangle
-    shape = new fabric.Triangle({
+    shape = createRoughShape("triangle", {
       left: centerX - 50,
       top: centerY - 30,
       width: 100,
       height: 100,
+      stroke: colour.value,
+      strokeWidth: penWidth.value,
       fill: colour.value,
-      objectCaching: false,
+      roughness: roughness.value,
+      fillStyle: fillStyle.value,
     });
   }
 
@@ -1948,13 +1963,24 @@ function createRoughShape(shapeType, options = {}) {
       strokeWidth: options.strokeWidth || penWidth.value,
       fill: options.fill || colour.value,
       objectCaching: false,
-      erasable: true, // Make the rectangle erasable
-      // fillStyle: options.fillStyle || fillStyle.value,
+      erasable: true,
       rough: true,
       roughness: options.roughness || roughness.value,
       bowing: options.bowing || 1,
       fillStyle: options.fillStyle || fillStyle.value,
     });
+
+    // FIXED: Use Object.assign instead of fabric.util.object.extend
+    shape.toObject = (function(toObject) {
+      return function() {
+        return Object.assign(toObject.call(this), {
+          rough: this.rough,
+          roughness: this.roughness,
+          bowing: this.bowing,
+          fillStyle: this.fillStyle
+        });
+      };
+    })(shape.toObject);
 
     const originalRender = shape._render;
     shape._render = function (ctx) {
@@ -1965,8 +1991,6 @@ function createRoughShape(shapeType, options = {}) {
 
       const rc = rough.canvas(ctx.canvas);
 
-      // Always check if we need to regenerate the shape
-      // This happens when properties change or cache is cleared
       if (!this._roughShape || this._needsRegeneration) {
         this._roughShape = rc.rectangle(
           -this.width / 2,
@@ -1988,46 +2012,21 @@ function createRoughShape(shapeType, options = {}) {
       rc.draw(this._roughShape);
     };
 
-    // Override the set method to detect property changes
     const originalSet = shape.set;
     shape.set = function (key, value) {
       const result = originalSet.call(this, key, value);
-
-      // Check if any property that affects rough rendering has changed
       if (typeof key === "object") {
-        const roughProps = [
-          "stroke",
-          "strokeWidth",
-          "fill",
-          "roughness",
-          "bowing",
-          "fillStyle",
-          "width",
-          "height",
-        ];
-        const hasRoughPropChange = roughProps.some((prop) =>
-          key.hasOwnProperty(prop)
-        );
+        const roughProps = ["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "width", "height"];
+        const hasRoughPropChange = roughProps.some((prop) => key.hasOwnProperty(prop));
         if (hasRoughPropChange) {
           this._needsRegeneration = true;
         }
-      } else if (
-        [
-          "stroke",
-          "strokeWidth",
-          "fill",
-          "roughness",
-          "bowing",
-          "fillStyle",
-          "width",
-          "height",
-        ].includes(key)
-      ) {
+      } else if (["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "width", "height"].includes(key)) {
         this._needsRegeneration = true;
       }
-
       return result;
     };
+
   } else if (shapeType === "circle") {
     shape = new fabric.Circle({
       left: options.left || 100,
@@ -2043,6 +2042,18 @@ function createRoughShape(shapeType, options = {}) {
       bowing: options.bowing || 1,
       fillStyle: options.fillStyle || fillStyle.value,
     });
+
+    // FIXED: Use Object.assign instead of fabric.util.object.extend
+    shape.toObject = (function(toObject) {
+      return function() {
+        return Object.assign(toObject.call(this), {
+          rough: this.rough,
+          roughness: this.roughness,
+          bowing: this.bowing,
+          fillStyle: this.fillStyle
+        });
+      };
+    })(shape.toObject);
 
     const originalRender = shape._render;
     shape._render = function (ctx) {
@@ -2068,46 +2079,262 @@ function createRoughShape(shapeType, options = {}) {
       rc.draw(this._roughShape);
     };
 
-    // Override the set method for circles too
     const originalSet = shape.set;
     shape.set = function (key, value) {
       const result = originalSet.call(this, key, value);
-
       if (typeof key === "object") {
-        const roughProps = [
-          "stroke",
-          "strokeWidth",
-          "fill",
-          "roughness",
-          "bowing",
-          "fillStyle",
-          "radius",
-        ];
-        const hasRoughPropChange = roughProps.some((prop) =>
-          key.hasOwnProperty(prop)
-        );
+        const roughProps = ["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "radius"];
+        const hasRoughPropChange = roughProps.some((prop) => key.hasOwnProperty(prop));
         if (hasRoughPropChange) {
           this._needsRegeneration = true;
         }
-      } else if (
-        [
-          "stroke",
-          "strokeWidth",
-          "fill",
-          "roughness",
-          "bowing",
-          "fillStyle",
-          "radius",
-        ].includes(key)
-      ) {
+      } else if (["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "radius"].includes(key)) {
         this._needsRegeneration = true;
       }
+      return result;
+    };
 
+  } else if (shapeType === "triangle") {
+    shape = new fabric.Triangle({
+      left: options.left || 100,
+      top: options.top || 100,
+      width: options.width || 100,
+      height: options.height || 100,
+      stroke: options.stroke || colour.value,
+      strokeWidth: options.strokeWidth || penWidth.value,
+      fill: options.fill || colour.value,
+      objectCaching: false,
+      rough: true,
+      erasable: true,
+      roughness: options.roughness || roughness.value,
+      bowing: options.bowing || 1,
+      fillStyle: options.fillStyle || fillStyle.value,
+    });
+
+    // FIXED: Use Object.assign instead of fabric.util.object.extend
+    shape.toObject = (function(toObject) {
+      return function() {
+        return Object.assign(toObject.call(this), {
+          rough: this.rough,
+          roughness: this.roughness,
+          bowing: this.bowing,
+          fillStyle: this.fillStyle
+        });
+      };
+    })(shape.toObject);
+
+    const originalRender = shape._render;
+    shape._render = function (ctx) {
+      if (!this.rough) {
+        originalRender.call(this, ctx);
+        return;
+      }
+
+      const rc = rough.canvas(ctx.canvas);
+
+      if (!this._roughShape || this._needsRegeneration) {
+        const halfWidth = this.width / 2;
+        const halfHeight = this.height / 2;
+        
+        const points = [
+          [0, -halfHeight],
+          [-halfWidth, halfHeight],
+          [halfWidth, halfHeight]
+        ];
+
+        this._roughShape = rc.polygon(points, {
+          stroke: this.stroke,
+          strokeWidth: this.strokeWidth,
+          fill: this.fill,
+          roughness: this.roughness || 1,
+          bowing: this.bowing || 1,
+          fillStyle: this.fillStyle || "solid",
+        });
+        this._needsRegeneration = false;
+      }
+
+      rc.draw(this._roughShape);
+    };
+
+    const originalSet = shape.set;
+    shape.set = function (key, value) {
+      const result = originalSet.call(this, key, value);
+      if (typeof key === "object") {
+        const roughProps = ["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "width", "height"];
+        const hasRoughPropChange = roughProps.some((prop) => key.hasOwnProperty(prop));
+        if (hasRoughPropChange) {
+          this._needsRegeneration = true;
+        }
+      } else if (["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "width", "height"].includes(key)) {
+        this._needsRegeneration = true;
+      }
       return result;
     };
   }
 
   return shape;
+}
+
+
+function restoreRoughShape(obj) {
+  console.error("Restoring rough shape for object:", obj.type);
+  
+  // Set the rough properties
+  obj.rough = true;
+  obj.roughness = obj.roughness || 1;
+  obj.bowing = obj.bowing || 1;
+  obj.fillStyle = obj.fillStyle || "solid";
+  obj.objectCaching = false;
+  
+  // Get the original render method - but store it properly
+  const fabricRender = obj._render.bind(obj);
+  
+  // Add the toObject extension first
+  obj.toObject = (function(toObject) {
+    return function() {
+      return Object.assign(toObject.call(this), {
+        rough: this.rough,
+        roughness: this.roughness,
+        bowing: this.bowing,
+        fillStyle: this.fillStyle
+      });
+    };
+  })(obj.toObject);
+  
+  // Restore the custom render method based on shape type
+  if (obj.type === "Rect") {
+    obj._render = function (ctx) {
+      if (!this.rough) {
+        fabricRender.call(this, ctx);
+        return;
+      }
+
+      const rc = rough.canvas(ctx.canvas);
+
+      if (!this._roughShape || this._needsRegeneration) {
+        this._roughShape = rc.rectangle(
+          -this.width / 2,
+          -this.height / 2,
+          this.width,
+          this.height,
+          {
+            stroke: this.stroke,
+            strokeWidth: this.strokeWidth,
+            fill: this.fill,
+            roughness: this.roughness || 1,
+            bowing: this.bowing || 1,
+            fillStyle: this.fillStyle || "solid",
+          }
+        );
+        this._needsRegeneration = false;
+      }
+
+      rc.draw(this._roughShape);
+    };
+  } else if (obj.type === "Circle") {
+    obj._render = function (ctx) {
+      if (!this.rough) {
+        fabricRender.call(this, ctx);
+        return;
+      }
+
+      const rc = rough.canvas(ctx.canvas);
+
+      if (!this._roughShape || this._needsRegeneration) {
+        this._roughShape = rc.circle(0, 0, this.radius * 2, {
+          stroke: this.stroke,
+          strokeWidth: this.strokeWidth,
+          fill: this.fill,
+          roughness: this.roughness || 1,
+          bowing: this.bowing || 1,
+          fillStyle: this.fillStyle || "solid",
+        });
+        this._needsRegeneration = false;
+      }
+
+      rc.draw(this._roughShape);
+    };
+  } else if (obj.type === "Triangle") {
+    obj._render = function (ctx) {
+      if (!this.rough) {
+        fabricRender.call(this, ctx);
+        return;
+      }
+
+      const rc = rough.canvas(ctx.canvas);
+
+      if (!this._roughShape || this._needsRegeneration) {
+        const halfWidth = this.width / 2;
+        const halfHeight = this.height / 2;
+        
+        const points = [
+          [0, -halfHeight],
+          [-halfWidth, halfHeight],
+          [halfWidth, halfHeight]
+        ];
+
+        this._roughShape = rc.polygon(points, {
+          stroke: this.stroke,
+          strokeWidth: this.strokeWidth,
+          fill: this.fill,
+          roughness: this.roughness || 1,
+          bowing: this.bowing || 1,
+          fillStyle: this.fillStyle || "solid",
+        });
+        this._needsRegeneration = false;
+      }
+
+      rc.draw(this._roughShape);
+    };
+  }
+
+  // Restore the set method override for property change detection
+  const originalSet = obj.set.bind(obj);
+  obj.set = function (key, value) {
+    const result = originalSet.call(this, key, value);
+
+    if (typeof key === "object") {
+      const roughProps = [
+        "stroke",
+        "strokeWidth", 
+        "fill",
+        "roughness",
+        "bowing",
+        "fillStyle",
+        "width",
+        "height",
+        "radius"
+      ];
+      const hasRoughPropChange = roughProps.some((prop) =>
+        key.hasOwnProperty(prop)
+      );
+      if (hasRoughPropChange) {
+        this._needsRegeneration = true;
+      }
+    } else if (
+      [
+        "stroke",
+        "strokeWidth",
+        "fill", 
+        "roughness",
+        "bowing",
+        "fillStyle",
+        "width",
+        "height",
+        "radius"
+      ].includes(key)
+    ) {
+      this._needsRegeneration = true;
+    }
+
+    return result;
+  };
+  
+  // Force regeneration on first load
+  obj._needsRegeneration = true;
+  canvas.renderAll();
+  canvas.requestRenderAll();
+  console.error("Rough shape restoration completed for:", obj.type);
 }
 
 // Add roughness controls
