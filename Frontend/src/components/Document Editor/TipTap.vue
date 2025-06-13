@@ -111,6 +111,8 @@ import {
   X as XIcon,
   Paintbrush as PaintbrushIcon,
   Link,
+  Undo2, 
+  Redo2,
 } from "lucide-vue-next";
 
 import { useGraphStore } from "@/stores/useGraphStore";
@@ -998,6 +1000,40 @@ const loadingVersions = ref(false);
                   <TooltipContent>Close Note</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      @click="editor.chain().focus().undo().run()"
+                      :disabled="!editor.can().undo()"
+                      class="mr-1"
+                    >
+                      <Undo2 class="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Undo</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      @click="editor.chain().focus().redo().run()"
+                      :disabled="!editor.can().redo()"
+                      class="mr-2"
+                    >
+                      <Redo2 class="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Redo</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
 
               <Separator orientation="vertical" class="h-6 mx-1" />
               <!-- Basic Text Formatting -->

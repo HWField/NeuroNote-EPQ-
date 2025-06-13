@@ -217,6 +217,41 @@
                   <TooltipContent>Close Whiteboard</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      @click="undo()"
+                      :disabled="!canUndo()"
+                      class="mr-1"
+                    >
+                      <Undo2 class="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Undo (Ctrl+Z)</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      @click="redo()"
+                      :disabled="!canRedo()"
+                      class="mr-2"
+                    >
+                      <Redo2 class="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Redo (Ctrl+Y)</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
               <Separator orientation="vertical" class="h-6 mx-1" />
 
               <!-- Eraser Button -->
@@ -635,13 +670,13 @@ import {
   Triangle,
   PlusIcon,
   Eraser,
-  Circle as circle2,
+  Circle,
   ChevronDown as ChevronDownIcon,
   TextIcon,
   Palette,
   Minus,
-  Undo,
-  Redo,
+  Undo2,
+  Redo2,
   Download,
   Trash2,
   Image,
@@ -705,6 +740,10 @@ const viewport = ref({ x: 0, y: 0, zoom: 1 });
 const background = ref("Lgrid");
 const mode = ref("auto");
 const colour = ref("red");
+const undoStack = ref([]);
+const redoStack = ref([]);
+const maxHistorySize = 50; // Limit history to prevent memory issues
+let isRestoring = false; // Flag to prevent history recording during restore
 
 if (useUserStore.theme == "dark") {
   colour.value = "white";
@@ -1033,6 +1072,103 @@ function updateNoteTitle(newTitle) {
   useTabStore().RenameTab(props.tabId, newTitle); //update tab live
 }
 
+function saveCanvasState() {
+  if (isRestoring || !canvas) return;
+
+  const currentState = JSON.stringify(canvas.toJSON());
+
+  // Don't save if state hasn't changed
+  if (
+    undoStack.value.length > 0 &&
+    undoStack.value[undoStack.value.length - 1] === currentState
+  ) {
+    return;
+  }
+
+  undoStack.value.push(currentState);
+
+  // Limit history size
+  if (undoStack.value.length > maxHistorySize) {
+    undoStack.value.shift();
+  }
+
+  // Only clear redo stack when new action is performed (not during undo/redo)
+  if (redoStack.value.length > 0) {
+    redoStack.value = [];
+  }
+}
+
+function undo() {
+  if (undoStack.value.length <= 1) return; // Keep at least one state
+
+  const currentState = undoStack.value.pop();
+  redoStack.value.push(currentState);
+
+  if (undoStack.value.length > 0) {
+    const previousState = undoStack.value[undoStack.value.length - 1];
+    restoreCanvasState(previousState);
+  }
+}
+
+function redo() {
+  if (redoStack.value.length === 0) return;
+
+  const nextState = redoStack.value.pop();
+  undoStack.value.push(nextState);
+  restoreCanvasState(nextState);
+}
+
+function restoreCanvasState(state) {
+  isRestoring = true;
+
+  canvas.loadFromJSON(state, () => {
+    // Reapply erasable property to all objects after restore
+    canvas.getObjects().forEach((obj) => {
+      obj.erasable = true;
+      if (obj.type === "path" || obj.type === "line" || obj.path) {
+        obj.objectCaching = false;
+        if (obj.strokeLineCap !== undefined) {
+          obj.strokeLineCap = "round";
+          obj.strokeLineJoin = "round";
+        }
+      }
+    });
+
+
+
+    
+
+     // Force multiple renders to ensure visibility
+     canvas.requestRenderAll();
+    
+    // Additional render after a brief delay to ensure everything appears
+    setTimeout(() => {
+      canvas.requestRenderAll();
+      isRestoring = false;
+
+      canvas.getObjects().forEach((obj) => {
+      obj.erasable = true;
+      if (obj.type === "path" || obj.type === "line" || obj.path) {
+        obj.objectCaching = false;
+        if (obj.strokeLineCap !== undefined) {
+          obj.strokeLineCap = "round";
+          obj.strokeLineJoin = "round";
+        }
+      }
+    });
+    
+    }, 10);
+  });
+}
+
+function canUndo() {
+  return undoStack.value.length > 1;
+}
+
+function canRedo() {
+  return redoStack.value.length > 0;
+}
+
 function initaliseCanvas() {
   return new Promise((resolve, reject) => {
     // Get DOM elements with proper null checks
@@ -1148,6 +1284,8 @@ function initaliseCanvas() {
 
       // Attach the sync function to the after:render event
       canvas.on("after:render", syncGridWithCanvas);
+
+
 
       canvas.on("mouse:down", function (opt) {
         const evt = opt.e;
@@ -1336,6 +1474,32 @@ function initaliseCanvas() {
           o.selectable = true;
         });
       });
+
+      canvas.on('path:created', () => {
+  if (!isRestoring) {
+    // Small delay to ensure path is fully created
+    setTimeout(() => saveCanvasState(), 50);
+  }
+});
+
+canvas.on('object:added', (e) => {
+  if (!isRestoring) {
+    setTimeout(() => saveCanvasState(), 50);
+  }
+});
+
+canvas.on('object:removed', (e) => {
+  if (!isRestoring) {
+    setTimeout(() => saveCanvasState(), 50);
+  }
+});
+
+canvas.on('object:modified', () => {
+  if (!isRestoring) {
+    setTimeout(() => saveCanvasState(), 50);
+  }
+});
+
       resolve(canvas);
     } catch (error) {
       console.error("Error initializing canvas:", error);
@@ -1408,6 +1572,19 @@ function HandleWhiteboardClick(event) {
     });
     canvas.setActiveObject(sel);
     canvas.requestRenderAll();
+  } else if (
+    (event.metaKey || event.ctrlKey) &&
+    event.key === "z" &&
+    !event.shiftKey
+  ) {
+    event.preventDefault();
+    undo();
+  } else if (
+    (event.metaKey || event.ctrlKey) &&
+    (event.key === "y" || (event.key === "z" && event.shiftKey))
+  ) {
+    event.preventDefault();
+    redo();
   }
 }
 
@@ -1418,6 +1595,13 @@ onMounted(async () => {
 
   if (loaded) {
     // Only enable editing if not in view-only mode
+
+        
+    // Save initial state to history
+    setTimeout(() => {
+      saveCanvasState();
+    }, 100);
+
     if (!props.viewOnly) {
       console.error("#########Edit mode enabled");
       useUserStore().addToRecentNotes(props.noteId);
@@ -1563,7 +1747,6 @@ watch(mode, (newMode) => {
     };
     canvas.selection = false;
   } else if (newMode == "erase") {
-    
     // Create the EraserBrush from erase2d
     const eraser = new EraserBrush(canvas);
     //eraser.width = 30;
@@ -1598,13 +1781,13 @@ watch(mode, (newMode) => {
       // commit erasing manually
       const pathPerObjectMap = await eraser.commit({ path, targets });
 
-  //     const committedEraser = circle.clipPath instanceof ClippingGroup;
+      //     const committedEraser = circle.clipPath instanceof ClippingGroup;
 
-  //     object.clipPath instanceof ClippingGroup
-  // ? object.clipPath.remove(
-  //     object.clipPath.item(0) /** the existing clip path is first */
-  //   )
-  // : delete object.clipPath;
+      //     object.clipPath instanceof ClippingGroup
+      // ? object.clipPath.remove(
+      //     object.clipPath.item(0) /** the existing clip path is first */
+      //   )
+      // : delete object.clipPath;
     });
 
     canvas.freeDrawingBrush = eraser;
@@ -1650,7 +1833,7 @@ watch(colour, (newColor) => {
 
 // Update the pen width watcher to handle rough shapes
 watch(penWidth, (newWidth) => {
-      canvas.freeDrawingBrush.width = newWidth;
+  canvas.freeDrawingBrush.width = newWidth;
   const activeObjects = canvas.getActiveObjects();
   activeObjects.forEach((obj) => {
     console.error("Updating stroke width of object:", obj);
@@ -1855,6 +2038,7 @@ function createRoughShape(shapeType, options = {}) {
       fill: options.fill || colour.value,
       objectCaching: false,
       rough: true,
+      erasable: true,
       roughness: options.roughness || roughness.value,
       bowing: options.bowing || 1,
       fillStyle: options.fillStyle || fillStyle.value,
