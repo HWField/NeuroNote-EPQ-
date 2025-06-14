@@ -254,24 +254,6 @@
 
               <Separator orientation="vertical" class="h-6 mx-1" />
 
-              <!-- Eraser Button -->
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      :variant="mode === 'erase' ? 'default' : 'ghost'"
-                      size="icon"
-                      @click="mode = mode === 'erase' ? 'type' : 'erase'"
-                      class="text-orange-600"
-                    >
-                      <Eraser class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Eraser</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <Separator orientation="vertical" class="h-6 mx-1" />
-
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -295,27 +277,40 @@
               <div
                 class="inline-flex rounded-md shadow-sm border overflow-hidden"
               >
-                <!-- Auto Button -->
-                <Button
-                  :variant="mode === 'auto' ? 'default' : 'ghost'"
-                  size="sm"
-                  class="rounded-none border-r px-3"
-                  @click="mode = mode === 'auto' ? 'type' : 'auto'"
-                >
-                  <Bot class="h-4 w-4 mr-1" />
-                  Auto
-                </Button>
-
-                <!-- Manual Draw Button -->
+                <!-- Erase Draw Button -->
                 <Button
                   :variant="mode === 'draw' ? 'default' : 'ghost'"
                   :class="{ 'opacity-50 ': mode === 'auto' }"
                   size="sm"
                   class="rounded-none px-3"
-                  @click="mode = mode === 'draw' ? 'type' : 'draw'"
+                  @click="mode = 'draw'"
                 >
                   <Pencil class="h-4 w-4 mr-1" />
                   Draw
+                </Button>
+
+                <!-- Erase Button -->
+                <Button
+                  :variant="mode === 'erase' ? 'default' : 'ghost'"
+                  :class="{ 'opacity-50 ': mode === 'auto' }"
+                  size="sm"
+                  class="rounded-none px-3"
+                  @click="mode = 'erase'"
+                >
+                  <EraserIcon class="h-4 w-4 mr-1" />
+                  Erase
+                </Button>
+
+                <!-- Select Draw Button -->
+                <Button
+                  :variant="mode === 'select' ? 'default' : 'ghost'"
+                  :class="{ 'opacity-50 ': mode === 'auto' }"
+                  size="sm"
+                  class="rounded-none px-3"
+                  @click="mode = 'select'"
+                >
+                  <Hand class="h-4 w-4 mr-1" />
+                  Select
                 </Button>
               </div>
 
@@ -633,7 +628,15 @@ import { useGraphStore } from "@/stores/useGraphStore";
 import { useUserStore } from "@/stores/useUserStore";
 import Loading from "@/components/Loading.vue";
 import NoteHeader from "@/components/Document Editor/NoteHeader.vue";
-import { Bot, FileText, Home, ImagePlus, Info } from "lucide-vue-next";
+import {
+  Bot,
+  EraserIcon,
+  FileText,
+  Hand,
+  Home,
+  ImagePlus,
+  Info,
+} from "lucide-vue-next";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
@@ -738,7 +741,7 @@ const { toast } = useToast();
 const isLoading = ref(false);
 const viewport = ref({ x: 0, y: 0, zoom: 1 });
 const background = ref("Lgrid");
-const mode = ref("auto");
+const mode = ref("draw");
 const colour = ref("red");
 const undoStack = ref([]);
 const redoStack = ref([]);
@@ -926,10 +929,9 @@ async function LoadFromBackend() {
                 }
 
                 if (obj.rough === true) {
-        console.error("Restoring rough shape for:", obj.type);
-        restoreRoughShape(obj);
-      }
-
+                  console.error("Restoring rough shape for:", obj.type);
+                  restoreRoughShape(obj);
+                }
               });
 
               // Force a second render after a brief delay
@@ -1139,37 +1141,34 @@ function restoreCanvasState(state) {
         }
       }
 
-
       // Restore rough shape functionality for shapes
-      if (obj.type === "Rect" || obj.type === "Circle" || obj.type === "Triangle") {
+      if (
+        obj.type === "Rect" ||
+        obj.type === "Circle" ||
+        obj.type === "Triangle"
+      ) {
         restoreRoughShape(obj);
       }
     });
 
+    // Force multiple renders to ensure visibility
+    canvas.requestRenderAll();
 
-
-    
-
-     // Force multiple renders to ensure visibility
-     canvas.requestRenderAll();
-    
     // Additional render after a brief delay to ensure everything appears
     setTimeout(() => {
       canvas.requestRenderAll();
       isRestoring = false;
 
       canvas.getObjects().forEach((obj) => {
-      obj.erasable = true;
-      if (obj.type === "path" || obj.type === "line" || obj.path) {
-        obj.objectCaching = false;
-        if (obj.strokeLineCap !== undefined) {
-          obj.strokeLineCap = "round";
-          obj.strokeLineJoin = "round";
+        obj.erasable = true;
+        if (obj.type === "path" || obj.type === "line" || obj.path) {
+          obj.objectCaching = false;
+          if (obj.strokeLineCap !== undefined) {
+            obj.strokeLineCap = "round";
+            obj.strokeLineJoin = "round";
+          }
         }
-      }
-      
-    });
-
+      });
     }, 10);
   });
 }
@@ -1298,14 +1297,11 @@ function initaliseCanvas() {
       // Attach the sync function to the after:render event
       canvas.on("after:render", syncGridWithCanvas);
 
-
-
       canvas.on("mouse:down", function (opt) {
         const evt = opt.e;
         if (evt.button === 1) {
           // Middle mouse button pressed
           isPanning = true;
-          // canvas.isDrawingMode = false; // Temporarily disable drawing
           lastPosX = evt.clientX;
           lastPosY = evt.clientY;
         }
@@ -1356,162 +1352,258 @@ function initaliseCanvas() {
         evt.preventDefault(); // Prevent default scrolling behavior
       });
 
-      //mode switching if auto
-      canvas.wrapperEl.addEventListener("pointerdown", (e) => {
-        if (mode.value == "auto") {
-          if (e.pointerType === "pen") {
-            canvas.isDrawingMode = true;
-            canvas.selection = false;
-          } else if (e.pointerType === "touch" || e.pointerType === "mouse") {
-            canvas.isDrawingMode = false;
-            canvas.selection = true;
-          }
-        }
-      });
+      // Touch and mouse panning are used for movement, pen and mouse down for interaction
+      // canvas.wrapperEl.addEventListener("pointerdown", (e) => {
+      //   if (mode.value == "draw" || mode.value == "erase") {
+      //     if (e.pointerType === "pen") {
+      //       canvas.isDrawingMode = true;
+      //       canvas.selection = false;
+      //     } else if (e.pointerType === "touch") {
+      //       canvas.isDrawingMode = false;
+      //       canvas.selection = false;
+      //       canvas.forEachObject(function (o) {
+      //         o.selectable = false;
+      //       });
+      //     } else {
+      //       // mouse pointer
+      //       canvas.isDrawingMode = true;
+      //       canvas.selection = false;
+      //     }
+      //   } else if (mode.value == "select") {
+      //     if (e.pointerType === "pen") {
+      //       canvas.isDrawingMode = false;
+      //       canvas.selection = true;
+      //       canvas.forEachObject(function (o) {
+      //         o.selectable = true;
+      //       });
+      //     } else if (e.pointerType === "touch") {
+      //       canvas.isDrawingMode = false;
+      //       canvas.selection = false;
+      //       canvas.forEachObject(function (o) {
+      //         o.selectable = false;
+      //       });
+      //     } else {
+      //       // mouse pointer
+      //       canvas.isDrawingMode = false;
+      //       canvas.selection = true;
+      //     }
+      //   }
+      // });
 
+      // hammer initialisation for pinch and pan gestures on touch screen
       const hammer = new Hammer(canvas.wrapperEl);
-      hammer
-        .get("pan")
-        .set({ direction: Hammer.DIRECTION_ALL, pointers: 2, threshold: 10 }); //threshod 10 to minimise accidental pans
-      hammer.get("pinch").set({ enable: true });
-      hammer.get("press").set({ time: 0 });
-      hammer.get("pinch").recognizeWith(hammer.get("pan"));
+hammer
+  .get("pan")
+  .set({ direction: Hammer.DIRECTION_ALL, pointers: 1, threshold: 10 }); //threshold 10 to minimise accidental pans
+hammer.get("pinch").set({ enable: true });
+hammer.get("press").set({ time: 0 });
+hammer.get("pinch").recognizeWith(hammer.get("pan"));
+hammer.get("pan").recognizeWith(hammer.get("pinch"));
 
-      let lastScale = 1;
+// Track active pointer types
+let activePointerTypes = new Set();
 
-      hammer.on("pinchstart", function (e) {
-        canvas._zoomStartScale = canvas.getZoom(); // Record the initial zoom level
-        lastScale = 1; // Reset the last scale for the new gesture
-
-        e.preventDefault();
-        canvas.isDrawingMode = false;
-        canvas.selection = false;
-        canvas.forEachObject(function (o) {
-          o.lockMovementX = true;
-          o.lockMovementY = true;
-          o.selectable = false;
-        });
+// Listen for all pointer events to track what's currently active
+canvas.wrapperEl.addEventListener("pointerdown", (e) => {
+  activePointerTypes.add(e.pointerType);
+  
+  if (mode.value == "draw" || mode.value == "erase") {
+    if (e.pointerType === "pen") {
+      canvas.isDrawingMode = true;
+      canvas.selection = false;
+    } else if (e.pointerType === "touch") {
+      canvas.isDrawingMode = false;
+      canvas.selection = false;
+      canvas.forEachObject(function (o) {
+        o.selectable = false;
       });
-
-      hammer.on("pinchmove", function (e) {
-        const scaleChange = e.scale / lastScale; // Calculate incremental scale change
-        lastScale = e.scale; // Update last scale for the next move event
-
-        const newZoom = canvas.getZoom() * scaleChange; // Apply incremental zoom
-        const boundedZoom = Math.min(Math.max(newZoom, 0.1), 50); // Clamp zoom level
-
-        const center = { x: e.center.x, y: e.center.y }; // Zoom relative to touch center
-        canvas.zoomToPoint(center, boundedZoom); // Apply zoom at the given point
-
-        // Redraw grid and canvas
-        drawGrid(
-          canvas.viewportTransform[4],
-          canvas.viewportTransform[5],
-          boundedZoom
-        );
-        canvas.requestRenderAll();
+    } else {
+      // mouse pointer
+      canvas.isDrawingMode = true;
+      canvas.selection = false;
+    }
+  } else if (mode.value == "select") {
+    if (e.pointerType === "pen") {
+      canvas.isDrawingMode = false;
+      canvas.selection = true;
+      canvas.forEachObject(function (o) {
+        o.selectable = true;
       });
+    } else if (e.pointerType === "touch") {
+      canvas.isDrawingMode = false;
+      canvas.selection = false;
+      canvas.forEachObject(function (o) {
+        o.selectable = false;
+      });
+    } else {
+      // mouse pointer
+      canvas.isDrawingMode = false;
+      canvas.selection = true;
+    }
+  }
+});
 
-      hammer.on("pinchend", function () {
-        lastScale = 1; // Reset scale tracking after the pinch gesture ends
-        //restore canvas interaction
-        if (mode.value == "draw") {
-          canvas.isDrawingMode = true;
+canvas.wrapperEl.addEventListener("pointerup", (e) => {
+  activePointerTypes.delete(e.pointerType);
+});
+
+canvas.wrapperEl.addEventListener("pointercancel", (e) => {
+  activePointerTypes.delete(e.pointerType);
+});
+
+// Helper function to check if pen is currently active
+const isPenActive = () => activePointerTypes.has("pen");
+
+let lastScale = 1;
+
+hammer.on("pinchstart", function (e) {
+  // Only respond to touch input, ignore if pen is active
+  if (isPenActive()) {
+    console.error("Pinch blocked - pen is active");
+    return;
+  }
+  
+  console.error("Pinch start detected");
+  canvas._zoomStartScale = canvas.getZoom();
+  lastScale = 1;
+
+  e.preventDefault();
+  canvas.isDrawingMode = false;
+  canvas.selection = false;
+  canvas.forEachObject(function (o) {
+    o.lockMovementX = true;
+    o.lockMovementY = true;
+    o.selectable = false;
+  });
+});
+
+hammer.on("pinchmove", function (e) {
+  // Only respond to touch input, ignore if pen is active
+  if (isPenActive()) {
+    return;
+  }
+  
+  console.error("Pinch move detected");
+  const scaleChange = e.scale / lastScale;
+  lastScale = e.scale;
+
+  const newZoom = canvas.getZoom() * scaleChange;
+  const boundedZoom = Math.min(Math.max(newZoom, 0.1), 50);
+
+  const center = { x: e.center.x, y: e.center.y };
+  canvas.zoomToPoint(center, boundedZoom);
+
+  drawGrid(
+    canvas.viewportTransform[4],
+    canvas.viewportTransform[5],
+    boundedZoom
+  );
+  canvas.requestRenderAll();
+});
+
+hammer.on("pinchend", function () {
+  // Only respond to touch input, ignore if pen is active
+  if (isPenActive()) {
+    return;
+  }
+  
+  canvas.forEachObject(function (o) {
+    o.lockMovementX = false;
+    o.lockMovementY = false;
+    o.selectable = true;
+  });
+});
+
+let lastDeltaX = 0;
+let lastDeltaY = 0;
+
+hammer.on("panstart", function (e) {
+  // Only respond to touch input, ignore if pen is active
+  if (isPenActive()) {
+    console.error("Pan blocked - pen is active");
+    return;
+  }
+  
+  console.error("Pan started");
+  e.preventDefault();
+  canvas.isDrawingMode = false;
+  canvas.selection = false;
+  canvas.forEachObject(function (o) {
+    o.lockMovementX = true;
+    o.lockMovementY = true;
+    o.selectable = false;
+  });
+});
+
+hammer.on("panmove", function (e) {
+  // Only respond to touch input, ignore if pen is active
+  if (isPenActive()) {
+    return;
+  }
+  
+  console.error("Pan move detected");
+  e.preventDefault();
+  canvas.isDrawingMode = false;
+  canvas.selection = false;
+  canvas.forEachObject(function (o) {
+    o.lockMovementX = true;
+    o.lockMovementY = true;
+    o.selectable = false;
+  });
+
+  const vpt = canvas.viewportTransform;
+  const deltaX = e.deltaX - lastDeltaX;
+  const deltaY = e.deltaY - lastDeltaY;
+  lastDeltaX = e.deltaX;
+  lastDeltaY = e.deltaY;
+
+  const movementScale = 1;
+  vpt[4] += deltaX * movementScale;
+  vpt[5] += deltaY * movementScale;
+
+  canvas.requestRenderAll();
+  drawGrid(vpt[4], vpt[5], canvas.getZoom());
+});
+
+hammer.on("panend", function () {
+  // Only respond to touch input, ignore if pen is active
+  if (isPenActive()) {
+    return;
+  }
+  
+  lastDeltaX = 0;
+  lastDeltaY = 0;
+  canvas.forEachObject(function (o) {
+    o.lockMovementX = false;
+    o.lockMovementY = false;
+    o.selectable = true;
+  });
+});
+
+      canvas.on("path:created", () => {
+        if (!isRestoring) {
+          // Small delay to ensure path is fully created
+          setTimeout(() => saveCanvasState(), 50);
         }
-        canvas.selection = true;
-        canvas.forEachObject(function (o) {
-          o.lockMovementX = false;
-          o.lockMovementY = false;
-          o.selectable = true;
-        });
       });
 
-      let lastDeltaX = 0;
-      let lastDeltaY = 0;
-
-      hammer.on("panstart", function (e) {
-        e.preventDefault();
-        canvas.isDrawingMode = false;
-        canvas.selection = false;
-        canvas.forEachObject(function (o) {
-          o.lockMovementX = true;
-          o.lockMovementY = true;
-          o.selectable = false;
-        });
-      });
-
-      hammer.on("panmove", function (e) {
-        e.preventDefault();
-        canvas.isDrawingMode = false;
-        canvas.selection = false;
-        canvas.forEachObject(function (o) {
-          o.lockMovementX = true;
-          o.lockMovementY = true;
-          o.selectable = false;
-        });
-
-        const vpt = canvas.viewportTransform;
-
-        // Calculate the incremental delta values
-        const deltaX = e.deltaX - lastDeltaX;
-        const deltaY = e.deltaY - lastDeltaY;
-
-        // Update last delta values
-        lastDeltaX = e.deltaX;
-        lastDeltaY = e.deltaY;
-
-        // Adjust the movement scale (optional for smoothing)
-        const movementScale = 1;
-
-        // Apply panning movement incrementally
-        vpt[4] += deltaX * movementScale;
-        vpt[5] += deltaY * movementScale;
-
-        // Re-render the canvas with the new viewport transform
-        canvas.requestRenderAll();
-        drawGrid(vpt[4], vpt[5], canvas.getZoom()); // Redraw grid during panning
-      });
-
-      hammer.on("panend", function () {
-        // Reset last delta values when the pan gesture ends
-        lastDeltaX = 0;
-        lastDeltaY = 0;
-        //restore canvas interaction
-        if (mode.value == "draw") {
-          canvas.isDrawingMode = true;
+      canvas.on("object:added", (e) => {
+        if (!isRestoring) {
+          setTimeout(() => saveCanvasState(), 50);
         }
-        canvas.selection = true;
-        canvas.forEachObject(function (o) {
-          o.lockMovementX = false;
-          o.lockMovementY = false;
-          o.selectable = true;
-        });
       });
 
-      canvas.on('path:created', () => {
-  if (!isRestoring) {
-    // Small delay to ensure path is fully created
-    setTimeout(() => saveCanvasState(), 50);
-  }
-});
+      canvas.on("object:removed", (e) => {
+        if (!isRestoring) {
+          setTimeout(() => saveCanvasState(), 50);
+        }
+      });
 
-canvas.on('object:added', (e) => {
-  if (!isRestoring) {
-    setTimeout(() => saveCanvasState(), 50);
-  }
-});
-
-canvas.on('object:removed', (e) => {
-  if (!isRestoring) {
-    setTimeout(() => saveCanvasState(), 50);
-  }
-});
-
-canvas.on('object:modified', () => {
-  if (!isRestoring) {
-    setTimeout(() => saveCanvasState(), 50);
-  }
-});
+      canvas.on("object:modified", () => {
+        if (!isRestoring) {
+          setTimeout(() => saveCanvasState(), 50);
+        }
+      });
 
       resolve(canvas);
     } catch (error) {
@@ -1552,10 +1644,10 @@ function HandleWhiteboardClick(event) {
     event.preventDefault(); // Prevent default tab behavior
     // Toggle between draw and type mode
 
-    if (mode.value === "type") {
+    if (mode.value === "erase") {
       mode.value = "draw";
     } else {
-      mode.value = "type";
+      mode.value = "erase";
     }
   } else if (event.key === "Enter") {
     event.preventDefault(); // Prevent default enter behavior
@@ -1609,7 +1701,6 @@ onMounted(async () => {
   if (loaded) {
     // Only enable editing if not in view-only mode
 
-        
     // Save initial state to history
     setTimeout(() => {
       saveCanvasState();
@@ -1629,7 +1720,9 @@ onMounted(async () => {
       mode.value = "view";
       canvas.isDrawingMode = true;
       canvas.selection = false;
+      console.error("#########handling intercations now");
       canvas.forEachObject(function (e) {
+        console.error("Disabling interaction for object:", e.type);
         e.selectable = false;
         e.evented = false;
         e.target.lockSkewingY = true;
@@ -1743,7 +1836,6 @@ function drawGrid(offsetX = 0, offsetY = 0, zoom = 1) {
 
 watch(mode, (newMode) => {
   if (newMode == "draw") {
-    canvas.isDrawingMode = true;
     canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
     canvas.freeDrawingBrush.width = penWidth.value;
     canvas.freeDrawingBrush.color = colour.value;
@@ -1793,23 +1885,11 @@ watch(mode, (newMode) => {
 
       // commit erasing manually
       const pathPerObjectMap = await eraser.commit({ path, targets });
-
-      //     const committedEraser = circle.clipPath instanceof ClippingGroup;
-
-      //     object.clipPath instanceof ClippingGroup
-      // ? object.clipPath.remove(
-      //     object.clipPath.item(0) /** the existing clip path is first */
-      //   )
-      // : delete object.clipPath;
     });
 
     canvas.freeDrawingBrush = eraser;
-    canvas.isDrawingMode = true;
 
     console.log("EraserBrush activated");
-  } else if (newMode == "type") {
-    canvas.isDrawingMode = false;
-    canvas.selection = true;
   } else if (newMode == "view") {
     console.log("#########View-only mode enabled");
     canvas.isDrawingMode = false;
@@ -1831,7 +1911,11 @@ watch(colour, (newColor) => {
       obj.set("stroke", newColor);
     } else if (obj.rough) {
       // Handle rough shapes - update properties and clear cache
-      if (obj.type === "rect" || obj.type === "circle" || obj.type === "triangle") {
+      if (
+        obj.type === "rect" ||
+        obj.type === "circle" ||
+        obj.type === "triangle"
+      ) {
         obj.set("stroke", newColor);
         obj.set("fill", newColor);
         // Clear the cached rough shape to force regeneration
@@ -1971,13 +2055,13 @@ function createRoughShape(shapeType, options = {}) {
     });
 
     // FIXED: Use Object.assign instead of fabric.util.object.extend
-    shape.toObject = (function(toObject) {
-      return function() {
+    shape.toObject = (function (toObject) {
+      return function () {
         return Object.assign(toObject.call(this), {
           rough: this.rough,
           roughness: this.roughness,
           bowing: this.bowing,
-          fillStyle: this.fillStyle
+          fillStyle: this.fillStyle,
         });
       };
     })(shape.toObject);
@@ -2016,17 +2100,38 @@ function createRoughShape(shapeType, options = {}) {
     shape.set = function (key, value) {
       const result = originalSet.call(this, key, value);
       if (typeof key === "object") {
-        const roughProps = ["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "width", "height"];
-        const hasRoughPropChange = roughProps.some((prop) => key.hasOwnProperty(prop));
+        const roughProps = [
+          "stroke",
+          "strokeWidth",
+          "fill",
+          "roughness",
+          "bowing",
+          "fillStyle",
+          "width",
+          "height",
+        ];
+        const hasRoughPropChange = roughProps.some((prop) =>
+          key.hasOwnProperty(prop)
+        );
         if (hasRoughPropChange) {
           this._needsRegeneration = true;
         }
-      } else if (["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "width", "height"].includes(key)) {
+      } else if (
+        [
+          "stroke",
+          "strokeWidth",
+          "fill",
+          "roughness",
+          "bowing",
+          "fillStyle",
+          "width",
+          "height",
+        ].includes(key)
+      ) {
         this._needsRegeneration = true;
       }
       return result;
     };
-
   } else if (shapeType === "circle") {
     shape = new fabric.Circle({
       left: options.left || 100,
@@ -2044,13 +2149,13 @@ function createRoughShape(shapeType, options = {}) {
     });
 
     // FIXED: Use Object.assign instead of fabric.util.object.extend
-    shape.toObject = (function(toObject) {
-      return function() {
+    shape.toObject = (function (toObject) {
+      return function () {
         return Object.assign(toObject.call(this), {
           rough: this.rough,
           roughness: this.roughness,
           bowing: this.bowing,
-          fillStyle: this.fillStyle
+          fillStyle: this.fillStyle,
         });
       };
     })(shape.toObject);
@@ -2083,17 +2188,36 @@ function createRoughShape(shapeType, options = {}) {
     shape.set = function (key, value) {
       const result = originalSet.call(this, key, value);
       if (typeof key === "object") {
-        const roughProps = ["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "radius"];
-        const hasRoughPropChange = roughProps.some((prop) => key.hasOwnProperty(prop));
+        const roughProps = [
+          "stroke",
+          "strokeWidth",
+          "fill",
+          "roughness",
+          "bowing",
+          "fillStyle",
+          "radius",
+        ];
+        const hasRoughPropChange = roughProps.some((prop) =>
+          key.hasOwnProperty(prop)
+        );
         if (hasRoughPropChange) {
           this._needsRegeneration = true;
         }
-      } else if (["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "radius"].includes(key)) {
+      } else if (
+        [
+          "stroke",
+          "strokeWidth",
+          "fill",
+          "roughness",
+          "bowing",
+          "fillStyle",
+          "radius",
+        ].includes(key)
+      ) {
         this._needsRegeneration = true;
       }
       return result;
     };
-
   } else if (shapeType === "triangle") {
     shape = new fabric.Triangle({
       left: options.left || 100,
@@ -2112,13 +2236,13 @@ function createRoughShape(shapeType, options = {}) {
     });
 
     // FIXED: Use Object.assign instead of fabric.util.object.extend
-    shape.toObject = (function(toObject) {
-      return function() {
+    shape.toObject = (function (toObject) {
+      return function () {
         return Object.assign(toObject.call(this), {
           rough: this.rough,
           roughness: this.roughness,
           bowing: this.bowing,
-          fillStyle: this.fillStyle
+          fillStyle: this.fillStyle,
         });
       };
     })(shape.toObject);
@@ -2135,11 +2259,11 @@ function createRoughShape(shapeType, options = {}) {
       if (!this._roughShape || this._needsRegeneration) {
         const halfWidth = this.width / 2;
         const halfHeight = this.height / 2;
-        
+
         const points = [
           [0, -halfHeight],
           [-halfWidth, halfHeight],
-          [halfWidth, halfHeight]
+          [halfWidth, halfHeight],
         ];
 
         this._roughShape = rc.polygon(points, {
@@ -2160,12 +2284,34 @@ function createRoughShape(shapeType, options = {}) {
     shape.set = function (key, value) {
       const result = originalSet.call(this, key, value);
       if (typeof key === "object") {
-        const roughProps = ["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "width", "height"];
-        const hasRoughPropChange = roughProps.some((prop) => key.hasOwnProperty(prop));
+        const roughProps = [
+          "stroke",
+          "strokeWidth",
+          "fill",
+          "roughness",
+          "bowing",
+          "fillStyle",
+          "width",
+          "height",
+        ];
+        const hasRoughPropChange = roughProps.some((prop) =>
+          key.hasOwnProperty(prop)
+        );
         if (hasRoughPropChange) {
           this._needsRegeneration = true;
         }
-      } else if (["stroke", "strokeWidth", "fill", "roughness", "bowing", "fillStyle", "width", "height"].includes(key)) {
+      } else if (
+        [
+          "stroke",
+          "strokeWidth",
+          "fill",
+          "roughness",
+          "bowing",
+          "fillStyle",
+          "width",
+          "height",
+        ].includes(key)
+      ) {
         this._needsRegeneration = true;
       }
       return result;
@@ -2175,32 +2321,31 @@ function createRoughShape(shapeType, options = {}) {
   return shape;
 }
 
-
 function restoreRoughShape(obj) {
   console.error("Restoring rough shape for object:", obj.type);
-  
+
   // Set the rough properties
   obj.rough = true;
   obj.roughness = obj.roughness || 1;
   obj.bowing = obj.bowing || 1;
   obj.fillStyle = obj.fillStyle || "solid";
   obj.objectCaching = false;
-  
+
   // Get the original render method - but store it properly
   const fabricRender = obj._render.bind(obj);
-  
+
   // Add the toObject extension first
-  obj.toObject = (function(toObject) {
-    return function() {
+  obj.toObject = (function (toObject) {
+    return function () {
       return Object.assign(toObject.call(this), {
         rough: this.rough,
         roughness: this.roughness,
         bowing: this.bowing,
-        fillStyle: this.fillStyle
+        fillStyle: this.fillStyle,
       });
     };
   })(obj.toObject);
-  
+
   // Restore the custom render method based on shape type
   if (obj.type === "Rect") {
     obj._render = function (ctx) {
@@ -2266,11 +2411,11 @@ function restoreRoughShape(obj) {
       if (!this._roughShape || this._needsRegeneration) {
         const halfWidth = this.width / 2;
         const halfHeight = this.height / 2;
-        
+
         const points = [
           [0, -halfHeight],
           [-halfWidth, halfHeight],
-          [halfWidth, halfHeight]
+          [halfWidth, halfHeight],
         ];
 
         this._roughShape = rc.polygon(points, {
@@ -2296,14 +2441,14 @@ function restoreRoughShape(obj) {
     if (typeof key === "object") {
       const roughProps = [
         "stroke",
-        "strokeWidth", 
+        "strokeWidth",
         "fill",
         "roughness",
         "bowing",
         "fillStyle",
         "width",
         "height",
-        "radius"
+        "radius",
       ];
       const hasRoughPropChange = roughProps.some((prop) =>
         key.hasOwnProperty(prop)
@@ -2315,13 +2460,13 @@ function restoreRoughShape(obj) {
       [
         "stroke",
         "strokeWidth",
-        "fill", 
+        "fill",
         "roughness",
         "bowing",
         "fillStyle",
         "width",
         "height",
-        "radius"
+        "radius",
       ].includes(key)
     ) {
       this._needsRegeneration = true;
@@ -2329,7 +2474,7 @@ function restoreRoughShape(obj) {
 
     return result;
   };
-  
+
   // Force regeneration on first load
   obj._needsRegeneration = true;
   canvas.renderAll();
@@ -2374,7 +2519,7 @@ function deleteSelected() {
   canvas.discardActiveObject().renderAll();
 }
 
-import { Camera } from "lucide-vue-next"; // You already have UploadIcon
+import { Camera, UploadIcon } from "lucide-vue-next"; // You already have UploadIcon
 
 // Add these refs
 const cameraInputRef = ref(null);
@@ -2384,52 +2529,9 @@ const triggerCamera = () => {
   cameraInputRef.value.click();
 };
 
-// Handle the photo capture
-const handleCameraCapture = () => {
-  if (cameraInputRef.value && cameraInputRef.value.files?.length) {
-    const file = cameraInputRef.value.files[0];
-    uploadImageFile(file)
-      .then(() => {
-        closeImageModal();
-        // Reset input so the same file can be selected again
-        cameraInputRef.value.value = "";
-      })
-      .catch((error) => console.error("Error uploading camera image:", error));
-  }
-};
-
 const imageUrlInput = ref("");
 const showImageModal = ref(false);
 const fileInputRef = ref(null);
-
-const uploadImageFile = (file) => {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  // Use your existing endpoint
-  return axios
-    .post("/upload-file", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    })
-    .then((response) => {
-      if (response.data && response.data.url) {
-        // Insert the image at at the middle of the fabric canvas and select it use src - src: getBaseUrl() + response.data.url
-        const fullImageUrl = getBaseUrl() + response.data.url;
-        console.error("Image URL:", fullImageUrl);
-        addImageToCanvas(fullImageUrl);
-        return response.data.url; // Return something for chaining
-      } else {
-        console.error("Invalid response format:", response.data);
-        throw new Error("Invalid response format");
-      }
-    })
-    .catch((error) => {
-      console.error("Error uploading image:", error);
-      throw error; // Re-throw to propagate the error
-    });
-};
 
 const openImageModal = () => {
   imageUrlInput.value = "";
@@ -2441,28 +2543,84 @@ const closeImageModal = () => {
   imageUrlInput.value = "";
 };
 
-const handleFileSelected = () => {
-  if (fileInputRef.value && fileInputRef.value.files?.length) {
-    const file = fileInputRef.value.files[0];
-    uploadImageFile(file)
-      .then(() => {
-        closeImageModal();
-      })
-      .catch((error) => {
-        console.error("Error in file upload:", error);
-        // You might want to show an error message to the user here
-      });
+const uploadImageFile = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const response = await axios.post("/upload-file", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    if (response.data && response.data.url) {
+      const fullImageUrl = getBaseUrl() + response.data.url;
+      console.error("Image URL:", fullImageUrl);
+      await addImageToCanvas(fullImageUrl); // Add await here
+      return response.data.url;
+    } else {
+      console.error("Invalid response format:", response.data);
+      throw new Error("Invalid response format");
+    }
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    throw error;
   }
 };
 
-const handleUrlSubmit = () => {
-  if (imageUrlInput.value) {
-    // add the selected url as an image to center of fabric src - src: getBaseUrl() + response.data.url
-    addImageToCanvas(imageUrlInput.value);
-    closeImageModal();
+const handleFileSelected = async () => {
+  if (fileInputRef.value && fileInputRef.value.files?.length) {
+    const file = fileInputRef.value.files[0];
+    try {
+      await uploadImageFile(file);
+      closeImageModal();
+    } catch (error) {
+      console.error("Error in file upload:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload image",
+        variant: "destructive",
+      });
+    }
   }
 };
-const addImageToCanvas = (imageUrl) => {
+
+const handleCameraCapture = async () => {
+  if (cameraInputRef.value && cameraInputRef.value.files?.length) {
+    const file = cameraInputRef.value.files[0];
+    try {
+      await uploadImageFile(file);
+      closeImageModal();
+      // Reset input so the same file can be selected again
+      cameraInputRef.value.value = "";
+    } catch (error) {
+      console.error("Error uploading camera image:", error);
+      toast({
+        title: "Error",
+        description: "Failed to upload camera image",
+        variant: "destructive",
+      });
+    }
+  }
+};
+
+const handleUrlSubmit = async () => {
+  if (imageUrlInput.value) {
+    try {
+      await addImageToCanvas(imageUrlInput.value);
+      closeImageModal();
+    } catch (error) {
+      console.error("Error adding image from URL:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add image from URL",
+        variant: "destructive",
+      });
+    }
+  }
+};
+const addImageToCanvas = async (imageUrl) => {
   if (!canvas) return;
 
   // Calculate the center of the current viewport in canvas coordinates
@@ -2472,47 +2630,40 @@ const addImageToCanvas = (imageUrl) => {
   const visibleHeight = modalContent.offsetHeight;
   const centerX = -vpt[4] / zoom + visibleWidth / (2 * zoom);
   const centerY = -vpt[5] / zoom + visibleHeight / (2 * zoom);
-  console.error("Adding image to canvas at:", centerX, centerY);
-  // Create a fabric image object
-  // fabric.Image.fromURL(imageUrl, (img) => {
-  //   // Scale image if it's too large
-  //   const maxSize = 300;
-  //   if (img.width > maxSize || img.height > maxSize) {
-  //     const scale = maxSize / Math.max(img.width, img.height);
-  //     img.scale(scale);
-  //   }
+  console.error("Adding image to canvas at:", centerX, centerY, imageUrl);
 
-  // Position at center
-  // img.set({
-  //   left: centerX - (img.width * (img.scaleX || 1)) / 2,
-  //   top: centerY - (img.height * (img.scaleY || 1)) / 2,
-  //   objectCaching: false,
-  // });
+  try {
+    // Create a fabric image object - Fabric 6 way
+    const newImage = await fabric.FabricImage.fromURL(imageUrl);
 
-  // Add to canvas, select it and render
-  // canvas.add(img);
-  // canvas.setActiveObject(img);
-  // canvas.requestRenderAll();
-  // });
+    // Scale image if it's too large
+    const maxSize = 300;
+    if (newImage.width > maxSize || newImage.height > maxSize) {
+      const scale = maxSize / Math.max(newImage.width, newImage.height);
+      newImage.scale(scale);
+    }
 
-  fabric.Image.fromURL(imageUrl, function (img) {
-    var oImg = img
-      .set({ left: 0, top: 0, angle: 0, width: 100, height: 100 })
-      .scale(1);
-    canvas.add(oImg).renderAll();
+    // Position at center
+    newImage.set({
+      left: centerX - (newImage.width * (newImage.scaleX || 1)) / 2,
+      top: centerY - (newImage.height * (newImage.scaleY || 1)) / 2,
+      objectCaching: false,
+      erasable: true, // Make it erasable
+    });
+
+    // Add to canvas, select it and render
+    canvas.add(newImage);
+    canvas.setActiveObject(newImage);
+    canvas.renderAll();
     canvas.requestRenderAll();
-    var a = canvas.setActiveObject(oImg);
-    var dataURL = canvas.toDataURL({ format: "png", quality: 0.8 });
-  });
-
-  // image = new fabric.Rect({
-  //   left: centerX - 50, // Center by offsetting half width
-  //   top: centerY - 30, // Center by offsetting half height
-  //   width: 100,
-  //   height: 60,
-  //   fill: colour.value,
-  //   objectCaching: false,
-  // });
+  } catch (error) {
+    console.error("Error loading image:", error);
+    toast({
+      title: "Error",
+      description: "Failed to load image",
+      variant: "destructive",
+    });
+  }
 };
 
 // Version history methods

@@ -111,7 +111,7 @@ import {
   X as XIcon,
   Paintbrush as PaintbrushIcon,
   Link,
-  Undo2, 
+  Undo2,
   Redo2,
 } from "lucide-vue-next";
 
@@ -470,7 +470,6 @@ async function LoadFromBackend() {
         "----------------------   Editor viewport set to position:",
         response.data.viewport
       );
-      
     }
 
     setTimeout(() => updateWhiteboardParentTabs(), 0);
@@ -981,483 +980,1344 @@ const loadingVersions = ref(false);
       <div class="h-24 w-full mb-0 relative">
         <div class="absolute top-6 w-full z-50 px-4 flex justify-center">
           <div
-          data-tour="tiptapToolbar" class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
+            data-tour="tiptapToolbar"
+            class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
           >
             <div class="flex items-center gap-1">
-              <!-- above flex wrap -->
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+              <!-- Priority 1: Essential controls - always visible -->
+              <div class="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        @click="closeNote()"
+                        class="mr-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-800/30"
+                      >
+                        <XIcon class="h-4 w-4 text-red-500 dark:text-red-400" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Close Note</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <!-- Undo/Redo - visible on sm+ screens -->
+                <div class="flex items-center gap-1">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          @click="editor.chain().focus().undo().run()"
+                          :disabled="!editor.can().undo()"
+                          class="mr-1"
+                        >
+                          <Undo2 class="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Undo</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          @click="editor.chain().focus().redo().run()"
+                          :disabled="!editor.can().redo()"
+                          class="mr-2"
+                        >
+                          <Redo2 class="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Redo</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+
+              <!-- Priority 2: Basic formatting - visible on sm+ screens -->
+              <div class="flex items-center gap-1">
+                <Separator orientation="vertical" class="h-6 mx-1" />
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        @click="editor.chain().focus().toggleBold().run()"
+                        :class="{ 'bg-primary/20': editor.isActive('bold') }"
+                      >
+                        <BoldIcon class="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Bold</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        @click="editor.chain().focus().toggleItalic().run()"
+                        :class="{ 'bg-primary/20': editor.isActive('italic') }"
+                      >
+                        <ItalicIcon class="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Italic</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <!-- Show underline on md+ only, hide on sm -->
+                <div class="hidden md:flex">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          @click="
+                            editor.chain().focus().toggleUnderline().run()
+                          "
+                          :class="{
+                            'bg-primary/20': editor.isActive('underline'),
+                          }"
+                        >
+                          <UnderlineIcon class="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Underline</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+
+              <!-- Priority 3: Headings - visible on md+ screens -->
+              <div class="hidden md:flex items-center gap-1">
+                <Separator orientation="vertical" class="h-6 mx-1" />
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      @click="closeNote()"
-                      class="mr-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-800/30"
+                      size="sm"
+                      class="flex gap-1 items-center"
                     >
-                      <XIcon class="h-4 w-4 text-red-500 dark:text-red-400" />
+                      <TextIcon class="h-4 w-4" />
+                      <span class="hidden lg:inline">Headings</span>
+                      <ChevronDownIcon class="h-3 w-3 opacity-50" />
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Close Note</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      @click="editor.chain().focus().setParagraph().run()"
+                    >
+                      <span
+                        :class="{ 'font-bold': editor.isActive('paragraph') }"
+                      >
+                        Paragraph
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      @click="
+                        editor.chain().focus().toggleHeading({ level: 1 }).run()
+                      "
+                    >
+                      <span
+                        :class="{
+                          'font-bold': editor.isActive('heading', { level: 1 }),
+                        }"
+                      >
+                        Heading 1
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      @click="
+                        editor.chain().focus().toggleHeading({ level: 2 }).run()
+                      "
+                    >
+                      <span
+                        :class="{
+                          'font-bold': editor.isActive('heading', { level: 2 }),
+                        }"
+                      >
+                        Heading 2
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      @click="
+                        editor.chain().focus().toggleHeading({ level: 3 }).run()
+                      "
+                    >
+                      <span
+                        :class="{
+                          'font-bold': editor.isActive('heading', { level: 3 }),
+                        }"
+                      >
+                        Heading 3
+                      </span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <!-- Priority 4: Alignment - visible on lg+ screens -->
+              <div class="hidden lg:flex items-center gap-1">
+                <Separator orientation="vertical" class="h-6 mx-1" />
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      @click="editor.chain().focus().undo().run()"
-                      :disabled="!editor.can().undo()"
-                      class="mr-1"
-                    >
-                      <Undo2 class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Undo</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      @click="editor.chain().focus().redo().run()"
-                      :disabled="!editor.can().redo()"
-                      class="mr-2"
-                    >
-                      <Redo2 class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Redo</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-
-              <Separator orientation="vertical" class="h-6 mx-1" />
-              <!-- Basic Text Formatting -->
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      @click="editor.chain().focus().toggleBold().run()"
-                      :class="{ 'bg-primary/20': editor.isActive('bold') }"
-                    >
-                      <BoldIcon class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Bold</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      @click="editor.chain().focus().toggleItalic().run()"
-                      :class="{ 'bg-primary/20': editor.isActive('italic') }"
-                    >
-                      <ItalicIcon class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Italic</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      @click="editor.chain().focus().toggleUnderline().run()"
-                      :class="{ 'bg-primary/20': editor.isActive('underline') }"
-                    >
-                      <UnderlineIcon class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Underline</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      @click="editor.chain().focus().toggleStrike().run()"
-                      :class="{ 'bg-primary/20': editor.isActive('strike') }"
-                    >
-                      <StrikethroughIcon class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Strikethrough</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      @click="editor.chain().focus().toggleCode().run()"
-                      :class="{ 'bg-primary/20': editor.isActive('code') }"
-                    >
-                      <CodeIcon class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Emphasis</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <Separator orientation="vertical" class="h-6 mx-1" />
-
-              <!-- Heading Dropdown -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="flex gap-1 items-center"
-                  >
-                    <TextIcon class="h-4 w-4" />
-                    <span>Headings</span>
-                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem
-                    @click="editor.chain().focus().setParagraph().run()"
-                  >
-                    <span :class="{ 'font-bold': editor.isActive('paragraph') }"
-                      >Paragraph</span
-                    >
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    @click="
-                      editor.chain().focus().toggleHeading({ level: 1 }).run()
-                    "
-                  >
-                    <span
-                      :class="{
-                        'font-bold': editor.isActive('heading', { level: 1 }),
-                      }"
-                      >Heading 1</span
-                    >
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    @click="
-                      editor.chain().focus().toggleHeading({ level: 2 }).run()
-                    "
-                  >
-                    <span
-                      :class="{
-                        'font-bold': editor.isActive('heading', { level: 2 }),
-                      }"
-                      >Heading 2</span
-                    >
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    @click="
-                      editor.chain().focus().toggleHeading({ level: 3 }).run()
-                    "
-                  >
-                    <span
-                      :class="{
-                        'font-bold': editor.isActive('heading', { level: 3 }),
-                      }"
-                      >Heading 3</span
-                    >
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Separator orientation="vertical" class="h-6 mx-1" />
-
-              <!-- Alignment Options -->
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      @click="editor.chain().focus().setTextAlign('left').run()"
-                      :class="{
-                        'bg-primary/20': editor.isActive({ textAlign: 'left' }),
-                      }"
+                      size="sm"
+                      class="flex gap-1 items-center"
                     >
                       <AlignLeftIcon class="h-4 w-4" />
+                      <span class="hidden xl:inline">Align</span>
+                      <ChevronDownIcon class="h-3 w-3 opacity-50" />
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Align left</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      @click="editor.chain().focus().setTextAlign('left').run()"
+                    >
+                      <AlignLeftIcon class="h-4 w-4 mr-2" />
+                      <span
+                        :class="{
+                          'font-bold': editor.isActive({ textAlign: 'left' }),
+                        }"
+                      >
+                        Align Left
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       @click="
                         editor.chain().focus().setTextAlign('center').run()
                       "
-                      :class="{
-                        'bg-primary/20': editor.isActive({
-                          textAlign: 'center',
-                        }),
-                      }"
                     >
-                      <AlignCenterIcon class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Align center</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                      <AlignCenterIcon class="h-4 w-4 mr-2" />
+                      <span
+                        :class="{
+                          'font-bold': editor.isActive({ textAlign: 'center' }),
+                        }"
+                      >
+                        Align Center
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       @click="
                         editor.chain().focus().setTextAlign('right').run()
                       "
-                      :class="{
-                        'bg-primary/20': editor.isActive({
-                          textAlign: 'right',
-                        }),
-                      }"
                     >
-                      <AlignRightIcon class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Align right</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
+                      <AlignRightIcon class="h-4 w-4 mr-2" />
+                      <span
+                        :class="{
+                          'font-bold': editor.isActive({ textAlign: 'right' }),
+                        }"
+                      >
+                        Align Right
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       @click="
                         editor.chain().focus().setTextAlign('justify').run()
                       "
-                      :class="{
-                        'bg-primary/20': editor.isActive({
-                          textAlign: 'justify',
-                        }),
-                      }"
                     >
-                      <AlignJustifyIcon class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Justify</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                      <AlignJustifyIcon class="h-4 w-4 mr-2" />
+                      <span
+                        :class="{
+                          'font-bold': editor.isActive({
+                            textAlign: 'justify',
+                          }),
+                        }"
+                      >
+                        Justify
+                      </span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-              <Separator orientation="vertical" class="h-6 mx-1" />
+              <!-- Priority 5: Highlight - visible on xl+ screens -->
+              <div class="hidden xl:flex items-center gap-1">
+                <Separator orientation="vertical" class="h-6 mx-1" />
 
-              <!-- Highlight Colors Dropdown -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="flex gap-1 items-center"
-                  >
-                    <PaintbrushIcon class="h-4 w-4" />
-                    <span>Highlight</span>
-                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <div class="flex flex-wrap gap-1 p-2 w-48">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="h-7 w-7 bg-yellow-200 hover:bg-yellow-300 border-yellow-400"
-                      @click="
-                        editor
-                          .chain()
-                          .focus()
-                          .toggleHighlight({ color: '#fef08a' })
-                          .run()
-                      "
-                      :class="{
-                        'ring-2 ring-offset-1': editor.isActive('highlight', {
-                          color: '#fef08a',
-                        }),
-                      }"
-                    />
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="h-7 w-7 bg-green-200 hover:bg-green-300 border-green-400"
-                      @click="
-                        editor
-                          .chain()
-                          .focus()
-                          .toggleHighlight({ color: '#bbf7d0' })
-                          .run()
-                      "
-                      :class="{
-                        'ring-2 ring-offset-1': editor.isActive('highlight', {
-                          color: '#bbf7d0',
-                        }),
-                      }"
-                    />
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="h-7 w-7 bg-blue-200 hover:bg-blue-300 border-blue-400"
-                      @click="
-                        editor
-                          .chain()
-                          .focus()
-                          .toggleHighlight({ color: '#bfdbfe' })
-                          .run()
-                      "
-                      :class="{
-                        'ring-2 ring-offset-1': editor.isActive('highlight', {
-                          color: '#bfdbfe',
-                        }),
-                      }"
-                    />
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="h-7 w-7 bg-pink-200 hover:bg-pink-300 border-pink-400"
-                      @click="
-                        editor
-                          .chain()
-                          .focus()
-                          .toggleHighlight({ color: '#fbcfe8' })
-                          .run()
-                      "
-                      :class="{
-                        'ring-2 ring-offset-1': editor.isActive('highlight', {
-                          color: '#fbcfe8',
-                        }),
-                      }"
-                    />
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="h-7 w-7 bg-purple-200 hover:bg-purple-300 border-purple-400"
-                      @click="
-                        editor
-                          .chain()
-                          .focus()
-                          .toggleHighlight({ color: '#e9d5ff' })
-                          .run()
-                      "
-                      :class="{
-                        'ring-2 ring-offset-1': editor.isActive('highlight', {
-                          color: '#e9d5ff',
-                        }),
-                      }"
-                    />
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="h-7 w-7 bg-orange-200 hover:bg-orange-300 border-orange-400"
-                      @click="
-                        editor
-                          .chain()
-                          .focus()
-                          .toggleHighlight({ color: '#fed7aa' })
-                          .run()
-                      "
-                      :class="{
-                        'ring-2 ring-offset-1': editor.isActive('highlight', {
-                          color: '#fed7aa',
-                        }),
-                      }"
-                    />
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="h-7 w-7 bg-red-200 hover:bg-red-300 border-red-400"
-                      @click="
-                        editor
-                          .chain()
-                          .focus()
-                          .toggleHighlight({ color: '#fecaca' })
-                          .run()
-                      "
-                      :class="{
-                        'ring-2 ring-offset-1': editor.isActive('highlight', {
-                          color: '#fecaca',
-                        }),
-                      }"
-                    />
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="h-7 w-7 bg-gray-200 hover:bg-gray-300 border-gray-400"
-                      @click="
-                        editor
-                          .chain()
-                          .focus()
-                          .toggleHighlight({ color: '#e5e7eb' })
-                          .run()
-                      "
-                      :class="{
-                        'ring-2 ring-offset-1': editor.isActive('highlight', {
-                          color: '#e5e7eb',
-                        }),
-                      }"
-                    />
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      class="h-7 w-7 flex items-center justify-center"
-                      @click="editor.chain().focus().unsetHighlight().run()"
-                    >
-                      <XIcon class="h-4 w-4" />
-                    </Button>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Separator orientation="vertical" class="h-6 mx-1" />
-
-              <!-- Version History Button -->
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
-                      @click="openVersionHistoryModal"
                       class="flex gap-1 items-center"
                     >
-                      <History class="h-4 w-4 mr-1" />
+                      <PaintbrushIcon class="h-4 w-4" />
+                      <span>Highlight</span>
+                      <ChevronDownIcon class="h-3 w-3 opacity-50" />
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Version History</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <div class="flex flex-wrap gap-1 p-2 w-48">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-7 w-7 bg-yellow-200 hover:bg-yellow-300 border-yellow-400"
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#fef08a' })
+                            .run()
+                        "
+                        :class="{
+                          'ring-2 ring-offset-1': editor.isActive('highlight', {
+                            color: '#fef08a',
+                          }),
+                        }"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-7 w-7 bg-green-200 hover:bg-green-300 border-green-400"
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#bbf7d0' })
+                            .run()
+                        "
+                        :class="{
+                          'ring-2 ring-offset-1': editor.isActive('highlight', {
+                            color: '#bbf7d0',
+                          }),
+                        }"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-7 w-7 bg-blue-200 hover:bg-blue-300 border-blue-400"
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#bfdbfe' })
+                            .run()
+                        "
+                        :class="{
+                          'ring-2 ring-offset-1': editor.isActive('highlight', {
+                            color: '#bfdbfe',
+                          }),
+                        }"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-7 w-7 bg-pink-200 hover:bg-pink-300 border-pink-400"
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#fbcfe8' })
+                            .run()
+                        "
+                        :class="{
+                          'ring-2 ring-offset-1': editor.isActive('highlight', {
+                            color: '#fbcfe8',
+                          }),
+                        }"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-7 w-7 bg-purple-200 hover:bg-purple-300 border-purple-400"
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#e9d5ff' })
+                            .run()
+                        "
+                        :class="{
+                          'ring-2 ring-offset-1': editor.isActive('highlight', {
+                            color: '#e9d5ff',
+                          }),
+                        }"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-7 w-7 bg-orange-200 hover:bg-orange-300 border-orange-400"
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#fed7aa' })
+                            .run()
+                        "
+                        :class="{
+                          'ring-2 ring-offset-1': editor.isActive('highlight', {
+                            color: '#fed7aa',
+                          }),
+                        }"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-7 w-7 bg-red-200 hover:bg-red-300 border-red-400"
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#fecaca' })
+                            .run()
+                        "
+                        :class="{
+                          'ring-2 ring-offset-1': editor.isActive('highlight', {
+                            color: '#fecaca',
+                          }),
+                        }"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-7 w-7 bg-gray-200 hover:bg-gray-300 border-gray-400"
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#e5e7eb' })
+                            .run()
+                        "
+                        :class="{
+                          'ring-2 ring-offset-1': editor.isActive('highlight', {
+                            color: '#e5e7eb',
+                          }),
+                        }"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        class="h-7 w-7 flex items-center justify-center"
+                        @click="editor.chain().focus().unsetHighlight().run()"
+                      >
+                        <XIcon class="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <!-- Version History - always visible but condensed on smaller screens -->
+              <div class="flex items-center gap-1 ml-auto">
+                <Separator orientation="vertical" class="h-6 mx-1" />
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        @click="openVersionHistoryModal"
+                        class="flex gap-1 items-center"
+                      >
+                        <History class="h-4 w-4" />
+                        <span class="hidden sm:inline">History</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Version History</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
+              <!-- Comprehensive Overflow Menus for smaller screens -->
+              <div class="flex items-center gap-1">
+                <!-- Mobile Menu (< sm) - Complete formatting menu -->
+                <div class=" flex sm:hidden">
+                  <Separator orientation="vertical" class="h-6 mx-1" />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <svg
+                          class="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zM12 13a1 1 0 110-2 1 1 0 010 2zM12 20a1 1 0 110-2 1 1 0 010 2z"
+                          />
+                        </svg>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      class="w-56 max-h-[400px] overflow-y-auto"
+                    >
+              
+
+                      <!-- Basic Formatting Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Format
+                      </div>
+                     
+                      <DropdownMenuItem
+                        @click="editor.chain().focus().toggleUnderline().run()"
+                      >
+                        <UnderlineIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{ 'font-bold': editor.isActive('underline') }"
+                          >Underline</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="editor.chain().focus().toggleStrike().run()"
+                      >
+                        <StrikethroughIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{ 'font-bold': editor.isActive('strike') }"
+                          >Strikethrough</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="editor.chain().focus().toggleCode().run()"
+                      >
+                        <CodeIcon class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': editor.isActive('code') }"
+                          >Code</span
+                        >
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <!-- Text Structure Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Text Structure
+                      </div>
+                      <DropdownMenuItem
+                        @click="editor.chain().focus().setParagraph().run()"
+                      >
+                        <TextIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{ 'font-bold': editor.isActive('paragraph') }"
+                          >Paragraph</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHeading({ level: 1 })
+                            .run()
+                        "
+                      >
+                        <TextIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('heading', {
+                              level: 1,
+                            }),
+                          }"
+                          >Heading 1</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHeading({ level: 2 })
+                            .run()
+                        "
+                      >
+                        <TextIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('heading', {
+                              level: 2,
+                            }),
+                          }"
+                          >Heading 2</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHeading({ level: 3 })
+                            .run()
+                        "
+                      >
+                        <TextIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('heading', {
+                              level: 3,
+                            }),
+                          }"
+                          >Heading 3</span
+                        >
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <!-- Alignment Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Alignment
+                      </div>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('left').run()
+                        "
+                      >
+                        <AlignLeftIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({ textAlign: 'left' }),
+                          }"
+                          >Align Left</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('center').run()
+                        "
+                      >
+                        <AlignCenterIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({
+                              textAlign: 'center',
+                            }),
+                          }"
+                          >Align Center</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('right').run()
+                        "
+                      >
+                        <AlignRightIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({
+                              textAlign: 'right',
+                            }),
+                          }"
+                          >Align Right</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('justify').run()
+                        "
+                      >
+                        <AlignJustifyIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({
+                              textAlign: 'justify',
+                            }),
+                          }"
+                          >Justify</span
+                        >
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <!-- Highlight Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Highlight
+                      </div>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#fef08a' })
+                            .run()
+                        "
+                      >
+                        <div
+                          class="h-4 w-4 mr-2 bg-yellow-200 border border-yellow-400 rounded"
+                        ></div>
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('highlight', {
+                              color: '#fef08a',
+                            }),
+                          }"
+                          >Yellow</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#bbf7d0' })
+                            .run()
+                        "
+                      >
+                        <div
+                          class="h-4 w-4 mr-2 bg-green-200 border border-green-400 rounded"
+                        ></div>
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('highlight', {
+                              color: '#bbf7d0',
+                            }),
+                          }"
+                          >Green</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#bfdbfe' })
+                            .run()
+                        "
+                      >
+                        <div
+                          class="h-4 w-4 mr-2 bg-blue-200 border border-blue-400 rounded"
+                        ></div>
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('highlight', {
+                              color: '#bfdbfe',
+                            }),
+                          }"
+                          >Blue</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="editor.chain().focus().unsetHighlight().run()"
+                      >
+                        <XIcon class="h-4 w-4 mr-2" />
+                        Remove Highlight
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <!-- Small Screen Menu (sm - md) - Missing features menu -->
+                <div class="hidden sm:flex md:hidden">
+                  <Separator orientation="vertical" class="h-6 mx-1" />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        class="flex gap-1 items-center"
+                      >
+                        <svg
+                          class="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zM12 13a1 1 0 110-2 1 1 0 010 2zM12 20a1 1 0 110-2 1 1 0 010 2z"
+                          />
+                        </svg>
+                        <span class="hidden md:inline">More</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      class="w-48 max-h-[350px] overflow-y-auto"
+                    >
+                      <!-- Advanced Formatting (missing on sm) -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Format
+                      </div>
+                      <DropdownMenuItem
+                        @click="editor.chain().focus().toggleUnderline().run()"
+                      >
+                        <UnderlineIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{ 'font-bold': editor.isActive('underline') }"
+                          >Underline</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="editor.chain().focus().toggleStrike().run()"
+                      >
+                        <StrikethroughIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{ 'font-bold': editor.isActive('strike') }"
+                          >Strikethrough</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="editor.chain().focus().toggleCode().run()"
+                      >
+                        <CodeIcon class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': editor.isActive('code') }"
+                          >Code</span
+                        >
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <!-- Text Structure -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Structure
+                      </div>
+                      <DropdownMenuItem
+                        @click="editor.chain().focus().setParagraph().run()"
+                      >
+                        <TextIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{ 'font-bold': editor.isActive('paragraph') }"
+                          >Paragraph</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHeading({ level: 1 })
+                            .run()
+                        "
+                      >
+                        <TextIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('heading', {
+                              level: 1,
+                            }),
+                          }"
+                          >Heading 1</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHeading({ level: 2 })
+                            .run()
+                        "
+                      >
+                        <TextIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('heading', {
+                              level: 2,
+                            }),
+                          }"
+                          >Heading 2</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHeading({ level: 3 })
+                            .run()
+                        "
+                      >
+                        <TextIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('heading', {
+                              level: 3,
+                            }),
+                          }"
+                          >Heading 3</span
+                        >
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <!-- Alignment -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Alignment
+                      </div>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('left').run()
+                        "
+                      >
+                        <AlignLeftIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({ textAlign: 'left' }),
+                          }"
+                          >Align Left</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('center').run()
+                        "
+                      >
+                        <AlignCenterIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({
+                              textAlign: 'center',
+                            }),
+                          }"
+                          >Align Center</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('right').run()
+                        "
+                      >
+                        <AlignRightIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({
+                              textAlign: 'right',
+                            }),
+                          }"
+                          >Align Right</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('justify').run()
+                        "
+                      >
+                        <AlignJustifyIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({
+                              textAlign: 'justify',
+                            }),
+                          }"
+                          >Justify</span
+                        >
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <!-- Quick Highlight -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Highlight
+                      </div>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#fef08a' })
+                            .run()
+                        "
+                      >
+                        <PaintbrushIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('highlight', {
+                              color: '#fef08a',
+                            }),
+                          }"
+                          >Highlight Yellow</span
+                        >
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <!-- Medium Screen Menu (md - lg) - Alignment and highlight -->
+                <div class="hidden md:flex lg:hidden">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        class="flex gap-1 items-center"
+                      >
+                        <svg
+                          class="h-4 w-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zM12 13a1 1 0 110-2 1 1 0 010 2zM12 20a1 1 0 110-2 1 1 0 010 2z"
+                          />
+                        </svg>
+                        More
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="w-48">
+                      <!-- Alignment Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Alignment
+                      </div>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('left').run()
+                        "
+                      >
+                        <AlignLeftIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({ textAlign: 'left' }),
+                          }"
+                          >Align Left</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('center').run()
+                        "
+                      >
+                        <AlignCenterIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({
+                              textAlign: 'center',
+                            }),
+                          }"
+                          >Align Center</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('right').run()
+                        "
+                      >
+                        <AlignRightIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({
+                              textAlign: 'right',
+                            }),
+                          }"
+                          >Align Right</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor.chain().focus().setTextAlign('justify').run()
+                        "
+                      >
+                        <AlignJustifyIcon class="h-4 w-4 mr-2" />
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive({
+                              textAlign: 'justify',
+                            }),
+                          }"
+                          >Justify</span
+                        >
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <!-- Highlight Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Highlight
+                      </div>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#fef08a' })
+                            .run()
+                        "
+                      >
+                        <div
+                          class="h-4 w-4 mr-2 bg-yellow-200 border border-yellow-400 rounded"
+                        ></div>
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('highlight', {
+                              color: '#fef08a',
+                            }),
+                          }"
+                          >Yellow</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#bbf7d0' })
+                            .run()
+                        "
+                      >
+                        <div
+                          class="h-4 w-4 mr-2 bg-green-200 border border-green-400 rounded"
+                        ></div>
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('highlight', {
+                              color: '#bbf7d0',
+                            }),
+                          }"
+                          >Green</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="
+                          editor
+                            .chain()
+                            .focus()
+                            .toggleHighlight({ color: '#bfdbfe' })
+                            .run()
+                        "
+                      >
+                        <div
+                          class="h-4 w-4 mr-2 bg-blue-200 border border-blue-400 rounded"
+                        ></div>
+                        <span
+                          :class="{
+                            'font-bold': editor.isActive('highlight', {
+                              color: '#bfdbfe',
+                            }),
+                          }"
+                          >Blue</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        @click="editor.chain().focus().unsetHighlight().run()"
+                      >
+                        <XIcon class="h-4 w-4 mr-2" />
+                        Remove Highlight
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <!-- Large Screen Menu (lg - xl) - Just highlight options -->
+                <div class="hidden lg:flex xl:hidden">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        class="flex gap-1 items-center"
+                      >
+                        <PaintbrushIcon class="h-4 w-4" />
+                        Highlight
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <div class="flex flex-wrap gap-1 p-2 w-48">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          class="h-7 w-7 bg-yellow-200 hover:bg-yellow-300 border-yellow-400"
+                          @click="
+                            editor
+                              .chain()
+                              .focus()
+                              .toggleHighlight({ color: '#fef08a' })
+                              .run()
+                          "
+                          :class="{
+                            'ring-2 ring-offset-1': editor.isActive(
+                              'highlight',
+                              {
+                                color: '#fef08a',
+                              }
+                            ),
+                          }"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          class="h-7 w-7 bg-green-200 hover:bg-green-300 border-green-400"
+                          @click="
+                            editor
+                              .chain()
+                              .focus()
+                              .toggleHighlight({ color: '#bbf7d0' })
+                              .run()
+                          "
+                          :class="{
+                            'ring-2 ring-offset-1': editor.isActive(
+                              'highlight',
+                              {
+                                color: '#bbf7d0',
+                              }
+                            ),
+                          }"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          class="h-7 w-7 bg-blue-200 hover:bg-blue-300 border-blue-400"
+                          @click="
+                            editor
+                              .chain()
+                              .focus()
+                              .toggleHighlight({ color: '#bfdbfe' })
+                              .run()
+                          "
+                          :class="{
+                            'ring-2 ring-offset-1': editor.isActive(
+                              'highlight',
+                              {
+                                color: '#bfdbfe',
+                              }
+                            ),
+                          }"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          class="h-7 w-7 bg-pink-200 hover:bg-pink-300 border-pink-400"
+                          @click="
+                            editor
+                              .chain()
+                              .focus()
+                              .toggleHighlight({ color: '#fbcfe8' })
+                              .run()
+                          "
+                          :class="{
+                            'ring-2 ring-offset-1': editor.isActive(
+                              'highlight',
+                              {
+                                color: '#fbcfe8',
+                              }
+                            ),
+                          }"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          class="h-7 w-7 bg-purple-200 hover:bg-purple-300 border-purple-400"
+                          @click="
+                            editor
+                              .chain()
+                              .focus()
+                              .toggleHighlight({ color: '#e9d5ff' })
+                              .run()
+                          "
+                          :class="{
+                            'ring-2 ring-offset-1': editor.isActive(
+                              'highlight',
+                              {
+                                color: '#e9d5ff',
+                              }
+                            ),
+                          }"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          class="h-7 w-7 bg-orange-200 hover:bg-orange-300 border-orange-400"
+                          @click="
+                            editor
+                              .chain()
+                              .focus()
+                              .toggleHighlight({ color: '#fed7aa' })
+                              .run()
+                          "
+                          :class="{
+                            'ring-2 ring-offset-1': editor.isActive(
+                              'highlight',
+                              {
+                                color: '#fed7aa',
+                              }
+                            ),
+                          }"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          class="h-7 w-7 bg-red-200 hover:bg-red-300 border-red-400"
+                          @click="
+                            editor
+                              .chain()
+                              .focus()
+                              .toggleHighlight({ color: '#fecaca' })
+                              .run()
+                          "
+                          :class="{
+                            'ring-2 ring-offset-1': editor.isActive(
+                              'highlight',
+                              {
+                                color: '#fecaca',
+                              }
+                            ),
+                          }"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          class="h-7 w-7 bg-gray-200 hover:bg-gray-300 border-gray-400"
+                          @click="
+                            editor
+                              .chain()
+                              .focus()
+                              .toggleHighlight({ color: '#e5e7eb' })
+                              .run()
+                          "
+                          :class="{
+                            'ring-2 ring-offset-1': editor.isActive(
+                              'highlight',
+                              {
+                                color: '#e5e7eb',
+                              }
+                            ),
+                          }"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          class="h-7 w-7 flex items-center justify-center"
+                          @click="editor.chain().focus().unsetHighlight().run()"
+                        >
+                          <XIcon class="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1465,7 +2325,7 @@ const loadingVersions = ref(false);
 
       <div class="flex justify-center flex-1">
         <ScrollArea
-        data-tour="tiptapContent"
+          data-tour="tiptapContent"
           class="editor w-full max-w-[2000px] h-[calc(100vh-12rem)] overflow-y-auto bg-primary-foreground rounded-lg shadow-md border border-input m-4"
           @click="focusEditor"
         >
