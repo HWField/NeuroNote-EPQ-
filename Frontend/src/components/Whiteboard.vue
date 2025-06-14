@@ -1452,7 +1452,7 @@ canvas.wrapperEl.addEventListener("pointercancel", (e) => {
 });
 
 // Helper function to check if pen is currently active
-const isPenActive = () => activePointerTypes.has("pen");
+const isPenActive = () => activePointerTypes.has("pen") || activePointerTypes.has("mouse");
 
 let lastScale = 1;
 
