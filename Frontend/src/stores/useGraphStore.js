@@ -286,7 +286,7 @@ export const useGraphStore = defineStore("graphStore", () => {
       note.name = newName;
     }
   }
-// Add this new function to the returned object in useGraphStore
+
 function replaceNoteTags(noteId, tagIds) {
   const noteKey = `note_${noteId}`;
   const existingNote = elements.value.find(el => el.id === parseInt(noteId) && el.type === 'note');
@@ -295,6 +295,9 @@ function replaceNoteTags(noteId, tagIds) {
     console.error(`Note with id ${noteId} not found`);
     return;
   }
+
+
+
   
   // Step 1: Get existing tags for this note
   const existingTags = existingNote.tags || [];
@@ -310,6 +313,17 @@ function replaceNoteTags(noteId, tagIds) {
   });
 }
 
+function replaceNoteWhiteboards(noteId, whiteboardIds) {
+  // const noteKey = `note_${noteId}`;
+  const document = elements.value.find(el => el.id === parseInt(noteId) && el.type === 'note');
+  
+  if (!document) {
+    console.error(`Note with id ${noteId} not found`);
+    return;
+  }
+  document.whiteboards = whiteboardIds.map(id => parseInt(id));
+}
+
   return {
     elements,
     fetchGraph,
@@ -318,6 +332,7 @@ function replaceNoteTags(noteId, tagIds) {
     resetGraph,
     updateNoteName,
     replaceNoteTags,
+    replaceNoteWhiteboards,
     addNode,
     RenameNode,
     DeleteNode,

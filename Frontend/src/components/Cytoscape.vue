@@ -296,7 +296,7 @@ function initializeCytoscape() {
         style: {
           width: 2,
           "line-color": "#aaa",
-          opacity: 0.1,
+          opacity: 0.2,
           "curve-style": "bezier",
           "target-arrow-shape": "triangle",
           "target-arrow-color": "#aaa",
@@ -306,6 +306,18 @@ function initializeCytoscape() {
             "line-color target-arrow-color opacity arrow-scale", // Enable smooth transition for multiple properties
           "transition-duration": "0.3s", // Different transition durations for each property
           "transition-timing-function": "ease", // Different easing functions for each property
+        },
+      },
+
+      { //selector for all note-note connections
+        selector: 'edge[source^="note_"][target^="note_"]',
+        style: {
+          "line-style": "dashed",
+          // "target-arrow-shape": "none",  
+          "line-dash-pattern": [2, 2], // 5px dash, 5px gap
+          "line-dash-offset": 0,
+          opacity: 0.2,
+          
         },
       },
 
@@ -578,13 +590,35 @@ function initializeCytoscape() {
   cy.on("ehstop", function () {
     cy.nodes().removeClass("greyed-out");
   });
-
   cy.on("ehcomplete", function (event, sourceNode, targetNode, addedEdge) {
-    useGraphStore().CreateEdge(sourceNode.id(), targetNode.id());
-    UpdateNodes();
-    // Remove the edge handle
-    removeHandle();
+  // Create the edge in the backend/store
+  useGraphStore().CreateEdge(sourceNode.id(), targetNode.id());
+  
+  // Remove the auto-generated edge from edgehandles
+  addedEdge.remove();
+  
+  // Create a new edge with the correct ID format
+  const correctEdgeId = `${sourceNode.id()}->${targetNode.id()}`;
+  const newEdge = cy.add({
+    group: 'edges',
+    data: {
+      id: correctEdgeId,
+      source: sourceNode.id(),
+      target: targetNode.id(),
+    },
   });
+  
+  console.log("Edge created:", {
+    id: newEdge.id(),
+    source: newEdge.source().id(),
+    target: newEdge.target().id(),
+    data: newEdge.data()
+  });
+  
+  UpdateNodes();
+  // Remove the edge handle
+  removeHandle();
+});
 
   const sharedMenuConfig = {
     fillColor: "rgba(0, 0, 0, 0.75)", // the background colour of the menu
@@ -729,7 +763,7 @@ function initializeCytoscape() {
   // Add context menu for edges
   cy.cxtmenu({
     ...sharedMenuConfig,
-    selector: "edge", // Apply to all edges
+    selector: 'edge[source^="tag_"]', //apply to all note-tag edges (not note whiteboard edges)
     commands: [
       {
         content: "Delete",
@@ -903,6 +937,25 @@ function AddNodes(data) {
     if (item.notes && Array.isArray(item.notes)) {
       item.notes.forEach((noteId) => {
         const targetId = `note_${noteId}`;
+        const edgeId = `${sourceId}->${targetId}`;
+
+        // Only add the edge if the target node exists and we haven't added this edge yet
+        if (addedNodes.has(targetId) && !addedEdges.has(edgeId)) {
+          cyElements.push({
+            data: {
+              id: edgeId,
+              source: sourceId,
+              target: targetId,
+            },
+          });
+          addedEdges.add(edgeId);
+        }
+      });
+    }
+
+    if (item.whiteboards && Array.isArray(item.whiteboards)) {
+      item.whiteboards.forEach((whiteboardId) => {
+        const targetId = `note_${whiteboardId}`;
         const edgeId = `${sourceId}->${targetId}`;
 
         // Only add the edge if the target node exists and we haven't added this edge yet
@@ -1412,10 +1465,13 @@ async function CreateNote(format) {
           const edgePromise = useGraphStore().CreateEdge(tagId, newNoteId);
           edgePromises.push(edgePromise);
 
+
+          const edgeId = `${tagId}->${newNoteId}`;
           // Also add the edge to the Cytoscape instance immediately for visual feedback
           cy.add({
             group: "edges",
             data: {
+              id: edgeId,
               source: tagId,
               target: newNoteId,
             },
@@ -1476,9 +1532,11 @@ async function CreateTag() {
           edgePromises.push(edgePromise);
 
           // Also add the edge to the Cytoscape instance immediately for visual feedback
+          const edgeId = `${parentTagId}->${newTagId}`;
           cy.add({
             group: "edges",
             data: {
+              id: edgeId,
               source: parentTagId,
               target: newTagId,
             },
@@ -2073,12 +2131,14 @@ onBeforeUnmount(() => {
 </style>
 <template>
   <Dialog :open="dialogueOpen" @update:open="(val) => !val && cancelDialogue()">
-    <DialogContent 
-  :onEscapeKeyDown="(event) => {
-    event.preventDefault();
-    closeDialogue();
-  }"
->
+    <DialogContent
+      :onEscapeKeyDown="
+        (event) => {
+          event.preventDefault();
+          closeDialogue();
+        }
+      "
+    >
       <!-- Rename dialog -->
       <div v-if="dialogueType === 'rename'">
         <DialogHeader>
@@ -2297,7 +2357,8 @@ onBeforeUnmount(() => {
       <!-- Large toolbar -->
 
       <div
-      data-tour="CytoscapeToolbar" v-if="hasControls && isLargeNavbarVisible"
+        data-tour="CytoscapeToolbar"
+        v-if="hasControls && isLargeNavbarVisible"
         class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"
       >
         <DropdownMenu>
@@ -2391,7 +2452,7 @@ onBeforeUnmount(() => {
 
       <!-- Small toolbar -->
       <div
-      data-tour="CytoscapeToolbar"
+        data-tour="CytoscapeToolbar"
         v-else
         v-if="hasControls"
         class="flex justify-center absolute top-6 left-1/2 transform -translate-x-1/2 z-50 bg-primary-foreground p-3 shadow-lg rounded-lg space-x-2 max-w-max"

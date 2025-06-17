@@ -408,6 +408,27 @@ function extractTagsFromDocument(document) {
   return Array.from(uniqueTagIds);
 }
 
+function extractWhiteboardIds(content) {
+  const whiteboardIds = [];
+  
+  const traverse = (node) => {
+    if (node.type === "whiteboard" && node.attrs && node.attrs.id) {
+      whiteboardIds.push(node.attrs.id);
+    }
+    
+    if (node.content && Array.isArray(node.content)) {
+      node.content.forEach(childNode => traverse(childNode));
+    }
+  };
+  
+  if (content && content.content) {
+    content.content.forEach(node => traverse(node));
+  }
+  console.error("1111111 Extracted whiteboard IDs:", whiteboardIds);
+  
+  return whiteboardIds;
+}
+
 async function SaveToBackend() {
   //  Don't save if still loading
   if (isLoading.value) {
@@ -418,10 +439,11 @@ async function SaveToBackend() {
   let noteContent = editor.getJSON();
   const title = noteTitle.value || "Untitled Note";
   const tags = noteTags.value;
-
   const graphStore = useGraphStore();
   graphStore.updateNoteName(props.noteId, title);
   graphStore.replaceNoteTags(props.noteId, tags);
+  const whiteboardIds = extractWhiteboardIds(noteContent);
+  graphStore.replaceNoteWhiteboards(props.noteId, whiteboardIds);
 
   try {
     await axios.post("/update", {
@@ -431,6 +453,7 @@ async function SaveToBackend() {
       tags: tags,
       id: props.noteId,
       viewport: editor.state.selection.head,
+      whiteboards: whiteboardIds,
     });
     return true; // Successful save
   } catch (error) {

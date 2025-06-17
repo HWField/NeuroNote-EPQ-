@@ -91,6 +91,12 @@ tag_parent_association = Table('tag_parent', Base.metadata,
     Column('parent_id', Integer, ForeignKey('tags.id'))
 )
 
+document_whiteboard_association = Table('document_whiteboard', Base.metadata,
+    Column('document_id', Integer, ForeignKey('notes.id')),
+    Column('whiteboard_id', Integer, ForeignKey('notes.id')),
+    UniqueConstraint('document_id', 'whiteboard_id', name='uq_document_whiteboard')
+)
+
 class Entity(Base):
     """Abstract Entity class representing Notes and Tags."""
     __tablename__ = 'entities'
@@ -169,6 +175,15 @@ class Note(Base):
     entity = relationship('Entity', backref='note', uselist=False, single_parent=True,
                      cascade="all, delete-orphan") 
      
+    whiteboards = relationship(
+        'Note',
+        secondary=document_whiteboard_association,
+        primaryjoin=id == document_whiteboard_association.c.document_id,
+        secondaryjoin=id == document_whiteboard_association.c.whiteboard_id,
+        backref=backref('parent_documents', lazy='dynamic'),
+        foreign_keys=[document_whiteboard_association.c.document_id, document_whiteboard_association.c.whiteboard_id]
+    )
+         
     def __init__(self, user_id, name, format=None, tags=None):
         entity = Entity(user_id, "note")
         dbsession.add(entity)
@@ -178,6 +193,8 @@ class Note(Base):
         self.format = format
         if tags is not None:
             self.tags = tags  # Assign the passed tags list to the note
+            
+    
 
 class User(Base, UserMixin):
     __tablename__ = 'users'
@@ -832,6 +849,7 @@ def update():
         note_id = data.get('id')
         new_content = data.get('content')
         tags_ids = data.get('tags', [])
+        whiteboard_ids = data.get('whiteboards', [])
         name = data.get('name')
         
         # Validate input
@@ -967,6 +985,8 @@ def update():
         # Replace all tag associations
         note.tags = new_tags
         
+
+        
         # Handle whiteboard-specific fields
         if note.format == "whiteboard":
             print("------- note is a whiteboard, setting viewport and background")
@@ -975,6 +995,22 @@ def update():
         elif note.format == "document":
             print("------- note is a document, setting viewport")
             note.viewport = data.get('viewport')
+            new_whiteboards = []
+            for whiteboard_id in whiteboard_ids:
+                print(f"------- Adding whiteboard with ID {whiteboard_id} to note")
+                whiteboard = dbsession.query(Note).join(Entity).filter(
+                    Entity.user_id == int(user),
+                    Entity.user_specific_id == whiteboard_id
+                ).first()
+                
+                if whiteboard:
+                    new_whiteboards.append(whiteboard)
+                    print(f"Found whiteboard with ID {whiteboard_id} for user {user}")
+                else:
+                    print(f"Warning: Tag with ID {whiteboard_id} not found for user {user}")
+            
+            # Replace all tag associations
+            note.whiteboards = new_whiteboards
             
         
         try:
@@ -1200,6 +1236,7 @@ def load():
                      'tags': [tag.entity.user_specific_id for tag in note.tags],
                 'type': "note",  # Add type property
                 'format': note.format,
+                'whiteboards': [whiteboard.entity.user_specific_id for whiteboard in note.whiteboards],
                 'data': 
                 {
                     # 'x': note.x,
