@@ -282,7 +282,7 @@ function initializeCytoscape() {
       {
         selector: 'node[format="whiteboard"]',
         style: {
-          shape: "triangle",
+          shape: "round-rectangle",
         },
       },
       {
@@ -847,13 +847,15 @@ function AddNodes(data) {
           classes: position ? "static" : "",
         };
       } else if (item.type === "note") {
+        const noteColor = item.format === "whiteboard" ? "#778DA9" : "#EF6F6C";
+
         nodeDefinition = {
           data: {
             id: nodeId,
             label: item.name,
             type: item.type,
             format: item.format,
-            colour: "#1aed2c",
+            colour: noteColor,
             width: 20,
             height: 20,
             x: position ? position.x : undefined,
