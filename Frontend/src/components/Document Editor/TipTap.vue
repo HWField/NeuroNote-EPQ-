@@ -9,7 +9,7 @@ import "katex/dist/katex.min.css"; //import base katex css
 import "katex/contrib/mhchem"; // Import the further katex chemistry extension
 import Mathematics from "@tiptap-pro/extension-mathematics";
 import { Hyperlink } from "@docs.plus/extension-hyperlink";
-import { HyperMultimediaKit } from "@docs.plus/extension-hypermultimedia";
+import { HyperMultimediaKit, imageModal } from "@docs.plus/extension-hypermultimedia";
 import previewHyperlinkModal from "@/components/Document Editor/modals/previewHyperlink.ts";
 import setHyperlinks from "@/components/Document Editor/modals/setHyperlink.ts";
 import "tippy.js/dist/svg-arrow.css";
@@ -71,6 +71,7 @@ import sql from "highlight.js/lib/languages/sql";
 import { createLowlight } from "lowlight";
 import { Editor, EditorContent } from "@tiptap/vue-3";
 import StarterKit from "@tiptap/starter-kit";
+import ImageResize from 'tiptap-extension-resize-image';
 import { ColorHighlighter } from "@/components/Document Editor/ColorHighlighter.ts";
 import { SmilieReplacer } from "@/components/Document Editor/SymbolReplacer.ts";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -628,6 +629,7 @@ let editor = new Editor({
     }
   }, 1000),
   extensions: [
+  ImageResize,
     Document,
     // chemistry,
     WhiteboardExtension,
@@ -674,16 +676,16 @@ let editor = new Editor({
     ListItem,
     Typography,
     ColorHighlighter,
-    // HyperMultimediaKit.configure({
-    //   Image,
-    //   Youtube,
-    //   Vimeo: {
-    //     modal: vimeoModal, // default modal
-    //     inline: true, // default false
-    //   },
-    //   SoundCloud: false,
-    //   Twitter: false,
-    // }),
+    HyperMultimediaKit.configure({
+      Image: {modal: imageModal, resizeGripper: true}, // default modal
+      Youtube,
+      // Vimeo: {
+      //   modal: vimeoModal, // default modal
+      //   inline: true, // default false
+      // },
+      // SoundCloud: false,
+      // Twitter: false,
+    }),
     Hyperlink.configure({
       openOnClick: true,
       modals: {
