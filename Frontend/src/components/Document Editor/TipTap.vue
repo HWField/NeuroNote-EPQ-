@@ -1,6 +1,7 @@
 <script setup>
 import { WhiteboardExtension } from "./Whiteboard/extension.js";
 import chemistry from "./Chemistry/Extension.js";
+import { aiService } from '@/aiService';
 import Gapcursor from "@tiptap/extension-gapcursor";
 import Code from "@tiptap/extension-code";
 import Document from "@tiptap/extension-document";
@@ -23,6 +24,8 @@ import {
   Upload as UploadIcon,
   ImageIcon,
   Link2 as LinkIcon,
+  Bot as BotIcon,
+  Sparkles as SparklesIcon,
 } from "lucide-vue-next";
 import {
   Dialog,
@@ -183,6 +186,11 @@ const handleCameraCapture = () => {
       .catch((error) => console.error("Error uploading camera image:", error));
   }
 };
+const showAIModal = ref(false);
+const aiPrompt = ref('');
+const aiLoading = ref(false);
+const aiAvailable = ref(false);
+const selectedTextForAI = ref('');
 
 const imageUrlInput = ref("");
 const showImageModal = ref(false);
@@ -274,6 +282,79 @@ const ImageUpload = Extension.create({
     };
   },
 });
+
+
+const openAIModal = () => {
+  // Get selected text as context
+  const { from, to } = editor.state.selection;
+  selectedTextForAI.value = editor.state.doc.textBetween(from, to, ' ');
+  
+  aiPrompt.value = '';
+  showAIModal.value = true;
+  
+  // Focus the input after modal opens
+
+    const input = document.querySelector('#ai-prompt-input');
+    if (input) input.focus();
+
+};
+
+const closeAIModal = () => {
+  showAIModal.value = false;
+  aiPrompt.value = '';
+  selectedTextForAI.value = '';
+};
+
+const handleAISubmit = async () => {
+  if (!aiPrompt.value.trim()) return;
+  
+  aiLoading.value = true;
+  
+  try {
+    // Get current cursor position
+    const { from } = editor.state.selection;
+    
+    // Use selected text as context if available
+    const context = selectedTextForAI.value ? selectedTextForAI.value : '';
+    
+    // Generate AI response
+    const response = await aiService.generateText(aiPrompt.value, context);
+    console.error('AI Response:', response);
+    // Insert AI response at cursor position
+    editor.chain()
+      .focus()
+            .insertContent(`<p></p><p><strong>AI Response:</strong></p><p>${response}</p><p></p>`)
+      .focus()
+      .run();
+    
+    toast({
+      title: "AI Response Generated",
+      description: "The AI response has been inserted into your note.",
+      variant: "default",
+    });
+    
+    closeAIModal();
+  } catch (error) {
+    console.error('AI Error:', error);
+    toast({
+      title: "AI Error",
+      description: error.message || "Failed to generate AI response",
+      variant: "destructive",
+    });
+  } finally {
+    aiLoading.value = false;
+  }
+};
+
+const handleAIKeydown = (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    handleAISubmit();
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    closeAIModal();
+  }
+};
 
 // whiteboard functions
 
@@ -588,6 +669,12 @@ onMounted(async () => {
     isLoading.value = false;
     // console.error("Editor loaded successfully", isLoading.value);
   }
+    aiAvailable.value = await aiService.isAvailable();
+  if (aiAvailable.value) {
+    console.error('✅ Local AI model detected');
+  } else {
+    console.error('❌ Local AI model not available');
+  }
 });
 
 onBeforeUnmount(async () => {
@@ -676,16 +763,16 @@ let editor = new Editor({
     ListItem,
     Typography,
     ColorHighlighter,
-    HyperMultimediaKit.configure({
-      Image: {modal: imageModal, resizeGripper: true}, // default modal
-      Youtube,
-      // Vimeo: {
-      //   modal: vimeoModal, // default modal
-      //   inline: true, // default false
-      // },
-      // SoundCloud: false,
-      // Twitter: false,
-    }),
+    // HyperMultimediaKit.configure({
+    //   Image: {modal: imageModal, resizeGripper: true}, // default modal
+    //   Youtube,
+    //   // Vimeo: {
+    //   //   modal: vimeoModal, // default modal
+    //   //   inline: true, // default false
+    //   // },
+    //   // SoundCloud: false,
+    //   // Twitter: false,
+    // }),
     Hyperlink.configure({
       openOnClick: true,
       modals: {
@@ -1063,6 +1150,30 @@ const loadingVersions = ref(false);
                     </Tooltip>
                   </TooltipProvider>
                 </div>
+
+                 <div class="flex items-center gap-1" v-if="aiAvailable">
+              <Separator orientation="vertical" class="h-6 mx-1" />
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      @click="openAIModal"
+                      class="flex gap-1 items-center bg-gradient-to-r from-purple-500/10 to-blue-500/10 hover:from-purple-500/20 hover:to-blue-500/20"
+                    >
+                      <BotIcon class="h-4 w-4" />
+                      <span class="hidden sm:inline">AI</span>
+                      <SparklesIcon class="h-3 w-3 opacity-70" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Ask AI about your notes</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+
               </div>
 
               <!-- Priority 2: Basic formatting - visible on sm+ screens -->
@@ -2513,6 +2624,68 @@ const loadingVersions = ref(false);
     </DialogContent>
   </Dialog>
 
+
+  <Dialog :open="showAIModal" @update:open="closeAIModal">
+    <DialogContent class="sm:max-w-[600px]">
+      <DialogHeader>
+        <DialogTitle class="flex items-center gap-2">
+          <BotIcon class="h-5 w-5" />
+          Ask AI Assistant
+          <SparklesIcon class="h-4 w-4 text-purple-500" />
+        </DialogTitle>
+      </DialogHeader>
+      
+      <div class="grid gap-4 py-4">
+        <!-- Context Preview -->
+        <div v-if="selectedTextForAI" class="p-3 bg-muted rounded-md">
+          <label class="text-sm font-medium text-muted-foreground mb-2 block">
+            Selected Context:
+          </label>
+          <p class="text-sm italic line-clamp-3">
+            "{{ selectedTextForAI }}"
+          </p>
+        </div>
+        
+        <!-- AI Prompt Input -->
+        <div class="flex flex-col gap-2">
+          <label for="ai-prompt-input" class="text-sm font-medium">
+            What would you like to know or generate?
+          </label>
+          <textarea
+            id="ai-prompt-input"
+            v-model="aiPrompt"
+            @keydown="handleAIKeydown"
+            placeholder="Ask a question about your notes, request a summary, or generate new content..."
+            class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+            :disabled="aiLoading"
+          />
+          <div class="text-xs text-muted-foreground">
+            Press Enter to send, Shift+Enter for new line, Esc to cancel
+          </div>
+        </div>
+        
+        <!-- AI Status -->
+        <div v-if="aiLoading" class="flex items-center gap-2 text-sm text-muted-foreground">
+          <div class="animate-spin h-4 w-4 border-2 border-primary/20 border-t-primary rounded-full"></div>
+          Generating response...
+        </div>
+      </div>
+      
+      <DialogFooter>
+        <Button variant="outline" @click="closeAIModal" :disabled="aiLoading">
+          Cancel
+        </Button>
+        <Button 
+          @click="handleAISubmit" 
+          :disabled="!aiPrompt.trim() || aiLoading"
+          class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+        >
+          <BotIcon class="h-4 w-4 mr-2" />
+          {{ aiLoading ? 'Generating...' : 'Generate' }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
   <!-- Version History Modal -->
   <Dialog
     :open="showVersionHistoryModal"
