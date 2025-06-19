@@ -21,6 +21,15 @@ import { eventBus } from "@/components/Document Editor/EventBus.js";
 import Loading from "@/components/Loading.vue";
 // import TagsList from "@/components/Document Editor/TagsList.vue";
 import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Upload as UploadIcon,
   ImageIcon,
   Link2 as LinkIcon,
@@ -188,8 +197,10 @@ const handleCameraCapture = () => {
 };
 const showAIModal = ref(false);
 const aiPrompt = ref('');
+const aiModel = ref('llama-3.2-3b-instruct'); // Default model
 const aiLoading = ref(false);
 const aiAvailable = ref(false);
+const aiAvailableModels = ref('');
 const selectedTextForAI = ref('');
 
 const imageUrlInput = ref("");
@@ -284,19 +295,30 @@ const ImageUpload = Extension.create({
 });
 
 
-const openAIModal = () => {
+const openAIModal = async () =>  {
   // Get selected text as context
+  
+  if (!aiService.isAvailable) {
+    toast({
+      title: "AI Not Available",
+      description: "Please check your AI model configuration.",
+      variant: "destructive",
+    });
+    return;
+  }
   const { from, to } = editor.state.selection;
   selectedTextForAI.value = editor.state.doc.textBetween(from, to, ' ');
-  
+  aiAvailableModels.value = await aiService.getModels();
+  console.error('Available AI models:', aiAvailableModels.value);
   aiPrompt.value = '';
+  // Only open modal after models are loaded
   showAIModal.value = true;
-  
-  // Focus the input after modal opens
 
+  // Focus the input after modal opens (next tick)
+  setTimeout(() => {
     const input = document.querySelector('#ai-prompt-input');
     if (input) input.focus();
-
+  }, 0);
 };
 
 const closeAIModal = () => {
@@ -306,6 +328,7 @@ const closeAIModal = () => {
 };
 
 const handleAISubmit = async () => {
+
   if (!aiPrompt.value.trim()) return;
   
   aiLoading.value = true;
@@ -316,14 +339,13 @@ const handleAISubmit = async () => {
     
     // Use selected text as context if available
     const context = selectedTextForAI.value ? selectedTextForAI.value : '';
-    
     // Generate AI response
-    const response = await aiService.generateText(aiPrompt.value, context);
+    const response = await aiService.generateFormattedText(aiPrompt.value, context, aiModel.value);
     console.error('AI Response:', response);
     // Insert AI response at cursor position
     editor.chain()
       .focus()
-            .insertContent(`<p></p><p><strong>AI Response:</strong></p><p>${response}</p><p></p>`)
+            .insertContent(response.html)
       .focus()
       .run();
     
@@ -658,6 +680,7 @@ onMounted(async () => {
 
     // Add event listener for tag updates
     eventBus.on("open-image-modal", openImageModal);
+    eventBus.on("open-ai-modal", openAIModal);
     eventBus.on("open-whiteboard-modal", openWhiteboardModal);
 
     window.addEventListener("keydown", handleEscapeKey);
@@ -697,6 +720,7 @@ onBeforeUnmount(async () => {
 
   // Clean up event listeners
   eventBus.off("open-image-modal", openImageModal);
+    eventBus.off("open-ai-modal", openAIModal);
   eventBus.off("open-whiteboard-modal", openWhiteboardModal);
   if (editor) {
     editor.destroy();
@@ -2625,13 +2649,13 @@ const loadingVersions = ref(false);
   </Dialog>
 
 
-  <Dialog :open="showAIModal" @update:open="closeAIModal">
+  <Dialog :open="showAIModal" @update:open="closeAIModal" >
     <DialogContent class="sm:max-w-[600px]">
       <DialogHeader>
         <DialogTitle class="flex items-center gap-2">
           <BotIcon class="h-5 w-5" />
-          Ask AI Assistant
-          <SparklesIcon class="h-4 w-4 text-purple-500" />
+          Imagine Anything...
+
         </DialogTitle>
       </DialogHeader>
       
@@ -2646,21 +2670,49 @@ const loadingVersions = ref(false);
           </p>
         </div>
         
+        <!-- Model Selection -->
+        <div class="flex flex-col gap-2">
+          <label for="ai-model-select" class="text-sm font-medium">
+            AI Model
+          </label>
+          <Select
+            id="ai-model-select"
+            v-model="aiModel"
+            :disabled="aiLoading"
+          >
+            <SelectTrigger class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+              <SelectValue placeholder="Select AI Model" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Available Models</SelectLabel>
+                <SelectItem
+                  v-for="model in aiAvailableModels"
+                  :key="model"
+                  :value="model"
+                >
+                  {{ model }}
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        
         <!-- AI Prompt Input -->
         <div class="flex flex-col gap-2">
           <label for="ai-prompt-input" class="text-sm font-medium">
-            What would you like to know or generate?
+            What would you like me to generate?
           </label>
           <textarea
             id="ai-prompt-input"
             v-model="aiPrompt"
             @keydown="handleAIKeydown"
-            placeholder="Ask a question about your notes, request a summary, or generate new content..."
+            placeholder="Ask for an explantion of key terms, request a summary, or generate new content..."
             class="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
             :disabled="aiLoading"
           />
           <div class="text-xs text-muted-foreground">
-            Press Enter to send, Shift+Enter for new line, Esc to cancel
+            Press Enter to send and Shift+Enter for new line
           </div>
         </div>
         
