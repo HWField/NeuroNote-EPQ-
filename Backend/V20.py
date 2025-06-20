@@ -241,7 +241,7 @@ Base.metadata.create_all(engine)
 
 
 def populate_sample_data():
-    print("Populating sample data...")
+    # print("Populating sample data...")
     user = User(email="admin@admin", password=generate_password_hash("admin", method='pbkdf2:sha256'), username="admin", user_status="admin")
     dbsession.add(user)
     dbsession.commit()  # Save the user to generate an ID
@@ -317,7 +317,7 @@ def refresh():
     
     # Create new access token
     access_token = create_access_token(identity=current_user)
-    print("################### refreshed access token")
+    # print("################### refreshed access token")
     
     return jsonify(access_token=access_token), 200
 
@@ -865,14 +865,14 @@ def update():
         if note is None:
             return jsonify({'status': 'error', 'message': 'Note not found'}), 404
         
-        print("------- note", note.name, "has been found with content type:")
+        # print("------- note", note.name, "has been found with content type:")
         
         # Initialize content properly
         if note.content is None:
-            print("------- Initializing empty content array")
+            # print("------- Initializing empty content array")
             note.content = []
         elif not isinstance(note.content, list):
-            print("------- Converting legacy content to versioned format")
+            # print("------- Converting legacy content to versioned format")
             old_content = note.content
             note.content = [{
                 "content": old_content,
@@ -929,17 +929,17 @@ def update():
                     # Only create a version if either threshold is met
                     should_create_version = time_threshold_met or change_size_threshold_met
                     
-                    print(f"------- Time threshold met: {time_threshold_met}, Change threshold met: {change_size_threshold_met}")
+                    # print(f"------- Time threshold met: {time_threshold_met}, Change threshold met: {change_size_threshold_met}")
                 
-                print(f"------- Content changed? {has_changed}, Creating new version? {should_create_version}")
+                # print(f"------- Content changed? {has_changed}, Creating new version? {should_create_version}")
             except Exception as e:
-                print(f"------- Error comparing content: {e}")
+                # print(f"------- Error comparing content: {e}")
                 should_create_version = True  # Assume we should version if comparison fails
 
         if has_changed:
             if should_create_version:
                 # Create a new version
-                print("------- Creating new version entry")
+                # print("------- Creating new version entry")
                 version_entry = {
                     "content": new_content,
                     "timestamp": datetime.now().isoformat(),
@@ -954,7 +954,7 @@ def update():
                 new_content_array = [version_entry] + note.content
             else:
                 # Just update the current version instead of creating a new one
-                print("------- Updating existing version entry")
+                # print("------- Updating existing version entry")
                 # Create a new list with updated first element
                 current_version = note.content[0].copy() if isinstance(note.content[0], dict) else {"content": note.content[0]}
                 current_version["content"] = new_content
@@ -980,7 +980,7 @@ def update():
             if tag:
                 new_tags.append(tag)
             else:
-                print(f"Warning: Tag with ID {tag_id} not found for user {user}")
+                 print(f"Warning: Tag with ID {tag_id} not found for user {user}")
         
         # Replace all tag associations
         note.tags = new_tags
@@ -989,11 +989,11 @@ def update():
         
         # Handle whiteboard-specific fields
         if note.format == "whiteboard":
-            print("------- note is a whiteboard, setting viewport and background")
+            # print("------- note is a whiteboard, setting viewport and background")
             note.viewport = data.get('viewport')
             note.background = data.get('background')
         elif note.format == "document":
-            print("------- note is a document, setting viewport")
+            # print("------- note is a document, setting viewport")
             note.viewport = data.get('viewport')
             new_whiteboards = []
             for whiteboard_id in whiteboard_ids:
@@ -1005,7 +1005,7 @@ def update():
                 
                 if whiteboard:
                     new_whiteboards.append(whiteboard)
-                    print(f"Found whiteboard with ID {whiteboard_id} for user {user}")
+                    # print(f"Found whiteboard with ID {whiteboard_id} for user {user}")
                 else:
                     print(f"Warning: Tag with ID {whiteboard_id} not found for user {user}")
             
@@ -1019,12 +1019,12 @@ def update():
             dbsession.refresh(note)
             
             # Verify the update worked
-            print(f"------- After update: note has {len(note.content)} versions")
+            # print(f"------- After update: note has {len(note.content)} versions")
             
             return jsonify({'status': 'success', 'message': 'Note content updated successfully.'})
         except Exception as e:
             dbsession.rollback()
-            print(f"Error updating note {note_id} content: {e}")
+            # print(f"Error updating note {note_id} content: {e}")
             return jsonify({'status': 'error', 'message': f'Failed to update note content: {str(e)}'}), 500
     
     elif operation == "restore":
@@ -1121,20 +1121,20 @@ def update():
                 
             # Check for password update
             if 'newPassword' in request.json:
-                print("########################## new password found")
+                # print("########################## new password found")
                 try:
                     currentPassword = request.json['currentPassword']
                     newPassword = request.json['newPassword']
-                    print("current password", currentPassword)
+                    # print("current password", currentPassword)
                     if check_password_hash(user.password, currentPassword):
                         
                         user.password = generate_password_hash(newPassword, method='pbkdf2:sha256')
-                        print("########################## password updated")
+                        # print("########################## password updated")
                     else:
-                        print("########################## error1")
+                        # print("########################## error1")
                         return jsonify({'status': 'error', 'message': 'Current password is incorrect'})
                 except:
-                    print("########################## error2")
+                    # print("########################## error2")
                     return jsonify({'status': 'error', 'message': 'Current password is required'})
                     
             # check for avatar
@@ -1148,7 +1148,7 @@ def update():
                 
             # Check for preferences update
             if 'preferences' in request.json:
-                print("########################## preferences found", request.json['preferences'])
+                # print("########################## preferences found", request.json['preferences'])
                 # print(f"Updating preferences with: {request.json['preferences']}")
                 preferences.update(request.json['preferences'])
                 
@@ -1501,4 +1501,4 @@ def serve_image(user_id, filename):
 def health():
     return jsonify(status="ok", service="flask"), 200   
 if __name__ == '__main__':
-    socketio.run(app, debug=True, host='0.0.0.0', port=8000, allow_unsafe_werkzeug=True)
+    socketio.run(app, debug=False, host='0.0.0.0', port=8000, allow_unsafe_werkzeug=True)
