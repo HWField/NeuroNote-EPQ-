@@ -179,7 +179,6 @@ function switchTab(id) {
 function openNewTab(tabType) {
   // Example: Adding a new tab dynamically
   if (tabType === "graph") {
-    console.error("Generic tab type is not implemented yet.");
     tabStore.addTab("Graph", "graph");
   } else if (tabType === "Settings") {
     tabStore.addTab("Settings", "settings");
@@ -319,7 +318,7 @@ function getTabIcon(tab) {
       (el) => el.type === "note" && el.id === parseInt(tab.state.noteId)
     ).format;
 
-    console.error("Note type:", noteType);
+
 
     if (noteType === "document") {
       return FileText;

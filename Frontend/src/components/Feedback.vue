@@ -252,7 +252,6 @@ const isValid = computed(() => {
 const tabid = useTabStore().GetActiveTabID();
 onMounted(() => {
   let tabid = useTabStore().GetActiveTabID();
-  console.error("Tab ID:", tabid);
   const tab = useTabStore().getTab(tabid);
   if (tab && tab.state) {
     // Restore form values from tab state

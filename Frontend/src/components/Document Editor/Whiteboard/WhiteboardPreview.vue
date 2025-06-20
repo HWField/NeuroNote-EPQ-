@@ -58,8 +58,6 @@ function handleViewportChange(viewport) {
 // Function to open the full whiteboard editor with the preview's current viewport
 function openFullWhiteboard() {
   if (props.node.attrs.id) {
-    console.error("Opening full whiteboard with preview viewport:", props.node.attrs.viewport);
-    
     // Pass the current preview viewport to the full editor
     useTabStore().addTab("note", "note", {
       noteId: props.node.attrs.id,

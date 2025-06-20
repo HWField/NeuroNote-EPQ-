@@ -249,7 +249,7 @@ function createTour() {
         //   '[data-tour="sidebar-profile"]'
         // );
         if (tabStore.activeTab.id !== 1) {
-          console.error("Active tab is not dashboard, switching to it");
+
           tabStore.setActiveTab(1); // Set to dashboard tab
           //short delay
           setTimeout(resolve, 300);
@@ -511,7 +511,6 @@ function createTour() {
       show() {
         // Record current active tab ID when step shows
         const initialTabId = tabStore.activeTab;
-        console.error(`Initial active tab ID: ${initialTabId}`);
 
         // Set up interval to check for tab changes
         const checkInterval = setInterval(() => {
@@ -997,7 +996,7 @@ function startTour() {
 
 function checkAndStartTourForNewUser() {
   if (graphStore.elements.length === 0) {
-    console.error(
+    console.log(
       "New user detected, starting tour...",
       graphStore.elements.length
     );
@@ -1019,7 +1018,6 @@ watch(
 
 // Auto-start for new users
 onMounted(() => {
-  console.error("Mounted TourGuide component");
 
   if (props.shouldStart) {
     checkAndStartTourForNewUser();

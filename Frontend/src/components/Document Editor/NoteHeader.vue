@@ -252,7 +252,6 @@ async function createNewTag(tagName) {
       })
       .then((response) => {
         graphStore.addNode(response.data);
-        console.error("Tag created:", response.data);
 
         // Find the newly created tag in the updated store
         const newTag = graphStore.elements

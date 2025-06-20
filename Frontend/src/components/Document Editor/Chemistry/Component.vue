@@ -36,7 +36,7 @@ onMounted(() => {
       viewer.setDimension("500px", "250px");
       viewer.setAutofit(true);
       viewer.getRenderConfigs().getEnvironmentConfigs().setGraphicQuality(Kekule.Render.Render3DGraphicQuality.EXTREME_HIGH); 
-      console.error(viewer.getRenderConfigs());
+
     
    
         viewer.setBackgroundColor("transparent");

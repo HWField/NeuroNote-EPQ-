@@ -76,7 +76,6 @@ const handleFilterChange = (newFilters) => {
 
 const OpenNote = (noteId) => {
   const Id = noteId.split("_")[1];
-  console.error("Note selected", Id);
   const note = graphStore.elements.find((el) => el.id === parseInt(Id));
 
   if (!note) {

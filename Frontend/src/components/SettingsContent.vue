@@ -763,11 +763,10 @@ watch(streamerMode, async (newValue, oldValue) => {
   }
 });
 
-watch(selectedTheme, (newValue, oldValue) => {
-  console.error(`selectedTheme changed from ${oldValue} to ${newValue}`);
-});
+// watch(selectedTheme, (newValue, oldValue) => {
+//   console.error(`selectedTheme changed from ${oldValue} to ${newValue}`);
+// });
 watch(colorMode, (newValue, oldValue) => {
-  console.error(`colorMode changed from ${oldValue} to ${newValue}`);
   userStore.saveUser({ theme: newValue });
   userStore.theme = newValue;
 });
@@ -800,6 +799,5 @@ onMounted(() => {
   avatar.value = userStore.avatar || ""; // Load avatar from user store
   streamerMode.value = userStore.streamerMode || false; // Load streamer mode from user store
   // Force streamerMode to true explicitly
-  console.error("Initial streamerMode value:", streamerMode.value);
 });
 </script>

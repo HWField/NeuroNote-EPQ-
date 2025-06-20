@@ -99,13 +99,13 @@ const register = async () => {
     });
 
     const redirect = route.query.redirect as string;
-    console.error(
-      "Registration successful",
-      "access_token: ",
-      response.data.access_token,
-      "refresh_token: ",
-      response.data.refresh_token
-    );
+    // console.error(
+    //   "Registration successful",
+    //   "access_token: ",
+    //   response.data.access_token,
+    //   "refresh_token: ",
+    //   response.data.refresh_token
+    // );
     userStore.Login({
       access_token: response.data.access_token,
       refresh_token: response.data.refresh_token,

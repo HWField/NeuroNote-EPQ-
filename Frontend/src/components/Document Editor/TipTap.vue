@@ -309,7 +309,6 @@ const openAIModal = async () =>  {
   const { from, to } = editor.state.selection;
   selectedTextForAI.value = editor.state.doc.textBetween(from, to, ' ');
   aiAvailableModels.value = await aiService.getModels();
-  console.error('Available AI models:', aiAvailableModels.value);
   aiPrompt.value = '';
   // Only open modal after models are loaded
   showAIModal.value = true;
@@ -434,12 +433,7 @@ const createWhiteboard = async () => {
   }
 };
 const insertWhiteboard = () => {
-  console.error(
-    "Inserting whiteboard with ID:",
-    selectedWhiteboard.value,
-    "parents:",
-    props.tabId
-  );
+
   if (selectedWhiteboard.value) {
     editor.commands.insertContent({
       type: "whiteboard",
@@ -528,8 +522,6 @@ function extractWhiteboardIds(content) {
   if (content && content.content) {
     content.content.forEach(node => traverse(node));
   }
-  console.error("1111111 Extracted whiteboard IDs:", whiteboardIds);
-  
   return whiteboardIds;
 }
 
@@ -593,10 +585,7 @@ async function LoadFromBackend() {
     if (response.data.viewport) {
       // Set the editor's viewport position
       editor.commands.focus(response.data.viewport);
-      console.error(
-        "----------------------   Editor viewport set to position:",
-        response.data.viewport
-      );
+   
     }
 
     setTimeout(() => updateWhiteboardParentTabs(), 0);
@@ -642,7 +631,6 @@ async function closeNote() {
 
     if (saveResult) {
       // Only close if save was successful
-      console.error("Note saved successfully before closing");
       isLoading.value = false;
       emit("note-closed");
     } else {
@@ -694,7 +682,7 @@ onMounted(async () => {
   }
     aiAvailable.value = await aiService.isAvailable();
   if (aiAvailable.value) {
-    console.error('✅ Local AI model detected');
+    console.log('✅ Local AI model detected');
   } else {
     console.error('❌ Local AI model not available');
   }
@@ -706,7 +694,6 @@ onBeforeUnmount(async () => {
   if (saveInterval.value) {
     clearInterval(saveInterval.value);
     saveInterval.value = null;
-    console.error("Save interval cleared");
   }
 
   // Only save if loading is complete

@@ -802,7 +802,6 @@ async function SaveToBackend() {
       viewport: JSON.stringify(canvas.viewportTransform),
       background: background.value,
     });
-    console.error("Note saved  successfully:", props.noteId);
     return true;
   } catch (error) {
     console.error("Error saving note:", error);
@@ -810,14 +809,12 @@ async function SaveToBackend() {
   }
 }
 async function LoadFromBackend() {
-  console.error("Loading note:", props.noteId);
   console.log("Initial viewport prop:", props.initialViewport);
   try {
     const response = await axios.post("/load", {
       id: props.noteId,
       operation: "content",
     });
-    console.error("Note loaded successfully:", response.data);
     Loading.value = false;
     // Set the title in our ref
     noteTitle.value = response.data.name || "Untitled Note";
@@ -857,7 +854,6 @@ async function LoadFromBackend() {
           typeof useTabStore().getTab(useTabStore().activeTab).state
             .initialViewport === "string"
         ) {
-          console.error("aaaaaaaa is a string");
           viewportToUse = JSON.parse(
             useTabStore().getTab(useTabStore().activeTab).state.initialViewport
           );
@@ -866,14 +862,10 @@ async function LoadFromBackend() {
             useTabStore().getTab(useTabStore().activeTab).state.initialViewport
           )
         ) {
-          console.error("aaaaaaaa is an array");
           viewportToUse = useTabStore().getTab(useTabStore().activeTab).state
             .initialViewport;
         }
-        console.error(
-          "!!!!!!!!Using custom preview sent viewport:",
-          useTabStore().getTab(useTabStore().activeTab).state.initialViewport
-        );
+     
 
         const previewHeight = 265;
         const fullEditorHeight = modalContent.offsetHeight;
@@ -883,13 +875,8 @@ async function LoadFromBackend() {
         // Move the viewport down by half the height difference
         viewportToUse[5] += heightDifference;
 
-        console.error("Adjusted viewport for full editor:", viewportToUse);
-        console.error("Height difference compensation:", heightDifference);
+     
       } else if (response.data.viewport) {
-        console.error(
-          "!!!!!!!!Using loaded viewport:",
-          useTabStore().getTab(useTabStore().activeTab).state.initialViewport
-        );
         // Priority 2: Use backend viewport (for full editor only)
         viewportToUse = JSON.parse(response.data.viewport);
         console.log("Using backend viewport:", viewportToUse);
@@ -929,7 +916,7 @@ async function LoadFromBackend() {
                 }
 
                 if (obj.rough === true) {
-                  console.error("Restoring rough shape for:", obj.type);
+            
                   restoreRoughShape(obj);
                 }
               });
@@ -980,7 +967,6 @@ async function closeNote() {
 
     if (saveResult) {
       // Only close if save was successful
-      console.error("Note saved successfully before closing");
       isLoading.value = false;
       emit("note-closed");
     } else {
@@ -1075,7 +1061,6 @@ watch(showNoteHeader, () => {
 });
 
 function updateNoteTitle(newTitle) {
-  console.error("Updating note title:", newTitle, "tab is", props.tabId);
   noteTitle.value = newTitle;
   useTabStore().RenameTab(props.tabId, newTitle); //update tab live
 }
@@ -1239,7 +1224,6 @@ function initaliseCanvas() {
       // }
       // canvas.on('selection:created', onObjectSelected);
 
-      console.error("Canvas initialized:", canvas);
       //might need changing in future but prevents blurry edges for now
       // Disable object caching for better performance
       fabric.Object.prototype.objectCaching = false;
@@ -1459,11 +1443,9 @@ let lastScale = 1;
 hammer.on("pinchstart", function (e) {
   // Only respond to touch input, ignore if pen is active
   if (isPenActive()) {
-    console.error("Pinch blocked - pen is active");
     return;
   }
   
-  console.error("Pinch start detected");
   canvas._zoomStartScale = canvas.getZoom();
   lastScale = 1;
 
@@ -1483,7 +1465,6 @@ hammer.on("pinchmove", function (e) {
     return;
   }
   
-  console.error("Pinch move detected");
   const scaleChange = e.scale / lastScale;
   lastScale = e.scale;
 
@@ -1520,11 +1501,9 @@ let lastDeltaY = 0;
 hammer.on("panstart", function (e) {
   // Only respond to touch input, ignore if pen is active
   if (isPenActive()) {
-    console.error("Pan blocked - pen is active");
     return;
   }
   
-  console.error("Pan started");
   e.preventDefault();
   canvas.isDrawingMode = false;
   canvas.selection = false;
@@ -1541,7 +1520,6 @@ hammer.on("panmove", function (e) {
     return;
   }
   
-  console.error("Pan move detected");
   e.preventDefault();
   canvas.isDrawingMode = false;
   canvas.selection = false;
@@ -1607,7 +1585,6 @@ hammer.on("panend", function () {
 
       resolve(canvas);
     } catch (error) {
-      console.error("Error initializing canvas:", error);
       reject(error);
     }
   });
@@ -1695,7 +1672,6 @@ function HandleWhiteboardClick(event) {
 
 onMounted(async () => {
   await initaliseCanvas();
-  console.error("Canvas initialization completed");
   const loaded = await LoadFromBackend();
 
   if (loaded) {
@@ -1707,7 +1683,6 @@ onMounted(async () => {
     }, 100);
 
     if (!props.viewOnly) {
-      console.error("#########Edit mode enabled");
       useUserStore().addToRecentNotes(props.noteId);
       useTabStore().RenameTab(props.tabId, noteTitle);
 
@@ -1720,9 +1695,7 @@ onMounted(async () => {
       mode.value = "view";
       canvas.isDrawingMode = true;
       canvas.selection = false;
-      console.error("#########handling intercations now");
       canvas.forEachObject(function (e) {
-        console.error("Disabling interaction for object:", e.type);
         e.selectable = false;
         e.evented = false;
         e.target.lockSkewingY = true;
@@ -1763,7 +1736,6 @@ onBeforeUnmount(async () => {
     if (saveInterval.value) {
       clearInterval(saveInterval.value);
       saveInterval.value = null;
-      console.error("Save interval cleared");
     }
 
     // Only save if loading is complete
@@ -1905,7 +1877,6 @@ watch(colour, (newColor) => {
   canvas.freeDrawingBrush.color = newColor;
   const activeObjects = canvas.getActiveObjects();
   activeObjects.forEach((obj) => {
-    console.error("Updating color of object:", obj);
 
     if (obj.type === "path") {
       obj.set("stroke", newColor);
@@ -1933,7 +1904,6 @@ watch(penWidth, (newWidth) => {
   canvas.freeDrawingBrush.width = newWidth;
   const activeObjects = canvas.getActiveObjects();
   activeObjects.forEach((obj) => {
-    console.error("Updating stroke width of object:", obj);
 
     if (obj.type === "path") {
       obj.set("strokeWidth", newWidth);
@@ -2322,7 +2292,6 @@ function createRoughShape(shapeType, options = {}) {
 }
 
 function restoreRoughShape(obj) {
-  console.error("Restoring rough shape for object:", obj.type);
 
   // Set the rough properties
   obj.rough = true;
@@ -2479,7 +2448,6 @@ function restoreRoughShape(obj) {
   obj._needsRegeneration = true;
   canvas.renderAll();
   canvas.requestRenderAll();
-  console.error("Rough shape restoration completed for:", obj.type);
 }
 
 // Add roughness controls
@@ -2556,7 +2524,6 @@ const uploadImageFile = async (file) => {
 
     if (response.data && response.data.url) {
       const fullImageUrl = getBaseUrl() + response.data.url;
-      console.error("Image URL:", fullImageUrl);
       await addImageToCanvas(fullImageUrl); // Add await here
       return response.data.url;
     } else {
@@ -2630,7 +2597,6 @@ const addImageToCanvas = async (imageUrl) => {
   const visibleHeight = modalContent.offsetHeight;
   const centerX = -vpt[4] / zoom + visibleWidth / (2 * zoom);
   const centerY = -vpt[5] / zoom + visibleHeight / (2 * zoom);
-  console.error("Adding image to canvas at:", centerX, centerY, imageUrl);
 
   try {
     // Create a fabric image object - Fabric 6 way

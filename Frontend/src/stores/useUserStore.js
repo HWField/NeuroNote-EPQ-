@@ -29,14 +29,12 @@ export const useUserStore = defineStore(
     // const theme = ref("auto"); // Default theme is "auto"
 
     watch(theme, (newTheme) => {
-      console.error("Theme changed:", newTheme);
       if (isAuthenticated.value) {
         saveUser({ theme: newTheme });
       }
     });
 
     watch(tourState, (newState, oldState) => {
-      console.error("Tour state changed from", oldState, "to", newState);
       console.trace(); // This will show you exactly where it's being changed from
     });
 
@@ -53,7 +51,6 @@ export const useUserStore = defineStore(
         // Load theme if available
         if (data.preferences?.theme) {
           theme.value = data.preferences.theme;
-          console.error("Theme found on load:", data.preferences.theme);
         }
 
         // Load recent notes if available
@@ -80,10 +77,7 @@ export const useUserStore = defineStore(
 
         // Load streamer mode if available
         if (data.preferences?.streamerMode) {
-          console.error(
-            "streamermode found on load:",
-            data.preferences.streamerMode
-          );
+      
           streamerMode.value = data.preferences.streamerMode;
         }
       }
@@ -206,7 +200,6 @@ export const useUserStore = defineStore(
 
     function addToRecentNotes(noteId) {
       // Convert to number if it's not already
-      console.error("ADDING TO RECENT noteS");
       noteId = Number(noteId);
 
       // Remove the note if it already exists in the list
@@ -235,7 +228,7 @@ export const useUserStore = defineStore(
       //     graphStore.openGraph(params.graphId);
       //   }
       // }
-      console.error("Running shortcut:", shortcut.params.noteId);
+      // console.error("Running shortcut:", shortcut.params.noteId);
       if (shortcut.action == "Note") {
         let Id = shortcut.params.noteId;
         const note = useGraphStore().elements.find(

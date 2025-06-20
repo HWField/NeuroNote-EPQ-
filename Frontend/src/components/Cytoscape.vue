@@ -1420,17 +1420,12 @@ async function CreateNote(format) {
   let noteFormat;
   let response;
   if (!format) {
-    console.error("No format provided for CreateNote");
     response = await openDialogue("newNote");
   } else {
-    console.error(" format provided for CreateNote");
     response = await openDialogue("newNote", { type: format });
   }
   noteName = response.name;
   noteFormat = response.type;
-  console.errror;
-  console.error("noteName is", noteName);
-  console.error("noteFormat is", noteFormat);
   if (!noteName || noteName.trim() === "") return;
 
   // Get all currently selected tags before creating the note
@@ -1597,7 +1592,6 @@ async function addFilter(
   let newFilter = {};
 
   if (prefilledValue) {
-    console.error("prefilledValue is true", preType, preValue, preLabel);
     newFilter = {
       id: Date.now().toString(),
       type: preType, // Fix: use standard property names
@@ -1609,7 +1603,6 @@ async function addFilter(
     if (result.type === "tag" && result.value) {
       // Extract the tag name from the selected value
       const tagname = result.value;
-      console.error("detected tagname is", tagname);
 
       newFilter = {
         id: Date.now().toString(),
@@ -1981,7 +1974,6 @@ function advancedSearch() {
 
 async function Spotlight() {
   const searchTerm = (await openDialogue("spotlight")).value;
-  console.error("Spotlight search term:", searchTerm);
   if (!searchTerm || searchTerm.trim() === "") return;
 
   const lowerCaseSearchTerm = searchTerm.toLowerCase();
@@ -2062,7 +2054,6 @@ function loadData() {
 }
 
 onMounted(() => {
-  console.error("Cytoscape mounted");
   initializeCytoscape();
   let state = loadState();
   loadData();
@@ -2071,7 +2062,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   removeHandle();
-  console.log("Cytoscape unmounted");
   if (cy) {
     cy.stop(); // Stop any ongoing layouts
     cy.off("layoutstop"); // Clean up listeners
