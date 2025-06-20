@@ -200,355 +200,562 @@
             data-tour="whiteboardToolbar"
             class="bg-primary-foreground shadow-lg rounded-lg p-3 max-w-[90%] mx-auto"
           >
-            <div class="flex items-center gap-1 flex-wrap">
-              <!-- Close button -->
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      @click="closeNote()"
-                      class="mr-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-800/30"
-                    >
-                      <X class="h-4 w-4 text-red-500 dark:text-red-400" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Close Whiteboard</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div class="flex items-center gap-1">
+              <!-- Priority 1: Essential controls - always visible -->
+              <div class="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        @click="closeNote()"
+                        class="mr-2 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-800/30"
+                      >
+                        <X class="h-4 w-4 text-red-500 dark:text-red-400" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Close Whiteboard</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      @click="undo()"
-                      :disabled="!canUndo()"
-                      class="mr-1"
-                    >
-                      <Undo2 class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Undo (Ctrl+Z)</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                <!-- Undo/Redo - always visible -->
+                <div class="flex items-center gap-1">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          @click="undo()"
+                          :disabled="!canUndo()"
+                          class="mr-1"
+                        >
+                          <Undo2 class="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Undo (Ctrl+Z)</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      @click="redo()"
-                      :disabled="!canRedo()"
-                      class="mr-2"
-                    >
-                      <Redo2 class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Redo (Ctrl+Y)</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          @click="redo()"
+                          :disabled="!canRedo()"
+                          class="mr-2"
+                        >
+                          <Redo2 class="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Redo (Ctrl+Y)</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
 
-              <Separator orientation="vertical" class="h-6 mx-1" />
+                <!-- Mode Selection - always visible -->
+                <div class="flex items-center gap-1">
+                  <Separator orientation="vertical" class="h-6 mx-1" />
 
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      :variant="showNoteHeader ? 'default' : 'ghost'"
-                      size="icon"
-                      @click="showNoteHeader = !showNoteHeader"
-                    >
-                      <Info class="h-4 w-4" />
-                      <span class="sr-only">Toggle Note Header</span>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    >{{ showNoteHeader ? "Hide" : "Show" }} Note
-                    Details</TooltipContent
+                  <div
+                    class="inline-flex rounded-md shadow-sm border overflow-hidden"
                   >
-                </Tooltip>
-              </TooltipProvider>
+                    <Button
+                      :variant="mode === 'draw' ? 'default' : 'ghost'"
+                      :class="{ 'opacity-50 ': mode === 'auto' }"
+                      size="sm"
+                      class="rounded-none px-2 sm:px-3"
+                      @click="mode = 'draw'"
+                    >
+                      <Pencil class="h-4 w-4" />
+                      <span class="hidden sm:inline ml-1">Draw</span>
+                    </Button>
 
-              <Separator orientation="vertical" class="h-6 mx-1" />
-              <div
-                class="inline-flex rounded-md shadow-sm border overflow-hidden"
-              >
-                <!-- Erase Draw Button -->
-                <Button
-                  :variant="mode === 'draw' ? 'default' : 'ghost'"
-                  :class="{ 'opacity-50 ': mode === 'auto' }"
-                  size="sm"
-                  class="rounded-none px-3"
-                  @click="mode = 'draw'"
-                >
-                  <Pencil class="h-4 w-4 mr-1" />
-                  Draw
-                </Button>
+                    <Button
+                      :variant="mode === 'erase' ? 'default' : 'ghost'"
+                      :class="{ 'opacity-50 ': mode === 'auto' }"
+                      size="sm"
+                      class="rounded-none px-2 sm:px-3"
+                      @click="mode = 'erase'"
+                    >
+                      <EraserIcon class="h-4 w-4" />
+                      <span class="hidden sm:inline ml-1">Erase</span>
+                    </Button>
 
-                <!-- Erase Button -->
-                <Button
-                  :variant="mode === 'erase' ? 'default' : 'ghost'"
-                  :class="{ 'opacity-50 ': mode === 'auto' }"
-                  size="sm"
-                  class="rounded-none px-3"
-                  @click="mode = 'erase'"
-                >
-                  <EraserIcon class="h-4 w-4 mr-1" />
-                  Erase
-                </Button>
-
-                <!-- Select Draw Button -->
-                <Button
-                  :variant="mode === 'select' ? 'default' : 'ghost'"
-                  :class="{ 'opacity-50 ': mode === 'auto' }"
-                  size="sm"
-                  class="rounded-none px-3"
-                  @click="mode = 'select'"
-                >
-                  <Hand class="h-4 w-4 mr-1" />
-                  Select
-                </Button>
+                    <Button
+                      :variant="mode === 'select' ? 'default' : 'ghost'"
+                      :class="{ 'opacity-50 ': mode === 'auto' }"
+                      size="sm"
+                      class="rounded-none px-2 sm:px-3"
+                      @click="mode = 'select'"
+                    >
+                      <Hand class="h-4 w-4" />
+                      <span class="hidden sm:inline ml-1">Select</span>
+                    </Button>
+                  </div>
+                  <Separator orientation="vertical" class="h-6 mx-1" />
+                </div>
               </div>
 
-              <Separator orientation="vertical" class="h-6 mx-1" />
+              <!-- Priority 3: Color and width controls - visible on md+ screens -->
+              <div class="hidden md:flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        @click="centerWhiteboard"
+                        class="mr-1"
+                      >
+                        <Home class="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Center Whiteboard</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <Separator orientation="vertical" class="h-6 mx-1" />
 
-              <!-- Add Shape -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="flex gap-1 items-center"
-                  >
-                    <PlusIcon class="h-4 w-4" />
-                    <span>Add</span>
-                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem @click="addShape('rectangle')">
-                    <Square class="h-4 w-4 mr-2" />
-                    <span>Rectangle</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="addShape('circle')">
-                    <Circle class="h-4 w-4 mr-2" />
-                    <span>Circle</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="addShape('triangle')">
-                    <Triangle class="h-4 w-4 mr-2" />
-                    <span>Triangle</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="addShape('line')">
-                    <Minus class="h-4 w-4 mr-2" />
-                    <span>Line</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem @click="addText()">
-                    <Type class="h-4 w-4 mr-2" />
-                    <span>Text</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="openImageModal()">
-                    <ImagePlus class="h-4 w-4 mr-2" />
-                    <span>Image</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Separator orientation="vertical" class="h-6 mx-1" />
-
-              <Button @click="centerWhiteboard()" variant="ghost" class="">
-                <Home class="h-4 w-4" /> Home</Button
-              >
-
-              <Separator orientation="vertical" class="h-6 mx-1" />
-
-              <!-- Pen Color -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="flex gap-1 items-center"
-                  >
-                    <Palette class="h-4 w-4" :color="colour" />
-                    <span>Colour</span>
-                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem @click="colour = 'black'">
-                    <Circle class="h-4 w-4 mr-2" fill="black" />
-                    <span>Black</span>
-                    <Check v-if="colour === 'black'" class="h-4 w-4 ml-auto" />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="colour = 'white'">
-                    <Circle
-                      class="h-4 w-4 mr-2"
-                      fill="white"
-                      stroke="#e5e5e5"
-                    />
-                    <span>White</span>
-                    <Check v-if="colour === 'white'" class="h-4 w-4 ml-auto" />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="colour = 'red'">
-                    <Circle class="h-4 w-4 mr-2" fill="red" />
-                    <span>Red</span>
-                    <Check v-if="colour === 'red'" class="h-4 w-4 ml-auto" />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="colour = 'blue'">
-                    <Circle class="h-4 w-4 mr-2" fill="blue" />
-                    <span>Blue</span>
-                    <Check v-if="colour === 'blue'" class="h-4 w-4 ml-auto" />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="colour = 'green'">
-                    <Circle class="h-4 w-4 mr-2" fill="green" />
-                    <span>Green</span>
-                    <Check v-if="colour === 'green'" class="h-4 w-4 ml-auto" />
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Separator orientation="vertical" class="h-6 mx-1" />
-
-              <!-- Pen type -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="flex gap-1 items-center"
-                  >
-                    <Pencil class="h-4 w-4" />
-                    <span>Width</span>
-                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem @click="penWidth = 1">
-                    <Minus class="h-4 w-4 mr-2" :stroke-width="0.5" />
-                    <span>Fine</span>
-                    <Check v-if="penWidth == 1" class="h-4 w-4 ml-auto" />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="penWidth = 3">
-                    <Minus class="h-4 w-4 mr-2" :stroke-width="1" />
-                    <span>Medium</span>
-                    <Check v-if="penWidth == 3" class="h-4 w-4 ml-auto" />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="penWidth = 8">
-                    <Minus class="h-4 w-4 mr-2" :stroke-width="3" />
-                    <span>Bold</span>
-                    <Check v-if="penWidth == 8" class="h-4 w-4 ml-auto" />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="penWidth = 16">
-                    <Minus class="h-4 w-4 mr-2" :stroke-width="5" />
-                    <span>Thick</span>
-                    <Check v-if="penWidth == 16" class="h-4 w-4 ml-auto" />
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Separator orientation="vertical" class="h-6 mx-1" />
-
-              <!-- Background/Grid -->
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    class="flex gap-1 items-center"
-                  >
-                    <Grid class="h-4 w-4" />
-                    <span>Background</span>
-                    <ChevronDownIcon class="h-3 w-3 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem @click="background = 'line'">
-                    <Rows3Icon class="h-4 w-4 mr-2" />
-                    <span>Line</span>
-                    <Check
-                      v-if="background == 'line'"
-                      class="h-4 w-4 ml-auto"
-                    />
-                  </DropdownMenuItem>
-                  <Separator />
-                  <DropdownMenuItem @click="background = 'sGrid'">
-                    <Grid class="h-4 w-4 mr-2" />
-                    <span>Small Grid</span>
-                    <Check
-                      v-if="background == 'sGrid'"
-                      class="h-4 w-4 ml-auto"
-                    />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="background = 'mGrid'">
-                    <Grid class="h-4 w-4 mr-2" />
-                    <span>Medium Grid</span>
-                    <Check
-                      v-if="background == 'mGrid'"
-                      class="h-4 w-4 ml-auto"
-                    />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="background = 'lGrid'">
-                    <Grid class="h-4 w-4 mr-2" />
-                    <span>Large Grid</span>
-                    <Check
-                      v-if="background == 'lGrid'"
-                      class="h-4 w-4 ml-auto"
-                    />
-                  </DropdownMenuItem>
-                  <Separator />
-                  <DropdownMenuItem @click="background = 'empty'">
-                    <Square class="h-4 w-4 mr-2" />
-                    <span>Blank</span>
-                    <Check
-                      v-if="background == 'empty'"
-                      class="h-4 w-4 ml-auto"
-                    />
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Separator orientation="vertical" class="h-6 mx-1" />
-
-              <!-- Delete Selected -->
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      class="text-orange-600"
-                      @click="deleteSelected"
-                    >
-                      <Trash2 class="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Delete Selected</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-
-              <Separator orientation="vertical" class="h-6 mx-1" />
-
-              <!-- Version History Button -->
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
                       size="sm"
-                      @click="openVersionHistoryModal"
                       class="flex gap-1 items-center"
                     >
-                      <History class="h-4 w-4 mr-1" />
+                      <div
+                        class="w-4 h-4 rounded border border-gray-300"
+                        :style="{ backgroundColor: colour }"
+                      ></div>
+                      <span class="hidden lg:inline">Colour</span>
+                      <ChevronDownIcon class="h-3 w-3 opacity-50" />
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Version History</TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem @click="colour = 'black'">
+                      <Circle class="h-4 w-4 mr-2" fill="black" />
+                      <span>Black</span>
+                      <Check
+                        v-if="colour === 'black'"
+                        class="h-4 w-4 ml-auto"
+                      />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="colour = 'white'">
+                      <Circle
+                        class="h-4 w-4 mr-2"
+                        fill="white"
+                        stroke="#e5e5e5"
+                      />
+                      <span>White</span>
+                      <Check
+                        v-if="colour === 'white'"
+                        class="h-4 w-4 ml-auto"
+                      />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="colour = 'red'">
+                      <Circle class="h-4 w-4 mr-2" fill="red" />
+                      <span>Red</span>
+                      <Check v-if="colour === 'red'" class="h-4 w-4 ml-auto" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="colour = 'blue'">
+                      <Circle class="h-4 w-4 mr-2" fill="blue" />
+                      <span>Blue</span>
+                      <Check v-if="colour === 'blue'" class="h-4 w-4 ml-auto" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="colour = 'green'">
+                      <Circle class="h-4 w-4 mr-2" fill="green" />
+                      <span>Green</span>
+                      <Check
+                        v-if="colour === 'green'"
+                        class="h-4 w-4 ml-auto"
+                      />
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="flex gap-1 items-center"
+                    >
+                      <div
+                        class="bg-current rounded-full"
+                        :style="{
+                          width: `${Math.min(penWidth, 16)}px`,
+                          height: `${Math.min(penWidth, 16)}px`,
+                        }"
+                      ></div>
+                      <span class="hidden lg:inline">Width</span>
+                      <ChevronDownIcon class="h-3 w-3 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem @click="penWidth = 1">
+                      <Minus class="h-4 w-4 mr-2" :stroke-width="0.5" />
+                      <span>Fine</span>
+                      <Check v-if="penWidth == 1" class="h-4 w-4 ml-auto" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="penWidth = 3">
+                      <Minus class="h-4 w-4 mr-2" :stroke-width="1" />
+                      <span>Medium</span>
+                      <Check v-if="penWidth == 3" class="h-4 w-4 ml-auto" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="penWidth = 8">
+                      <Minus class="h-4 w-4 mr-2" :stroke-width="3" />
+                      <span>Bold</span>
+                      <Check v-if="penWidth == 8" class="h-4 w-4 ml-auto" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="penWidth = 16">
+                      <Minus class="h-4 w-4 mr-2" :stroke-width="5" />
+                      <span>Thick</span>
+                      <Check v-if="penWidth == 16" class="h-4 w-4 ml-auto" />
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <!-- Priority 4: Background and utilities - visible on lg+ screens -->
+              <div class="hidden xl:flex items-center gap-1">
+                <!-- <Separator orientation="vertical" class="h-6 mx-1" /> -->
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="flex gap-1 items-center"
+                    >
+                      <Grid class="h-4 w-4" />
+                      <span class="hidden xl:inline">Background</span>
+                      <ChevronDownIcon class="h-3 w-3 opacity-50" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem @click="background = 'line'">
+                      <Rows3Icon class="h-4 w-4 mr-2" />
+                      <span>Line</span>
+                      <Check
+                        v-if="background == 'line'"
+                        class="h-4 w-4 ml-auto"
+                      />
+                    </DropdownMenuItem>
+                    <Separator />
+                    <DropdownMenuItem @click="background = 'sGrid'">
+                      <Grid class="h-4 w-4 mr-2" />
+                      <span>Small Grid</span>
+                      <Check
+                        v-if="background == 'sGrid'"
+                        class="h-4 w-4 ml-auto"
+                      />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="background = 'mGrid'">
+                      <Grid class="h-4 w-4 mr-2" />
+                      <span>Medium Grid</span>
+                      <Check
+                        v-if="background == 'mGrid'"
+                        class="h-4 w-4 ml-auto"
+                      />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem @click="background = 'lGrid'">
+                      <Grid class="h-4 w-4 mr-2" />
+                      <span>Large Grid</span>
+                      <Check
+                        v-if="background == 'lGrid'"
+                        class="h-4 w-4 ml-auto"
+                      />
+                    </DropdownMenuItem>
+                    <Separator />
+                    <DropdownMenuItem @click="background = 'empty'">
+                      <Square class="h-4 w-4 mr-2" />
+                      <span>Blank</span>
+                      <Check
+                        v-if="background == 'empty'"
+                        class="h-4 w-4 ml-auto"
+                      />
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        class="text-orange-600"
+                        @click="deleteSelected"
+                      >
+                        <Trash2 class="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Delete Selected</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        @click="openVersionHistoryModal"
+                        class="flex gap-1 items-center"
+                      >
+                        <History class="h-4 w-4" />
+                        <span class="hidden xl:inline">History</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Version History</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
+              <!-- Comprehensive Overflow Menus for smaller screens -->
+              <div class="flex items-center gap-1 ml-auto">
+                <!-- Mobile Menu (< md) - Complete tools menu -->
+                <div class="flex md:hidden">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <MoreVertical class="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="end"
+                      class="w-56 max-h-[400px] overflow-y-auto"
+                    >
+                      <!-- Note Tools Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Note Tools
+                      </div>
+                      <DropdownMenuItem
+                        @click="showNoteHeader = !showNoteHeader"
+                      >
+                        <Info class="h-4 w-4 mr-2" />
+                        <span
+                          >{{ showNoteHeader ? "Hide" : "Show" }} Note
+                          Details</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="centerWhiteboard()">
+                        <Home class="h-4 w-4 mr-2" />
+                        <span>Center Whiteboard</span>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <!-- Drawing Tools Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Add Shapes
+                      </div>
+                      <DropdownMenuItem @click="addShape('rectangle')">
+                        <Square class="h-4 w-4 mr-2" />
+                        <span>Rectangle</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="addShape('circle')">
+                        <Circle class="h-4 w-4 mr-2" />
+                        <span>Circle</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="addShape('triangle')">
+                        <Triangle class="h-4 w-4 mr-2" />
+                        <span>Triangle</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="addShape('line')">
+                        <Minus class="h-4 w-4 mr-2" />
+                        <span>Line</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="addText()">
+                        <Type class="h-4 w-4 mr-2" />
+                        <span>Text</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="openImageModal()">
+                        <ImagePlus class="h-4 w-4 mr-2" />
+                        <span>Image</span>
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <!-- Colors Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Colors
+                      </div>
+                      <DropdownMenuItem @click="colour = 'black'">
+                        <Circle class="h-4 w-4 mr-2" fill="black" />
+                        <span :class="{ 'font-bold': colour === 'black' }"
+                          >Black</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="colour = 'white'">
+                        <Circle
+                          class="h-4 w-4 mr-2"
+                          fill="white"
+                          stroke="#e5e5e5"
+                        />
+                        <span :class="{ 'font-bold': colour === 'white' }"
+                          >White</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="colour = 'red'">
+                        <Circle class="h-4 w-4 mr-2" fill="red" />
+                        <span :class="{ 'font-bold': colour === 'red' }"
+                          >Red</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="colour = 'blue'">
+                        <Circle class="h-4 w-4 mr-2" fill="blue" />
+                        <span :class="{ 'font-bold': colour === 'blue' }"
+                          >Blue</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="colour = 'green'">
+                        <Circle class="h-4 w-4 mr-2" fill="green" />
+                        <span :class="{ 'font-bold': colour === 'green' }"
+                          >Green</span
+                        >
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+                      <!-- Background Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Background
+                      </div>
+                             <DropdownMenuItem @click="background = 'line'">
+                        <Rows3Icon class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': background === 'line' }">Line</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="background = 'sGrid'">
+                        <Grid class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': background === 'sGrid' }">Small Grid</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="background = 'mGrid'">
+                        <Grid class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': background === 'mGrid' }">Medium Grid</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="background = 'lGrid'">
+                        <Grid class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': background === 'lGrid' }">Large Grid</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="background = 'empty'">
+                        <Square class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': background === 'empty' }">Blank</span>
+                        </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <!-- Actions Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Actions
+                      </div>
+                      <DropdownMenuItem
+                        @click="deleteSelected"
+                        class="text-orange-600"
+                      >
+                        <Trash2 class="h-4 w-4 mr-2" />
+                        <span>Delete Selected</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="openVersionHistoryModal">
+                        <History class="h-4 w-4 mr-2" />
+                        <span>Version History</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <!-- Medium Screen Menu (md - lg) - Background and utilities -->
+                <div class="hidden md:flex xl:hidden">
+                  <Separator orientation="vertical" class="h-6 mx-1" />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        class="flex gap-1 items-center"
+                      >
+                        <Grid class="h-4 w-4" />
+                        More
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="w-48">
+                      <!-- Background Section -->
+                      <div
+                        class="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+                      >
+                        Background
+                      </div>
+                      <DropdownMenuItem @click="background = 'line'">
+                        <Rows3Icon class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': background === 'line' }"
+                          >Line</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="background = 'sGrid'">
+                        <Grid class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': background === 'sGrid' }"
+                          >Small Grid</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="background = 'mGrid'">
+                        <Grid class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': background === 'mGrid' }"
+                          >Medium Grid</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="background = 'lGrid'">
+                        <Grid class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': background === 'lGrid' }"
+                          >Large Grid</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="background = 'empty'">
+                        <Square class="h-4 w-4 mr-2" />
+                        <span :class="{ 'font-bold': background === 'empty' }"
+                          >Blank</span
+                        >
+                      </DropdownMenuItem>
+
+                      <DropdownMenuSeparator />
+
+                      <!-- Actions -->
+                      <DropdownMenuItem
+                        @click="showNoteHeader = !showNoteHeader"
+                      >
+                        <Info class="h-4 w-4 mr-2" />
+                        <span
+                          >{{ showNoteHeader ? "Hide" : "Show" }} Note
+                          Details</span
+                        >
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        @click="deleteSelected"
+                        class="text-orange-600"
+                      >
+                        <Trash2 class="h-4 w-4 mr-2" />
+                        <span>Delete Selected</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="openVersionHistoryModal">
+                        <History class="h-4 w-4 mr-2" />
+                        <span>Version History</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -673,6 +880,7 @@ import {
   Triangle,
   PlusIcon,
   Eraser,
+  // Eraser as EraserIcon,
   Circle,
   ChevronDown as ChevronDownIcon,
   TextIcon,
@@ -683,6 +891,7 @@ import {
   Download,
   Trash2,
   Image,
+  // ImagePlus,
   Grid,
   LucideFileLineChart,
   Rows3Icon,
@@ -691,6 +900,10 @@ import {
   History,
   RotateCcw,
   Clock,
+  MoreVertical,
+  // Hand,
+  // Info,
+  // Home,
 } from "lucide-vue-next";
 import { useToast } from "@/components/ui/toast/use-toast";
 import rough from "roughjs/bundled/rough.esm";
@@ -865,7 +1078,6 @@ async function LoadFromBackend() {
           viewportToUse = useTabStore().getTab(useTabStore().activeTab).state
             .initialViewport;
         }
-     
 
         const previewHeight = 265;
         const fullEditorHeight = modalContent.offsetHeight;
@@ -874,8 +1086,6 @@ async function LoadFromBackend() {
         // Adjust the Y translation (index 5) to center the content
         // Move the viewport down by half the height difference
         viewportToUse[5] += heightDifference;
-
-     
       } else if (response.data.viewport) {
         // Priority 2: Use backend viewport (for full editor only)
         viewportToUse = JSON.parse(response.data.viewport);
@@ -916,7 +1126,6 @@ async function LoadFromBackend() {
                 }
 
                 if (obj.rough === true) {
-            
                   restoreRoughShape(obj);
                 }
               });
@@ -1376,187 +1585,188 @@ function initaliseCanvas() {
 
       // hammer initialisation for pinch and pan gestures on touch screen
       const hammer = new Hammer(canvas.wrapperEl);
-hammer
-  .get("pan")
-  .set({ direction: Hammer.DIRECTION_ALL, pointers: 1, threshold: 10 }); //threshold 10 to minimise accidental pans
-hammer.get("pinch").set({ enable: true });
-hammer.get("press").set({ time: 0 });
-hammer.get("pinch").recognizeWith(hammer.get("pan"));
-hammer.get("pan").recognizeWith(hammer.get("pinch"));
+      hammer
+        .get("pan")
+        .set({ direction: Hammer.DIRECTION_ALL, pointers: 1, threshold: 10 }); //threshold 10 to minimise accidental pans
+      hammer.get("pinch").set({ enable: true });
+      hammer.get("press").set({ time: 0 });
+      hammer.get("pinch").recognizeWith(hammer.get("pan"));
+      hammer.get("pan").recognizeWith(hammer.get("pinch"));
 
-// Track active pointer types
-let activePointerTypes = new Set();
+      // Track active pointer types
+      let activePointerTypes = new Set();
 
-// Listen for all pointer events to track what's currently active
-canvas.wrapperEl.addEventListener("pointerdown", (e) => {
-  activePointerTypes.add(e.pointerType);
-  
-  if (mode.value == "draw" || mode.value == "erase") {
-    if (e.pointerType === "pen") {
-      canvas.isDrawingMode = true;
-      canvas.selection = false;
-    } else if (e.pointerType === "touch") {
-      canvas.isDrawingMode = false;
-      canvas.selection = false;
-      canvas.forEachObject(function (o) {
-        o.selectable = false;
+      // Listen for all pointer events to track what's currently active
+      canvas.wrapperEl.addEventListener("pointerdown", (e) => {
+        activePointerTypes.add(e.pointerType);
+
+        if (mode.value == "draw" || mode.value == "erase") {
+          if (e.pointerType === "pen") {
+            canvas.isDrawingMode = true;
+            canvas.selection = false;
+          } else if (e.pointerType === "touch") {
+            canvas.isDrawingMode = false;
+            canvas.selection = false;
+            canvas.forEachObject(function (o) {
+              o.selectable = false;
+            });
+          } else {
+            // mouse pointer
+            canvas.isDrawingMode = true;
+            canvas.selection = false;
+          }
+        } else if (mode.value == "select") {
+          if (e.pointerType === "pen") {
+            canvas.isDrawingMode = false;
+            canvas.selection = true;
+            canvas.forEachObject(function (o) {
+              o.selectable = true;
+            });
+          } else if (e.pointerType === "touch") {
+            canvas.isDrawingMode = false;
+            canvas.selection = false;
+            canvas.forEachObject(function (o) {
+              o.selectable = false;
+            });
+          } else {
+            // mouse pointer
+            canvas.isDrawingMode = false;
+            canvas.selection = true;
+          }
+        }
       });
-    } else {
-      // mouse pointer
-      canvas.isDrawingMode = true;
-      canvas.selection = false;
-    }
-  } else if (mode.value == "select") {
-    if (e.pointerType === "pen") {
-      canvas.isDrawingMode = false;
-      canvas.selection = true;
-      canvas.forEachObject(function (o) {
-        o.selectable = true;
+
+      canvas.wrapperEl.addEventListener("pointerup", (e) => {
+        activePointerTypes.delete(e.pointerType);
       });
-    } else if (e.pointerType === "touch") {
-      canvas.isDrawingMode = false;
-      canvas.selection = false;
-      canvas.forEachObject(function (o) {
-        o.selectable = false;
+
+      canvas.wrapperEl.addEventListener("pointercancel", (e) => {
+        activePointerTypes.delete(e.pointerType);
       });
-    } else {
-      // mouse pointer
-      canvas.isDrawingMode = false;
-      canvas.selection = true;
-    }
-  }
-});
 
-canvas.wrapperEl.addEventListener("pointerup", (e) => {
-  activePointerTypes.delete(e.pointerType);
-});
+      // Helper function to check if pen is currently active
+      const isPenActive = () =>
+        activePointerTypes.has("pen") || activePointerTypes.has("mouse");
 
-canvas.wrapperEl.addEventListener("pointercancel", (e) => {
-  activePointerTypes.delete(e.pointerType);
-});
+      let lastScale = 1;
 
-// Helper function to check if pen is currently active
-const isPenActive = () => activePointerTypes.has("pen") || activePointerTypes.has("mouse");
+      hammer.on("pinchstart", function (e) {
+        // Only respond to touch input, ignore if pen is active
+        if (isPenActive()) {
+          return;
+        }
 
-let lastScale = 1;
+        canvas._zoomStartScale = canvas.getZoom();
+        lastScale = 1;
 
-hammer.on("pinchstart", function (e) {
-  // Only respond to touch input, ignore if pen is active
-  if (isPenActive()) {
-    return;
-  }
-  
-  canvas._zoomStartScale = canvas.getZoom();
-  lastScale = 1;
+        e.preventDefault();
+        canvas.isDrawingMode = false;
+        canvas.selection = false;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = true;
+          o.lockMovementY = true;
+          o.selectable = false;
+        });
+      });
 
-  e.preventDefault();
-  canvas.isDrawingMode = false;
-  canvas.selection = false;
-  canvas.forEachObject(function (o) {
-    o.lockMovementX = true;
-    o.lockMovementY = true;
-    o.selectable = false;
-  });
-});
+      hammer.on("pinchmove", function (e) {
+        // Only respond to touch input, ignore if pen is active
+        if (isPenActive()) {
+          return;
+        }
 
-hammer.on("pinchmove", function (e) {
-  // Only respond to touch input, ignore if pen is active
-  if (isPenActive()) {
-    return;
-  }
-  
-  const scaleChange = e.scale / lastScale;
-  lastScale = e.scale;
+        const scaleChange = e.scale / lastScale;
+        lastScale = e.scale;
 
-  const newZoom = canvas.getZoom() * scaleChange;
-  const boundedZoom = Math.min(Math.max(newZoom, 0.1), 50);
+        const newZoom = canvas.getZoom() * scaleChange;
+        const boundedZoom = Math.min(Math.max(newZoom, 0.1), 50);
 
-  const center = { x: e.center.x, y: e.center.y };
-  canvas.zoomToPoint(center, boundedZoom);
+        const center = { x: e.center.x, y: e.center.y };
+        canvas.zoomToPoint(center, boundedZoom);
 
-  drawGrid(
-    canvas.viewportTransform[4],
-    canvas.viewportTransform[5],
-    boundedZoom
-  );
-  canvas.requestRenderAll();
-});
+        drawGrid(
+          canvas.viewportTransform[4],
+          canvas.viewportTransform[5],
+          boundedZoom
+        );
+        canvas.requestRenderAll();
+      });
 
-hammer.on("pinchend", function () {
-  // Only respond to touch input, ignore if pen is active
-  if (isPenActive()) {
-    return;
-  }
-  
-  canvas.forEachObject(function (o) {
-    o.lockMovementX = false;
-    o.lockMovementY = false;
-    o.selectable = true;
-  });
-});
+      hammer.on("pinchend", function () {
+        // Only respond to touch input, ignore if pen is active
+        if (isPenActive()) {
+          return;
+        }
 
-let lastDeltaX = 0;
-let lastDeltaY = 0;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = false;
+          o.lockMovementY = false;
+          o.selectable = true;
+        });
+      });
 
-hammer.on("panstart", function (e) {
-  // Only respond to touch input, ignore if pen is active
-  if (isPenActive()) {
-    return;
-  }
-  
-  e.preventDefault();
-  canvas.isDrawingMode = false;
-  canvas.selection = false;
-  canvas.forEachObject(function (o) {
-    o.lockMovementX = true;
-    o.lockMovementY = true;
-    o.selectable = false;
-  });
-});
+      let lastDeltaX = 0;
+      let lastDeltaY = 0;
 
-hammer.on("panmove", function (e) {
-  // Only respond to touch input, ignore if pen is active
-  if (isPenActive()) {
-    return;
-  }
-  
-  e.preventDefault();
-  canvas.isDrawingMode = false;
-  canvas.selection = false;
-  canvas.forEachObject(function (o) {
-    o.lockMovementX = true;
-    o.lockMovementY = true;
-    o.selectable = false;
-  });
+      hammer.on("panstart", function (e) {
+        // Only respond to touch input, ignore if pen is active
+        if (isPenActive()) {
+          return;
+        }
 
-  const vpt = canvas.viewportTransform;
-  const deltaX = e.deltaX - lastDeltaX;
-  const deltaY = e.deltaY - lastDeltaY;
-  lastDeltaX = e.deltaX;
-  lastDeltaY = e.deltaY;
+        e.preventDefault();
+        canvas.isDrawingMode = false;
+        canvas.selection = false;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = true;
+          o.lockMovementY = true;
+          o.selectable = false;
+        });
+      });
 
-  const movementScale = 1;
-  vpt[4] += deltaX * movementScale;
-  vpt[5] += deltaY * movementScale;
+      hammer.on("panmove", function (e) {
+        // Only respond to touch input, ignore if pen is active
+        if (isPenActive()) {
+          return;
+        }
 
-  canvas.requestRenderAll();
-  drawGrid(vpt[4], vpt[5], canvas.getZoom());
-});
+        e.preventDefault();
+        canvas.isDrawingMode = false;
+        canvas.selection = false;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = true;
+          o.lockMovementY = true;
+          o.selectable = false;
+        });
 
-hammer.on("panend", function () {
-  // Only respond to touch input, ignore if pen is active
-  if (isPenActive()) {
-    return;
-  }
-  
-  lastDeltaX = 0;
-  lastDeltaY = 0;
-  canvas.forEachObject(function (o) {
-    o.lockMovementX = false;
-    o.lockMovementY = false;
-    o.selectable = true;
-  });
-});
+        const vpt = canvas.viewportTransform;
+        const deltaX = e.deltaX - lastDeltaX;
+        const deltaY = e.deltaY - lastDeltaY;
+        lastDeltaX = e.deltaX;
+        lastDeltaY = e.deltaY;
+
+        const movementScale = 1;
+        vpt[4] += deltaX * movementScale;
+        vpt[5] += deltaY * movementScale;
+
+        canvas.requestRenderAll();
+        drawGrid(vpt[4], vpt[5], canvas.getZoom());
+      });
+
+      hammer.on("panend", function () {
+        // Only respond to touch input, ignore if pen is active
+        if (isPenActive()) {
+          return;
+        }
+
+        lastDeltaX = 0;
+        lastDeltaY = 0;
+        canvas.forEachObject(function (o) {
+          o.lockMovementX = false;
+          o.lockMovementY = false;
+          o.selectable = true;
+        });
+      });
 
       canvas.on("path:created", () => {
         if (!isRestoring) {
@@ -1877,7 +2087,6 @@ watch(colour, (newColor) => {
   canvas.freeDrawingBrush.color = newColor;
   const activeObjects = canvas.getActiveObjects();
   activeObjects.forEach((obj) => {
-
     if (obj.type === "path") {
       obj.set("stroke", newColor);
     } else if (obj.rough) {
@@ -1904,7 +2113,6 @@ watch(penWidth, (newWidth) => {
   canvas.freeDrawingBrush.width = newWidth;
   const activeObjects = canvas.getActiveObjects();
   activeObjects.forEach((obj) => {
-
     if (obj.type === "path") {
       obj.set("strokeWidth", newWidth);
     } else if (obj.rough) {
@@ -2292,7 +2500,6 @@ function createRoughShape(shapeType, options = {}) {
 }
 
 function restoreRoughShape(obj) {
-
   // Set the rough properties
   obj.rough = true;
   obj.roughness = obj.roughness || 1;

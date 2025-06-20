@@ -121,7 +121,6 @@ Keep responses clear, well-structured, and properly formatted.`
 
       const data = await response.json();
       const modelIds = data.data.map(model => model.id);
-      console.error('Models fetched:', modelIds);
       return modelIds || [];
     } catch (error) {
       console.error('Error fetching models:', error);

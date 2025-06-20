@@ -12,8 +12,6 @@ export const Tags = Extension.create({
       suggestion: {
         char: '@',
         command: ({ editor, range, props }) => {
-          console.error("Tag props received:", props);
-          
           // We need to first delete the @ trigger character
           editor
             .chain()
